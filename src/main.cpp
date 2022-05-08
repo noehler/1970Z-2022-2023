@@ -6,7 +6,7 @@
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
-void on_center_button() {
+/*void on_center_button() {
 	static bool pressed = false;
 	pressed = !pressed;
 	if (pressed) {
@@ -14,7 +14,7 @@ void on_center_button() {
 	} else {
 		pros::lcd::clear_line(2);
 	}
-}
+}*/
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -24,9 +24,9 @@ void on_center_button() {
  */
 void initialize() {
 	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
+//	pros::lcd::set_text(1, "Hello PROS User!");
 
-	pros::lcd::register_btn1_cb(on_center_button);
+	//pros::lcd::register_btn1_cb(on_center_button);
 }
 
 /**
@@ -76,7 +76,7 @@ void autonomous() {}
 void opcontrol() {
 
 	while (true) {
-		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
+		/*pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
 		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
 		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);
 		int leftSPD = master.get_analog(ANALOG_LEFT_Y);
@@ -86,17 +86,55 @@ void opcontrol() {
 		leftBackDrive = leftSPD;
 		rightFrontDrive = rightSPD;
 		rightBackDrive = rightSPD;
-		pros::delay(20);
+		pros::delay(20);*/
+		static bool goingUp = false;
+		static bool timing = false;
+		static int goT = 0;
+		static int lastA = 0;
+		static int lastD = 0;
 
-		if (!master.get_digital_new_press(E_CONTROLLER_DIGITAL_B)){
+		if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_UP)){
 			static bool pressed = false;
 			pressed = !pressed;
 			if (pressed){
-				flyWheel = 127;
+				flyWheel1 = -127;
+				flyWheel2 = -127;
+				goT = millis();
+				goingUp = true;
+				timing = true;
+
 			}
 			else {
-				flyWheel.brake();
+				flyWheel1.brake();
+				flyWheel2.brake();
+				goT = millis();
+				goingUp = false;
+				timing = true;
+
 			}
+
 		}
+		if (timing && ((goingUp && (flyWheel1.get_actual_velocity() + flyWheel1.get_actual_velocity())/2 > 600) ||
+		(!goingUp && (flyWheel1.get_actual_velocity() + flyWheel1.get_actual_velocity())/2 < 10)))
+		{
+			if (goingUp){
+				lastA = millis() - goT;
+			}
+			else
+			{
+				lastD = millis() - goT;
+			}
+			timing = false;
+
+		}
+
+		lcd::print(0, "AvgTemp: %f, RPM:%f", (flyWheel1.get_temperature() + flyWheel1.get_temperature())/2, (flyWheel1.get_actual_velocity() + flyWheel1.get_actual_velocity())/2);
+		lcd::print(2, "TA: %d, TD: %d", lastA, lastD);
+
+		if (timing == false && goingUp == true){
+			trackNums();
+		}
+
+		delay(20);
 	}
 }

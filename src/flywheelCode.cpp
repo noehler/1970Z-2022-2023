@@ -46,6 +46,8 @@ void updateTurretAngles(void){
   /*  CONSTANTS  */
   //variable to represent the gear ratio between the motor and the rotation of the turret
   double ratio = 1/3;
+  double highAngle = 3*M_PI/8;
+  double lowAngle = M_PI/4;
 
   //variable to represent the velocity frizbees are shot at in ft/s
   double Ffps = 10;
@@ -58,6 +60,7 @@ void updateTurretAngles(void){
 
   double angleToH = robotGoal.angleBetweenHorREL;
   double angleToV = robotGoal.angleBetweenV;
+  
 
   /*  accounting for robot velocity  */
   double purpendicularVelocity = robot.velocity / cos(robotGoal.angleBetweenHorREL + M_PI/4);
@@ -70,7 +73,6 @@ void updateTurretAngles(void){
   double degreeCorrection = atan(feetAway / robotGoal.distBetweenH);
   angleToH += degreeCorrection;
 
-  /* getting angle on x axis */
 
 
 

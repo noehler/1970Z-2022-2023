@@ -10,6 +10,7 @@ Motor leftBackDrive(3, driveGear, true);
 Motor rightFrontDrive(10, driveGear, true);
 Motor rightBackDrive(12, driveGear, true);
 
-Motor flyWheel(20, E_MOTOR_GEARSET_18, true);
-Motor turrYRot(20, E_MOTOR_GEARSET_36, true);
-Motor turrZRot(20, E_MOTOR_GEARSET_36, true);;
+Motor flyWheel1(17, E_MOTOR_GEARSET_06, true);
+Motor flyWheel2(19, E_MOTOR_GEARSET_06, true);
+Motor turrYRot(14, E_MOTOR_GEARSET_06, true);
+Motor turrZRot(15, E_MOTOR_GEARSET_06, true);

@@ -3,6 +3,7 @@
 
 #include "api.h"
 #include "flywheelCode.h"
+#include "velTrack.h"
 
 using namespace pros;
 
@@ -13,7 +14,8 @@ extern Motor leftBackDrive;
 extern Motor rightFrontDrive;
 extern Motor rightBackDrive;
 
-extern Motor flyWheel;
+extern Motor flyWheel1;
+extern Motor flyWheel2;
 extern Motor turrYRot;
 extern Motor turrZRot;
 
