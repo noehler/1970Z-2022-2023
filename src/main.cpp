@@ -130,10 +130,8 @@ void opcontrol() {
 
 		lcd::print(0, "AvgTemp: %f, RPM:%f", (flyWheel1.get_temperature() + flyWheel1.get_temperature())/2, (flyWheel1.get_actual_velocity() + flyWheel1.get_actual_velocity())/2);
 		lcd::print(2, "TA: %d, TD: %d", lastA, lastD);
-
-		if (timing == false && goingUp == true){
-			trackNums();
-		}
+		
+		trackNums();
 
 		delay(20);
 	}
