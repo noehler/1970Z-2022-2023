@@ -10,5 +10,8 @@ class position_t {
 
 extern position_t robot;
 extern position_t homeGoal;
+extern void updateTurretAngle(void);
+extern void turretSpeed(void);
+extern void turretSpeed(void);
 
 #endif

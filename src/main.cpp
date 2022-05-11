@@ -74,65 +74,96 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+	master.clear();
+	delay(50);
+	master.print(0, 0, "A for distance Calcs");
+	delay(50);
+	master.print(1, 0, "B for joyStick speed");
 
-	while (true) {
-		/*pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);
-		int leftSPD = master.get_analog(ANALOG_LEFT_Y);
-		int rightSPD = master.get_analog(ANALOG_RIGHT_Y);
+	while (1){
+		if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_A)){
+			master.clear();
+			delay(50);
+			master.print(1, 0, "B to exit");
+			while (true) {
+				static bool goingUp = false;
+				static bool timing = false;
+				static int goT = 0;
+				static int lastA = 0;
+				static int lastD = 0;
 
-		leftFrontDrive = leftSPD;
-		leftBackDrive = leftSPD;
-		rightFrontDrive = rightSPD;
-		rightBackDrive = rightSPD;
-		pros::delay(20);*/
-		static bool goingUp = false;
-		static bool timing = false;
-		static int goT = 0;
-		static int lastA = 0;
-		static int lastD = 0;
 
-		if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_UP)){
-			static bool pressed = false;
-			pressed = !pressed;
-			if (pressed){
-				flyWheel1 = -127;
-				flyWheel2 = -127;
-				goT = millis();
-				goingUp = true;
-				timing = true;
+				turretSpeed();
 
+				lcd::print(0, "AvgTemp: %f, RPM:%f", (flyWheel1.get_temperature() + flyWheel2.get_temperature()+flyWheel3.get_actual_velocity() + flyWheel4.get_actual_velocity())/4,
+				 													(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity()+flyWheel3.get_actual_velocity() + flyWheel4.get_actual_velocity())/4*49);
+				//lcd::print(2, "TA: %d, TD: %d", lastA, lastD);
+
+				//trackNums();
+
+				if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_B)){
+
+					master.clear();
+					delay(50);
+					master.print(0, 0, "A for distance Calcs");
+					delay(50);
+					master.print(1, 0, "B for joyStick speed");
+					lcd::clear();
+					flyWheel1.brake();
+					flyWheel2.brake();
+					flyWheel3.brake();
+					flyWheel4.brake();
+					break;
+				}
+
+				delay(20);
 			}
-			else {
-				flyWheel1.brake();
-				flyWheel2.brake();
-				goT = millis();
-				goingUp = false;
-				timing = true;
-
-			}
-
 		}
-		if (timing && ((goingUp && (flyWheel1.get_actual_velocity() + flyWheel1.get_actual_velocity())/2 > 600) ||
-		(!goingUp && (flyWheel1.get_actual_velocity() + flyWheel1.get_actual_velocity())/2 < 10)))
-		{
-			if (goingUp){
-				lastA = millis() - goT;
-			}
-			else
-			{
-				lastD = millis() - goT;
-			}
-			timing = false;
+		else if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_B)){
+			master.clear();
 
+			delay(50);
+			master.print(1, 0, "B to exit");
+			while (true) {
+
+				 int pctADD =  master.get_analog(E_CONTROLLER_ANALOG_LEFT_X)/50;
+				 static int pctTotal = 0;
+
+				 if ((pctADD > 0 && pctTotal < 350) || (pctADD < 0 && pctTotal > -350)){
+					 pctTotal += pctADD;
+				 }
+
+				 if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_UP)){
+					 pctTotal = 0;
+				 }
+
+				 if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_B)){
+
+					 master.clear();
+					 delay(50);
+				 	 master.print(0, 0, "A for distance Calcs ");
+				 	 delay(50);
+				 	 master.print(1, 0, "B for joyStick speed ");
+					 lcd::clear();
+					 pctTotal = 0;
+					 flyWheel1.brake();
+					 flyWheel2.brake();
+					 flyWheel3.brake();
+					 flyWheel4.brake();
+					 break;
+				 }
+
+				 flyWheel1 = abs(pctTotal);
+				 flyWheel2 = abs(pctTotal);
+				 flyWheel3 = abs(pctTotal);
+				 flyWheel4 = abs(pctTotal);
+
+				 lcd::print(0, "AvgTemp: %f, RPM:%f", (flyWheel1.get_temperature() + flyWheel2.get_temperature()+flyWheel3.get_actual_velocity() + flyWheel4.get_actual_velocity())/4,
+				  													(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity()+flyWheel3.get_actual_velocity() + flyWheel4.get_actual_velocity())/4*49);
+
+				 delay(40);
+			}
 		}
-
-		lcd::print(0, "AvgTemp: %f, RPM:%f", (flyWheel1.get_temperature() + flyWheel1.get_temperature())/2, (flyWheel1.get_actual_velocity() + flyWheel1.get_actual_velocity())/2);
-		lcd::print(2, "TA: %d, TD: %d", lastA, lastD);
-		
-		trackNums();
-
 		delay(20);
 	}
 }
