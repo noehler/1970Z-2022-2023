@@ -44,58 +44,28 @@ void updateTurretAngle(void){
   /*  CONSTANTS  */
   //variable to represent the gear ratio between the motor and the rotation of the turret
   double ratioRot = 0.14285;
-  double radius = 2;
+  double radius = 5/12;
 
   //degree that the radius goes away from the rotation point
-  double degreeRad = 94;
+  double degreeRad = 90-15;
 
   //difference in degree from inertial and shot out of
   double degreeOff = degreeRad - 90;
 
   //angle between rotation point and Target
-  double degreeRotTar = robotGoal.angleBetweenHorABS;
+  double degreeRotTar = robotGoal.angleBetweenHorABS*180/M_PI;
 
   //angle located at point of rotation opposite to distance between shoot point and Target
   //IDFK = I dont fudging know
-  double degreeIDFK = asin(sqrt(pow(robotGoal.distBetweenH, 2)-pow(radius,2))/robotGoal.distBetweenH);
+  double degreeIDFK = asin(sqrt(pow(robotGoal.distBetweenH, 2)-pow(radius,2))/robotGoal.distBetweenH)*180/M_PI;
 
   //adding angles, idk why this works, Chenghan did the math
-  double goAngle = degreeRad - degreeIDFK + degreeRotTar;
+  double goAngle = degreeRad - degreeIDFK + degreeRotTar + 180;
+  std::cout << "\n\n\nAngleTo:"<< goAngle << "\nIDFK:"<< degreeIDFK << "\ndegRotTar:"<< degreeRotTar << "\ndegOff:"<< degreeOff << "\n\n\n";
+  degreeHope = goAngle;
 
-  
-  //converting angle to field to angle usable by robot.
-  robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - robot.angle;
-
-
-  double angleToH = robotGoal.angleBetweenHorREL;
-  double angleToV = robotGoal.angleBetweenV;
-
-
-  /*  accounting for robot velocity  */
-  //double purpendicularVelocity = robot.velocity / cos(robotGoal.angleBetweenHorREL + M_PI/4);
-
-  //dividing feet by feet per second to give time taken to arrive at location
-  //taking time and multiplying it my purpendicularVelocity to get how far off awway the frizbee will be
-  //double feetAway = (robotGoal.distBetweenH / Ffps/cos(angleToV)) /* purpendicularVelocity*/;
-
-  //converting from feet away to degree that needs to be added to current degree to compensate for speed of robot
-  //double degreeCorrection = atan(feetAway / robotGoal.distBetweenH);
-  //angleToH += degreeCorrection;
-
-
-  angleToH =-angleToH*180/M_PI;
-  angleToH += 180-16;
-
-  std::cout <<"\n\n\nAngle: " << ratioRot  <<"\n" << angleToH;
-
-
-  //making the turret spin to face the goal
-  //turrYRot1.move_absolute(angleToH/ratioRot*4+angleShootStraight, 127);
-  //turrYRot1.move_absolute(angleToH/ratioRot*4+angleShootStraight, 127);
-  degreeHope = angleToH;
-
-  while(fabs(inertial.get_heading() - angleToH) > 1 ){
-    double degToGo = fabs(inertial.get_heading() - angleToH);
+  while(fabs(inertial.get_heading() - goAngle) > 1 ){
+    double degToGo = fabs(inertial.get_heading() - goAngle);
     int speed;
     if (degToGo > 30){
       speed = 100;
@@ -103,7 +73,7 @@ void updateTurretAngle(void){
     else{
       speed = 30;
     }
-    if (inertial.get_heading() < angleToH){
+    if (inertial.get_heading() < goAngle){
       speed = -speed;
     }
     turrYRot1 = speed;

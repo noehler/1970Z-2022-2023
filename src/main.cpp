@@ -76,8 +76,8 @@ void autonomous() {}
 
 void turretControl_fn(void){
 	while(1){
-		turrYRot1 = -master.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/3;
-		turrYRot2 = -master.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/3;
+		//turrYRot1 = -master.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/3;
+		//turrYRot2 = -master.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/3;
 
 		if(shootButton.get_value() || master.get_digital(E_CONTROLLER_DIGITAL_A) ){
 			shootPiston.set_value(true);
@@ -107,8 +107,7 @@ void opcontrol() {
 
   turrYRot1.move_absolute(300, 127);
   turrYRot1.move_absolute(300, 127);
-	/*Task turretControl(turretControl_fn);
-	flyWheel1 = abs(127);
+	/*flyWheel1 = abs(127);
 	flyWheel2 = abs(127);
 	flyWheel3 = abs(127);
 	flyWheel4 = abs(127);
@@ -123,6 +122,8 @@ void opcontrol() {
 	master.print(1, 0, "B for joyStick speed");
 	while (1){
 		if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_A)){
+
+			Task turretControl(turretControl_fn);
 			delay(50);
 			master.clear();
 			delay(50);
@@ -144,7 +145,7 @@ void opcontrol() {
 				{
 					robot.xpos = getNum("Robot X: ");
 					robot.ypos = getNum("Robot Y: ");
-					robot.zpos = getNum("Robot Z: ");
+					robot.zpos = -getNum("Robot Z: ");
 
 					robCoorGot = true;
 				}
@@ -152,35 +153,31 @@ void opcontrol() {
 
 				homeGoal.xpos = getNum("Target X: ");
 				homeGoal.ypos = getNum("Target Y: ");
-				homeGoal.zpos = getNum("Target Z: ");
+				homeGoal.zpos = -getNum("Target Z: ");
 
 				updateTurretAngle();
 
 
-				flyWheel1 = 100;
-				flyWheel2 = 100;
-				flyWheel3 = 100;
-				flyWheel4 = 100;
+				flyWheel1 = 127;
+				flyWheel2 = 127;
+				flyWheel3 = 127;
+				flyWheel4 = 127;
 
 
 				//turretSpeed();
 
 				while((fabs(flyWheel1.get_actual_velocity()) < abs(flyWheel1.get_target_velocity()) *.9)){
-					std::cout << "\n" <<inertial.get_heading()  << ":" << degreeHope;
+					//std::cout << "\n" <<inertial.get_heading()  << ":" << degreeHope;
  					//std::cout << "\n" <<fabs(flyWheel1.get_actual_velocity()) << " : " << abs(flyWheel1.get_target_velocity())*.9 << "\n" <<flyWheel1.get_temperature();
 					delay(40);
 				}
 				std::cout << "\n\nFire!\n\n";
-				while(!shootButton.get_new_press() && !master.get_digital(E_CONTROLLER_DIGITAL_A) ){
-					std::cout << "\n" <<inertial.get_heading()  << ":" << degreeHope;
+				while(!(shootButton.get_value() || master.get_digital(E_CONTROLLER_DIGITAL_A)) ){
+					//std::cout << "\n" <<inertial.get_heading()  << ":" << degreeHope;
 					//std::cout << "\n" <<fabs(flyWheel1.get_actual_velocity()) << " : " << abs(flyWheel1.get_target_velocity())*.9;
 					delay(40);
 				}
-				shootPiston.set_value(true);
-				delay(100);
-				shootPiston.set_value(false);
-
-				//trackNums();
+				std::cout << "\n\nShot!\n\n";
 
 				delay(500);
 
@@ -188,11 +185,6 @@ void opcontrol() {
 				flyWheel2.brake();
 				flyWheel3.brake();
 				flyWheel4.brake();
-
-				/*flyWheel1.brake();
-				flyWheel2.brake();
-				flyWheel3.brake();
-				flyWheel4.brake();*/
 
 				delay(20);
 			}
