@@ -5,6 +5,7 @@
 #include "flywheelCode.h"
 #include "velTrack.h"
 #include "buttons.h"
+#include "devFunctions.h"
 
 using namespace pros;
 
@@ -21,8 +22,13 @@ extern Motor flyWheel3;
 extern Motor flyWheel4;
 
 
-extern Motor turrYRot;
-extern Motor turrZRot;
+extern Motor turrYRot1;
+extern Motor turrYRot2;
+
+extern ADIDigitalIn shootButton;
+extern ADIDigitalOut shootPiston;
+
+extern Imu inertial;
 
 
 #endif

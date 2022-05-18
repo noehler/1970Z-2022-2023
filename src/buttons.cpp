@@ -62,3 +62,20 @@ void btnSetToggled(lv_obj_t * btn, bool toggled)
 {
     if(toggled != (lv_btn_get_state(btn) >= 2)) lv_btn_toggle(btn);
 }
+
+lv_obj_t * drawRectangle( int x, int y, int width, int height, lv_color_t color ) {
+  lv_obj_t * obj1 = lv_obj_create(lv_scr_act(), NULL);
+
+  lv_style_t *style1 = (lv_style_t *)malloc( sizeof( lv_style_t ));
+  lv_style_copy(style1, &lv_style_plain_color);    /*Copy a built-in style to initialize the new style*/
+  style1->body.empty = 1;
+  style1->body.border.color = color;
+  style1->body.border.width = 1;
+  style1->body.border.part = LV_BORDER_FULL;
+
+  lv_obj_set_style(obj1, style1);
+  lv_obj_set_pos(obj1, x, y);
+  lv_obj_set_size(obj1, width, height);
+
+  return obj1;
+}
