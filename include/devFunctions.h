@@ -7,4 +7,7 @@ extern void graphFunction(void);
 extern void numTrain(void);
 extern void readYRot(void);
 
+extern void trackNums(void);
+
+
 #endif

@@ -1,4 +1,4 @@
-#include "robotConfig.h"
+#include "main.h"
 
 double getNum(std::string Output){
   std::string tempDist;
@@ -87,11 +87,93 @@ void graphFunction(void){
 
 double randMotor(void){
   //std::cout << "\nX: " << 1/inertial.get_accel().x << "\nY: " << 1/inertial.get_accel().y << "\nZ: " << 1/inertial.get_accel().z;
-  double motR = (cos(pow(flyWheel1.get_temperature(), sqrt(turrYRot1.get_temperature()))/(inertial.get_accel().x+1)) + sin(pow(flyWheel4.get_temperature(), sqrt(turrYRot2.get_temperature()))/(inertial.get_accel().y+1)))/2;
+  double motR = (cos(pow(rbD.get_temperature(), sqrt(lfD.get_temperature()))/(inertial.get_accel().x+1)) + sin(pow(rfD.get_temperature(), sqrt(lbD.get_temperature()))/(inertial.get_accel().y+1)))/2;
   //std::cout << "\nR: " <<motR << "\n";
   return motR;
 }
 
+double velocity[1000];
+int timeV[1000];
+int currPos = 0;
+
+void graphVelTime(void){
+  FILE* usd_file_write_v = fopen("/usd/vel.txt", "w");
+  for (int i = 0; i< 1000; i++){
+    fprintf(usd_file_write_v,"%f \n", velocity[i]);
+  }
+  fclose(usd_file_write_v);
+
+  FILE* usd_file_write_t = fopen("/usd/time.txt", "w");
+  for (int i = 0; i< 1000; i++){
+    fprintf(usd_file_write_t,"%d \n", timeV[i]);
+  }
+  fclose(usd_file_write_t);
+
+  lcd::print(3, "done collecting");
+}
+
+//used to get the radius experimantally to calibrate the encoders (because the wheels are never perfect)
+void calcRadius(void){
+  using namespace std;
+
+  //getting target distance
+  cout << "Select distance to travel in inches (larger is better): \n";
+  int targetDist;
+  cin >> targetDist;
+
+  //getting encoder to test
+  bool completed = false;
+  int encoderNum;
+  while(!completed){
+    cout << "Encoder nicks as follows:\n\n" << "\tLeft Forward Reverse: 1\n" << "\tRight Forward Reverse: 2\n" << "\tSide Side: 3\n\n";
+    cout << "Select encoder to test: \n";
+    cin >> encoderNum;
+    if (encoderNum == 1){
+      completed = true;
+    }
+    else if (encoderNum == 2){
+      completed = true;
+    }
+    else if (encoderNum == 3){
+      completed = true;
+    }
+    else{
+      cout<<"\n\nretry\n\n";
+    }
+  }
+
+  //getting distance rotated and calculating value continously
+  while (1){
+    double degTraveled;
+    if (encoderNum == 1){
+      ADIEncoder encoder({{20,'A','B'}});
+      degTraveled = encoder.get_value();
+    }
+    else if (encoderNum == 2){
+      ADIEncoder encoder({{20,'C','D'}});
+      degTraveled = encoder.get_value();
+    }
+    else if (encoderNum == 3){
+      ADIEncoder encoder({{20,'E','F'}});
+      degTraveled = encoder.get_value();
+    }
+    double radius = (targetDist*180)/(degTraveled* M_PI);
+    cout << "\nt\tRadius: " << radius;
+  }
+}
+
+void trackNums(void){
+  velocity[currPos] = flyWheel1.get_actual_velocity() * 5;
+  timeV[currPos] = millis();
+
+  currPos++;
+  if (currPos > 999){
+    currPos = 0;
+    graphVelTime();
+  }
+}
+
+/*
 void numTrain(void){
   double constants[3];
   double prevConstants[3][5];
@@ -208,4 +290,4 @@ void numTrain(void){
       }
     }
   }
-}
+}*/

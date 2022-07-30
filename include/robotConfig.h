@@ -3,32 +3,27 @@
 
 #include "api.h"
 #include "flywheelCode.h"
-#include "velTrack.h"
-#include "buttons.h"
 #include "devFunctions.h"
+#include "odometry.h"
+#include "backgroundFuncs.h"
 
 using namespace pros;
 
 extern Controller master;
 
-extern Motor leftFrontDrive;
-extern Motor leftBackDrive;
-extern Motor rightFrontDrive;
-extern Motor rightBackDrive;
+extern Motor lfD;
+extern Motor lbD;
+extern Motor rfD;
+extern Motor rbD;
 
 extern Motor flyWheel1;
 extern Motor flyWheel2;
-extern Motor flyWheel3;
-extern Motor flyWheel4;
 
-
-extern Motor turrYRot1;
-extern Motor turrYRot2;
-
-extern ADIDigitalIn shootButton;
-extern ADIDigitalOut shootPiston;
-
+extern Motor diff1;
+extern Motor diff2;
 extern Imu inertial;
+
+extern ADIDigitalOut shootPiston;
 
 
 #endif
