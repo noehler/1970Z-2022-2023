@@ -21,9 +21,19 @@ extern Motor flyWheel2;
 
 extern Motor diff1;
 extern Motor diff2;
-extern Imu inertial;
 
 extern ADIDigitalOut shootPiston;
+extern ADIDigitalOut elevatePiston;
 
+extern ADIUltrasonic leftUltra;
+extern ADIUltrasonic rightUltra;
+extern ADIUltrasonic revUltra;
+
+extern ADIEncoder leftEncoderFB;
+extern ADIEncoder rightEncoderFB;
+extern ADIEncoder encoderLR;
+
+
+extern Imu inertial;
 
 #endif
