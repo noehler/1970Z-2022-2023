@@ -159,6 +159,7 @@ void calcRadius(void){
     }
     double radius = (targetDist*180)/(degTraveled* M_PI);
     cout << "\nt\tRadius: " << radius;
+    delay(20);
   }
 }
 
