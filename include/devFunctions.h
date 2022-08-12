@@ -6,6 +6,7 @@ extern double getNum(std::string);
 extern void graphFunction(void);
 extern void numTrain(void);
 extern void readYRot(void);
+extern void calcRadius(void);
 
 extern void trackNums(void);
 

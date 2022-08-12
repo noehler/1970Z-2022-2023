@@ -1,4 +1,6 @@
 #include "main.h"
+#include "backgroundFuncs.h"
+#include "robotConfig.h"
 
 void initialize() {
 	inertial.reset();
@@ -22,6 +24,14 @@ void competition_initialize() {}
 void autonomous() {}
 
 void opcontrol() {
+	/*while (1){
+		while (!master.get_digital_new_press(DIGITAL_L1)){
+			std::cout << leftEncoderFB.get_value() << "\n";
+			delay(20);
+		}
+		leftEncoderFB.reset();
+	}*/
+	Task my_task(mainLoop);;	
 
 	while(1){
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
