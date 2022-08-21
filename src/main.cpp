@@ -11,6 +11,15 @@ void initialize() {
 
 	inertial.set_heading(180);
 
+	robot.xpos = 82;
+    robot.ypos = 0;
+    robot.zpos = 24;
+
+	homeGoal.xpos = 24;
+	homeGoal.ypos = 48;
+	homegoal.zpos = 24;
+	mainLoop();
+
 	//starting main loop that handles odometry and turret angle
 	//mainLoop();
 }

@@ -42,7 +42,6 @@ void turretSpeed(void){
   /* constants */
   double highAngle = M_PI/3;
   double lowAngle = M_PI/4;
-  double acceleration = 7.726667;
 
   //setting constants for teting;
   lowAngle = 0;
@@ -65,4 +64,9 @@ void turretSpeed(void){
   flyWheel2 = rotNeededL;
 
   lcd::print(2, "DistH: %f, theta: %f, ", robotGoal.distBetweenH, robotGoal.angleBetweenV);
+}
+
+void turretControl(void){
+  turretSpeed();
+
 }
