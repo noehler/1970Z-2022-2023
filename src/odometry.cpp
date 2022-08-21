@@ -12,7 +12,7 @@ robotGoalRelatives robotGoal;
 double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
     double ratioNum;
     if ((encoderLoc == &leftEncoderFB) || (encoderLoc == &rightEncoderFB) || (encoderLoc == &encoderLR)){
-        ratioNum=10;
+        ratioNum=1.320;
     }
     else{
         ratioNum = 0;
@@ -38,8 +38,8 @@ void basicOdometry(void){
     double avgSS = distTraveled(&encoderLR);
 
     //converting from relative to robot movement to absolute to field movement
-    double changeX = avgFR * cos(inertial.get_heading()*DEG2RAD) + avgSS + cos((inertial.get_heading()+90)*DEG2RAD);
-    double changeZ = avgFR * sin(inertial.get_heading()*DEG2RAD) + avgSS + sin((inertial.get_heading()+90)*DEG2RAD);
+    double changeX = avgFR * cos(inertial.get_heading()*DEG2RAD) + avgSS * cos((inertial.get_heading()+90)*DEG2RAD);
+    double changeZ = avgFR * sin(inertial.get_heading()*DEG2RAD) + avgSS * sin((inertial.get_heading()+90)*DEG2RAD);
 
     //adding calculated values onto the global position of the robot
     robot.xpos += changeX;

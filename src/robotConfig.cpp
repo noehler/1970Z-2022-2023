@@ -15,16 +15,16 @@ Motor flyWheel2(10, E_MOTOR_GEARSET_36, true);
 
 Motor diff1(5, E_MOTOR_GEARSET_06, true);
 Motor diff2(6, E_MOTOR_GEARSET_06, true);
-Imu inertial(18);
+Imu inertial(11);
 
 
 ADIDigitalOut shootPiston({{22,'A'}});
 ADIDigitalOut elevatePiston({{22,'B'}});
 
-ADIUltrasonic leftUltra({{22,'C', 'D'}});
-ADIUltrasonic rightUltra({{22,'E','F'}});
-ADIUltrasonic revUltra({{22,'G','H'}});
+ADIUltrasonic leftUltra({{22,'A', 'B'}});
+ADIUltrasonic rightUltra({{22,'B','B'}});
+ADIUltrasonic revUltra({{22,'A','B'}});
 
-ADIEncoder leftEncoderFB({{20,'A','B'}});
-ADIEncoder rightEncoderFB({{20,'C', 'D'}});
-ADIEncoder encoderLR({{20,'E','F'}});
+ADIEncoder leftEncoderFB({{20,'C','D'}, true});
+ADIEncoder rightEncoderFB({{22,'C', 'D'}});
+ADIEncoder encoderLR({{20,'A','B'}});

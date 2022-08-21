@@ -1,4 +1,5 @@
 #include "main.h"
+#include "robotConfig.h"
 
 double getNum(std::string Output){
   std::string tempDist;
@@ -146,19 +147,16 @@ void calcRadius(void){
   while (1){
     double degTraveled;
     if (encoderNum == 1){
-      ADIEncoder encoder({{20,'A','B'}});
-      degTraveled = encoder.get_value();
+      degTraveled = leftEncoderFB.get_value();
     }
     else if (encoderNum == 2){
-      ADIEncoder encoder({{20,'C','D'}});
-      degTraveled = encoder.get_value();
+      degTraveled = rightEncoderFB.get_value();
     }
     else if (encoderNum == 3){
-      ADIEncoder encoder({{20,'E','F'}});
-      degTraveled = encoder.get_value();
+      degTraveled = encoderLR.get_value();
     }
-    double radius = (targetDist*180)/(degTraveled* M_PI);
-    cout << "\nt\tRadius: " << radius;
+    double radius = (targetDist*180)/(degTraveled* 3.1415926535);
+    cout << "\nt\tRadius: " << radius <<degTraveled;
     delay(20);
   }
 }

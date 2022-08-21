@@ -1,6 +1,7 @@
 // made on July 28, 2022 by Nathaniel Oehler
 
 #include "main.h"
+#include "robotConfig.h"
 
 void mainLoop(void)
 {

@@ -27,5 +27,7 @@ extern robotGoalRelatives robotGoal;
 extern position_t robot;
 extern position_t homeGoal;
 
+extern void basicOdometry(void);
+
 
 #endif
