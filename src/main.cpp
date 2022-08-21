@@ -19,7 +19,7 @@ void initialize() {
 
 	homeGoal.xpos = 24;
 	homeGoal.ypos = 48;
-	homegoal.zpos = 24;
+	homeGoal.zpos = 24;
 	mainLoop();
 
 	//starting main loop that handles odometry and turret angle

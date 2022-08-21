@@ -75,11 +75,6 @@ void turretSpeed(void){
   lcd::print(2, "DistH: %f, theta: %f, ", robotGoal.distBetweenH, robotGoal.angleBetweenV);
 }
 
-void turretControl(void){
-  turretSpeed();
-
-}
-
 void turretAngleTo(void){
   //calculating the angle to drive the turret to
   angleHoriBetween();

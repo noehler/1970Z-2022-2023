@@ -5,7 +5,7 @@ extern void turretSpeed(void);
 extern void angleVertBetween(void);
 extern double angularVelocityCalc(double, double, double, double);
 extern double degreeHope;
-extern void turretControl(void);
 extern double velocityCalc(void);
+extern void turretAngleTo(void);
 
 #endif
