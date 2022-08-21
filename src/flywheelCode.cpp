@@ -1,10 +1,19 @@
 #include "main.h"
+#include "odometry.h"
+#include "robotConfig.h"
 
 double degreeHope = 0;
 
-//returns the absolute angle between the robot and the goal relative to the field, not the robot
+double timeInAir(void){
+  double speed = 10;
+  double time = robotGoal.distBetweenH / speed;
+  return time;
+}
+
+//returns the absolute angle between the robot and the goal relative to the field, not the robot, accounting for velocity
 void angleHoriBetween(void){
-  double angleB = atan((homeGoal.zpos - robot.zpos)/(homeGoal.xpos - robot.xpos));
+  robot.velocity = velocityCalc();
+  double angleB = atan((homeGoal.zpos - robot.zpos + (robot.velocity*sin(robot.angle)*timeInAir()))/(homeGoal.xpos - robot.xpos + (robot.velocity*cos(robot.angle)*timeInAir())));
   robotGoal.angleBetweenHorABS = angleB;
 }
 
@@ -65,4 +74,13 @@ void turretSpeed(void){
   flyWheel2 = rotNeededL;
 
   lcd::print(2, "DistH: %f, theta: %f, ", robotGoal.distBetweenH, robotGoal.angleBetweenV);
+}
+
+void turretAngleTo(void){
+  //calculating the angle to drive the turret to
+  angleHoriBetween();
+  robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - inertial.get_heading();
+
+  
+
 }
