@@ -32,6 +32,7 @@ extern ADIUltrasonic revUltra;
 extern ADIEncoder leftEncoderFB;
 extern ADIEncoder rightEncoderFB;
 extern ADIEncoder encoderLR;
+extern Rotation turretAngle;
 
 
 extern Imu inertial;

@@ -16,6 +16,7 @@ Motor flyWheel2(10, E_MOTOR_GEARSET_36, true);
 Motor diff1(5, E_MOTOR_GEARSET_06, true);
 Motor diff2(6, E_MOTOR_GEARSET_06, true);
 Imu inertial(11);
+Rotation turretAngle(8);
 
 
 ADIDigitalOut shootPiston({{22,'A'}});

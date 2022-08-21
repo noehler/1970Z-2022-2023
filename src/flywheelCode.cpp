@@ -14,6 +14,7 @@ double timeInAir(void){
 void angleHoriBetween(void){
   robot.velocity = velocityCalc();
   double angleB = atan((homeGoal.zpos - robot.zpos + (robot.velocity*sin(robot.angle)*timeInAir()))/(homeGoal.xpos - robot.xpos + (robot.velocity*cos(robot.angle)*timeInAir())));
+  angleB = atan((homeGoal.zpos - robot.zpos)/(homeGoal.xpos - robot.xpos))*180/M_PI;
   robotGoal.angleBetweenHorABS = angleB;
 }
 
@@ -78,8 +79,6 @@ void turretSpeed(void){
 void turretAngleTo(void){
   //calculating the angle to drive the turret to
   angleHoriBetween();
-  robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - inertial.get_heading();
-
-  
+  robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - inertial.get_heading();  
 
 }

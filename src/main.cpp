@@ -5,7 +5,7 @@
 void initialize() {
 	inertial.reset();
 
-	while(inertial.is_calibrating()){
+	while (inertial.is_calibrating()){
 		std::cout << "\nCalibrating!";
 		delay(40);
 	}
@@ -13,14 +13,15 @@ void initialize() {
 
 	inertial.set_heading(180);
 
-	robot.xpos = 82;
+	/*robot.xpos = 82;
     robot.ypos = 0;
     robot.zpos = 24;
 
 	homeGoal.xpos = 24;
 	homeGoal.ypos = 48;
-	homeGoal.zpos = 24;
-	mainLoop();
+	homeGoal.zpos = 24;*/
+	
+	Task my_task(mainLoop);
 
 	//starting main loop that handles odometry and turret angle
 	//mainLoop();
@@ -40,7 +41,6 @@ void opcontrol() {
 		}
 		leftEncoderFB.reset();
 	}*/
-	Task my_task(mainLoop);;	
 
 	while(1){
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
@@ -63,6 +63,7 @@ void opcontrol() {
 		}
 		}
 
+		/*
 		if (currDiffMode == 0){
 		diff1.brake();
 		diff2.brake();
@@ -74,7 +75,7 @@ void opcontrol() {
 		else{
 		diff1.move(127);
 		diff2.move(-127);
-		}
+		}*/
 
 	}	
 
