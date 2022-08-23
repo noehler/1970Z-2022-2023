@@ -4,5 +4,6 @@
 #define __BACKGROUNDFUNCS_H__
 
 extern void mainLoop(void);
+extern bool runLoop;
 
 #endif

@@ -3,14 +3,17 @@
 #include "flywheelCode.h"
 #include "main.h"
 #include "odometry.h"
+#include "pros/llemu.hpp"
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
 #include "robotConfig.h"
 
+bool runLoop = true;
+
 
 void turrDrive(void){
     //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
-    while (1){
+    while (runLoop){
         turretAngleTo();
         double angle1 = turretAngle.get_position()/100;
         double angleDiff = angle1*12/259-robotGoal.angleBetweenHorREL;
@@ -41,10 +44,15 @@ void turrDrive(void){
 void mainLoop(void)
 {
     Task my_task(turrDrive);
+    std::cout << "starting Loop \n";
     
-    while (1){
+    while (runLoop){
         
         basicOdometry();
+        //lcd::clear();
+        pros::lcd::print(0, "X: %f", robot.xpos);
+        pros::lcd::print(1, "Y: %f", robot.ypos);
+        pros::lcd::print(2, "Z:");
         
         delay(20);
     }

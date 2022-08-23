@@ -9,6 +9,7 @@ extern void readYRot(void);
 extern void calcRadius(void);
 
 extern void trackNums(void);
+extern void devMode(void);
 
 
 #endif

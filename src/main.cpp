@@ -1,9 +1,11 @@
 #include "main.h"
 #include "backgroundFuncs.h"
+#include "pros/llemu.hpp"
 #include "robotConfig.h"
 
 void initialize() {
 	inertial.reset();
+	pros::lcd::initialize();
 
 	while (inertial.is_calibrating()){
 		std::cout << "\nCalibrating!";
@@ -41,7 +43,7 @@ void opcontrol() {
 		}
 		leftEncoderFB.reset();
 	}*/
-
+    int startTime = millis();
 	while(1){
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
 		int LNSpeed = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
@@ -63,20 +65,21 @@ void opcontrol() {
 		}
 		}
 
-		/*
-		if (currDiffMode == 0){
-		diff1.brake();
-		diff2.brake();
+		if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
+		 && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
+			delay(50);
+			master.clear_line(1);
+			delay(50);
+			master.print(1, 1, "Entering dev mode");
+			runLoop = false;
+			devMode();
+			delay(50);
+			master.clear_line(1);
+			delay(50);
+			master.print(1, 1, "Exiting dev mode");
+			runLoop = true;
+			startTime = millis();
 		}
-		else if (currDiffMode == 1){
-		diff1.move(127);
-		diff2.move(127);
-		}
-		else{
-		diff1.move(127);
-		diff2.move(-127);
-		}*/
 
-	}	
-
+	}
 }

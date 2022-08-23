@@ -1,4 +1,5 @@
 #include "main.h"
+#include "pros/rtos.h"
 #include "robotConfig.h"
 
 double getNum(std::string Output){
@@ -290,3 +291,20 @@ void numTrain(void){
     }
   }
 }*/
+void devMode(void){
+  int startTime = millis();
+  while(1){
+		diff1 = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_Y);
+		diff2 = master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_Y);
+    
+    
+    delay(20);
+
+    if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
+     && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
+			runLoop = true;
+      Task my_task(mainLoop);
+      break;
+    }
+	}
+}
