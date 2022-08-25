@@ -11,12 +11,12 @@ robotGoalRelatives robotGoal;
 //function to automatically detect distance covered by an individual tracking wheel
 //using pointers so that I can determine what ratio is needed to convert from degrees to distance without using a second variable
 double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
-    double ratioNum;
+    double radius;
     if ((encoderLoc == &leftEncoderFB) || (encoderLoc == &rightEncoderFB) || (encoderLoc == &encoderLR)){
-        ratioNum=1.320;
+        radius=1.40723013;
     }
     else{
-        ratioNum = 0;
+        radius = 0;
     }
 
 
@@ -28,7 +28,7 @@ double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
         encoderVar.reset();
     }
 
-    double distTraveled = degreesTraveled * ratioNum;
+    double distTraveled = degreesTraveled/360 * radius *2*M_PI;
     
     return distTraveled;
 }

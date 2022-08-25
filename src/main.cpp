@@ -5,15 +5,27 @@
 
 void initialize() {
 	inertial.reset();
-	pros::lcd::initialize();
+	//pros::lcd::initialize();
 
-	while (inertial.is_calibrating()){
+	int startTime = millis();
+	while (inertial.is_calibrating() ){
 		std::cout << "\nCalibrating!";
 		delay(40);
+		if (millis() - startTime > 3000){
+			delay(50);
+			master.clear();
+			delay(50);
+			master.print(2,1,"Calibration Failing.");
+			delay(50);
+			master.print(1,1,"B to ignore.");
+			if (master.get_digital(DIGITAL_B)){
+				break;
+			}
+		}
 	}
 	std::cout << "\nDone Calibrating!\n\n\n";
 
-	inertial.set_heading(180);
+	//inertial.set_heading(180);
 
 	/*robot.xpos = 82;
     robot.ypos = 0;
@@ -50,12 +62,12 @@ void opcontrol() {
 		int RNSpeed = master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_X);
 
 		//mechanum(magic) speed
-		int MSpeed = master.get_analog(ANALOG_LEFT_X);
+		int MSpeed = -master.get_analog(ANALOG_LEFT_X);
 
-		lfD.move(LNSpeed + MSpeed);
-		lbD.move(LNSpeed - MSpeed);
-		rfD.move(RNSpeed - MSpeed);
-		rbD.move(RNSpeed + MSpeed);
+		lfD.move(-LNSpeed + MSpeed);
+		lbD.move(-LNSpeed - MSpeed);
+		rfD.move(-RNSpeed - MSpeed);
+		rbD.move(-RNSpeed + MSpeed);
 
 		static int currDiffMode = 0;
 		if(master.get_digital_new_press(DIGITAL_L1)){

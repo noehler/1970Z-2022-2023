@@ -1,4 +1,5 @@
 #include "main.h"
+#include "odometry.h"
 #include "pros/rtos.h"
 #include "robotConfig.h"
 
@@ -119,17 +120,17 @@ void calcRadius(void){
   using namespace std;
 
   //getting target distance
-  cout << "Select distance to travel in inches (larger is better): \n";
-  int targetDist;
-  cin >> targetDist;
+  //cout << "Select distance to travel in inches (larger is better): \n";
+  int targetDist = 74;
+  //cin >> targetDist;
 
   //getting encoder to test
   bool completed = false;
-  int encoderNum;
+  int encoderNum = 1;
   while(!completed){
     cout << "Encoder nicks as follows:\n\n" << "\tLeft Forward Reverse: 1\n" << "\tRight Forward Reverse: 2\n" << "\tSide Side: 3\n\n";
     cout << "Select encoder to test: \n";
-    cin >> encoderNum;
+    //cin >> encoderNum;
     if (encoderNum == 1){
       completed = true;
     }
@@ -291,13 +292,25 @@ void numTrain(void){
     }
   }
 }*/
+
+bool devPossible = true;
 void devMode(void){
   int startTime = millis();
-  while(1){
-		diff1 = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_Y);
+  while(devPossible){
+    diff1 = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_Y);
 		diff2 = master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_Y);
+    basicOdometry();
+    std::cout << "\n\nX: " << robot.xpos << "\nY: " << robot.ypos << "\nZ: " << robot.zpos << "\nH: " << inertial.get_heading()<< "\n";
     
-    
+    //std::cout << leftEncoderFB.get_value() << "\n";
+
+    if (master.get_digital(DIGITAL_UP)){
+      robot.xpos = 0;
+      robot.ypos = 0;
+      robot.zpos = 0;
+      inertial.set_heading(0);
+    }
+
     delay(20);
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)

@@ -7,8 +7,8 @@ motor_gearset_e driveGear = E_MOTOR_GEARSET_06 ;
 
 Motor lfD(1, driveGear, true);
 Motor lbD(2, driveGear, true);
-Motor rfD(7, driveGear, true);
-Motor rbD(4, driveGear, true);
+Motor rfD(7, driveGear, false);
+Motor rbD(4, driveGear, false);
 
 Motor flyWheel1(9, E_MOTOR_GEARSET_36, false);
 Motor flyWheel2(10, E_MOTOR_GEARSET_36, true);
