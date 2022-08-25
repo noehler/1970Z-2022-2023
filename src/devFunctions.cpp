@@ -54,7 +54,8 @@ void graphFunction(void){
 
   double finalDone[xRes];
   for (int i = 0; i < xRes; i++){
-    homeGoal.xpos = i * 60 /479;
+    double tempi = i;
+    homeGoal.xpos = tempi * 60 /479;
 
     angleVertBetween();
 
