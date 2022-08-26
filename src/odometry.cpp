@@ -2,7 +2,7 @@
 
 #include "main.h"
 #include "robotConfig.h"
-#define DEG2RAD M_PI/360
+#define DEG2RAD M_PI/180
 
 position_t robot;
 position_t homeGoal;
@@ -41,7 +41,7 @@ void basicOdometry(void){
     //converting from relative to robot movement to absolute to field movement
     double changeX = avgFR * cos(inertial.get_heading()*DEG2RAD) + avgSS * cos((90-inertial.get_heading())*DEG2RAD);
     double changeZ = avgFR * sin(inertial.get_heading()*DEG2RAD) + avgSS * sin((90-inertial.get_heading())*DEG2RAD);
-
+    std::cout << "\n\nCX: " << changeX << "\nCZ: " << changeZ  << "\nCXFR: " << avgFR * cos(inertial.get_heading()*DEG2RAD) << "\nCXSS: " << avgSS * cos((90-inertial.get_heading())*DEG2RAD) << "\n";
     //getting the angle moving, because may not always be moving straight forward
     robot.angle = atan(changeZ/changeX)/DEG2RAD;
 

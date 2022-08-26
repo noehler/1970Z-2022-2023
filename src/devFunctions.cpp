@@ -312,7 +312,7 @@ void devMode(void){
       inertial.set_heading(0);
     }
 
-    delay(20);
+    delay(50);
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){

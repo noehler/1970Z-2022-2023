@@ -1,5 +1,6 @@
 #include "main.h"
 #include "backgroundFuncs.h"
+#include "devFunctions.h"
 #include "pros/llemu.hpp"
 #include "robotConfig.h"
 
@@ -23,6 +24,10 @@ void initialize() {
 			}
 		}
 	}
+	delay(50);
+	master.clear();
+	delay(50);
+	master.print(1,1,"Calibration Success.");
 	std::cout << "\nDone Calibrating!\n\n\n";
 
 	//inertial.set_heading(180);
@@ -72,10 +77,24 @@ void opcontrol() {
 		static int currDiffMode = 0;
 		if(master.get_digital_new_press(DIGITAL_L1)){
 		currDiffMode++;
-		if (currDiffMode == 3){
-		currDiffMode = 0;
+			if (currDiffMode == 3){
+			currDiffMode = 0;
+			}
 		}
+		if (master.get_digital(DIGITAL_R2)){
+			diff1 = -127;
+			diff2 = -127;
 		}
+		else if (master.get_digital(DIGITAL_R1)){
+			diff1 = 127;
+			diff2 = 127;
+		}
+		else{
+			diff1 = 0;
+			diff2 = 0;;
+		}
+
+		
 
 		if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
 		 && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
