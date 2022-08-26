@@ -15,8 +15,7 @@ void turrDrive(void){
     //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
     while (runLoop){
         turretAngleTo();
-        double tempTurrA = turretAngle.get_position();
-        double angle1 = tempTurrA/100;
+        double angle1 = double(turretAngle.get_position())/100;
         double angleDiff = angle1*12/259-robotGoal.angleBetweenHorREL;
         //std::cout <<angleDiff << "\n";
         int speedrot;
