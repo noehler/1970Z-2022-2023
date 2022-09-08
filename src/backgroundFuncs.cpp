@@ -13,7 +13,7 @@ bool runLoop = true;
 
 void turrDrive(void){
     //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
-    while (runLoop){
+    while (1){
         turretAngleTo();
         double angle1 = double(turretAngle.get_position())/100;
         double angleDiff = angle1*12/259-robotGoal.angleBetweenHorREL;
@@ -43,16 +43,16 @@ void turrDrive(void){
 
 void mainLoop(void)
 {
-    Task my_task(turrDrive);
+    //Task my_task(turrDrive);
     std::cout << "starting Loop \n";
     
     while (runLoop){
         
-        basicOdometry();
+        //basicOdometry();
         //lcd::clear();
-        pros::lcd::print(0, "X: %f", robot.xpos);
-        pros::lcd::print(1, "Y: %f", robot.ypos);
-        pros::lcd::print(2, "Z:");
+        //3pros::lcd::print(0, "X: %f", robot.xpos);
+        //pros::lcd::print(1, "Y: %f", robot.ypos);
+        //pros::lcd::print(2, "Z:");
         
         delay(20);
     }
