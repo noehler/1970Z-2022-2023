@@ -12,7 +12,7 @@ double timeInAir(void){
 
 //returns the absolute angle between the robot and the goal relative to the field, not the robot, accounting for velocity
 void angleHoriBetween(void){
-  robot.velocity = velocityCalc();
+  //grobot.velocity = velocityCalc();
   double angleB = atan((homeGoal.zpos - robot.zpos + (robot.velocity*sin(robot.angle)*timeInAir()))/(homeGoal.xpos - robot.xpos + (robot.velocity*cos(robot.angle)*timeInAir())));
   angleB = atan((homeGoal.zpos - robot.zpos)/(homeGoal.xpos - robot.xpos))*180/M_PI;
   robotGoal.angleBetweenHorABS = angleB;
@@ -83,13 +83,37 @@ void turretAngleTo(void){
 
 }
 
-void singSameOldSongTimeTurretTwister(void){
+//defining constants
+float g = 386.08858267717;
+double a = -pow(g,2)*.25;
 
+void singSameOldSongTimeTurretTwister(void){
   //define quartic equation terms
-  double a = -g025_2;
-  double c = pow(robot., 2) + pow(Vry, 2) - Distz * g;
-  double d = -2 * robotGoal.dx * Vrx - 2 * Disty * Vry;
-  double e = pow(Distx, 2) + pow(Disty, 2) - pow(Distz, 2);
+  double c = pow(robot.xVelocity, 2) + pow(robot.yVelocity, 2) - robotGoal.dx * g;
+  double d = -2 * robotGoal.dx * robot.xVelocity - 2 * robotGoal.dy * robot.yVelocity;
+  double e = pow(robotGoal.dx, 2) + pow(robotGoal.dy, 2) - pow(robotGoal.dz, 2);
   double D = 1000000000000;
   double T = 0.1;
+
+  bool close_enough = false;
+  while (close_enough != true){
+    if (D > 10000){
+      T += 0.1;
+    }  
+    else if (D > 1){
+      T += 0.001;
+    }
+    else{
+      close_enough = true;
+    }
+    D = a * pow(T, 4) + c * pow(T, 2) + d * T + e;
+  }
+  
+  double P1 = robotGoal.dy - robot.yVelocity * T;
+  double P2 = robotGoal.dx - robot.xVelocity * T;
+  double Tar_ang = atan(P1 / P2);
+  double P3 = cos(Tar_ang) * 0.707106781187 * T;
+  double V_disk = P2 / P3;
+  //return V_disk, Tar_ang*180/np.pi, T;
+  //idk what those things are
 }
