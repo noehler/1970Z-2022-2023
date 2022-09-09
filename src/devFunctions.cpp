@@ -297,22 +297,24 @@ void numTrain(void){
 bool devPossible = true;
 void devMode(void){
   int startTime = millis();
+  delay(50);
+  master.clear();
   while(devPossible){
-    diff1 = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_Y);
-		diff2 = master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_Y);
+    //diff1 = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_Y);
+		//diff2 = master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_Y);
     basicOdometry();
-    std::cout << "\n\nX: " << robot.xpos << "\nY: " << robot.ypos << "\nZ: " << robot.zpos << "\nH: " << inertial.get_heading()<< "\n";
-    
-    //std::cout << leftEncoderFB.get_value() << "\n";
-
-    if (master.get_digital(DIGITAL_UP)){
-      robot.xpos = 0;
-      robot.ypos = 0;
-      robot.zpos = 0;
-      inertial.set_heading(0);
-    }
-
+    //std::cout << "\n\nX: " << robot.xpos << "\nY: " << robot.ypos << "\nZ: " << robot.zpos << "\nH: " << inertial.get_heading()<< "\n";
+    master.print(0, 1, "X: %4f", robot.xpos);
     delay(50);
+    master.print(0, 8, "H: %4f", inertial.get_heading());
+    delay(50);
+    master.print(1, 1, "Y: %4f", robot.ypos);
+    delay(50);
+    master.print(2, 1, "Z: %4f", robot.zpos);
+    delay(50);
+
+  
+    //std::cout << leftEncoderFB.get_value() << "\n";
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){

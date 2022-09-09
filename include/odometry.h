@@ -5,7 +5,7 @@
 
 class position_t {
   public:
-    double xpos, ypos, zpos;
+    double xpos, ypos, zpos, width, length;
     double angle;
     double velocity;
 };
