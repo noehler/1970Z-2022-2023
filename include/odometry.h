@@ -7,7 +7,7 @@ class position_t {
   public:
     double xpos, ypos, zpos, width, length;
     double angle;
-    double velocity;
+    double velocity, xVelocity, yVelocity;
 };
 
 class robotGoalRelatives {
@@ -15,6 +15,7 @@ class robotGoalRelatives {
     //storing the absolute and relative horizontal angle between goal and robot
     double angleBetweenHorABS;
     double angleBetweenHorREL;
+    double dx, dy,dz;
 
     //storing angle between turret and goal
     double angleBetweenV;
@@ -28,6 +29,5 @@ extern position_t robot;
 extern position_t homeGoal;
 
 extern void basicOdometry(void);
-
 
 #endif

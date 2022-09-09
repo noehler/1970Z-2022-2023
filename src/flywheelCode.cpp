@@ -82,3 +82,17 @@ void turretAngleTo(void){
   robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - inertial.get_heading();
 
 }
+<<<<<<< Updated upstream
+=======
+
+void singSameOldSongTimeTurretTwister(void){
+
+  //define quartic equation terms
+  double a = -g025_2;
+  double c = pow(robot., 2) + pow(Vry, 2) - Distz * g;
+  double d = -2 * robotGoal.dx * Vrx - 2 * Disty * Vry;
+  double e = pow(Distx, 2) + pow(Disty, 2) - pow(Distz, 2);
+  double D = 1000000000000;
+  double T = 0.1;
+}
+>>>>>>> Stashed changes
