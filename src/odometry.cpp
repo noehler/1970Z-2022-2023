@@ -29,10 +29,10 @@ double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
     }
 
     double distTraveled = degreesTraveled/360 * radius *2*M_PI;
-    
+
     return distTraveled;
 }
- 
+
 void basicOdometry(void){
     //getting average of fwd reverse distance traveled to account for turning
     double avgFR = (distTraveled(&leftEncoderFB) + distTraveled(&rightEncoderFB))/2;
@@ -54,7 +54,7 @@ double velocityCalc(void){
     static double prevAvg = double(leftEncoderFB.get_value() + rightEncoderFB.get_value())/2;
     static double prevSS = encoderLR.get_value();
     static double prevT = pros::millis();
-    double c = sqrt(pow((prevAvg - (leftEncoderFB.get_value())* + rightEncoderFB.get_value())/2000 * (prevT - millis()), 2) + 
+    double c = sqrt(pow((prevAvg - (leftEncoderFB.get_value())* + rightEncoderFB.get_value())/2000 * (prevT - millis()), 2) +
                     pow((prevSS-encoderLR.get_value())/1000 * (prevT - millis()), 2));
 
     prevAvg = double(leftEncoderFB.get_value() + rightEncoderFB.get_value())/2;
@@ -63,3 +63,27 @@ double velocityCalc(void){
     return c;
 }
 
+void odometry(
+  double Arc1 = ; //rightEncoderFB travel, to forward direction of robot is positive
+  double Arc2 = ; //leftEncoderFB travel, to forward direction of robot is positive
+  double Arc3 = ; //backEncoderFB travel, to right of robot is positive
+  float a = ; //distance between two tracking wheels
+  float b = ; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+  static float T =0;
+  T = millis()/1000 - T;
+
+  double P1 = (Arc1 - Arc2);
+  double Delta_heading = P1/a;
+  double Radius_side = (Arc1 + Arc2)*a/(2*P1);
+  double Radius_back = Arc3/Delta_heading - b;
+  double C_theta_side = cos(robot.angle+Delta_heading)-cos(robot.angle);
+  double C_theta_back = cos(robot.angle+Delta_heading-pi/2)-cos(robot.angle-pi/2);
+  double Delta_x = C_theta_side*Radius_side + C_theta_back * Radius_back;
+  double S_theta_side = sin(robot.angle+Delta_heading)-sin(robot.angle);
+  double S_theta_back = sin(robot.angle+Delta_heading-pi/2)-sin(robot.angle-pi/2);
+  double Delta_y = S_theta_side*Radius_side + S_theta_back * Radius_back;
+  robot.xpos +=Delta_x;
+  robot.ypos +=Delta_y;
+  robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
+  robot.yVelocity = Delta_y/T; //same as above
+)

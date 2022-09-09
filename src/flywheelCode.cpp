@@ -79,6 +79,6 @@ void turretSpeed(void){
 void turretAngleTo(void){
   //calculating the angle to drive the turret to
   angleHoriBetween();
-  robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - inertial.get_heading();  
+  robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - inertial.get_heading();
 
 }
