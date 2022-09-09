@@ -50,7 +50,6 @@ void basicOdometry(void){
     robot.zpos += changeZ;
 }
 
-<<<<<<< Updated upstream
 double velocityCalc(void){
     static double prevAvg = double(leftEncoderFB.get_value() + rightEncoderFB.get_value())/2;
     static double prevSS = encoderLR.get_value();
@@ -88,5 +87,3 @@ void odometry(
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
   robot.yVelocity = Delta_y/T; //same as above
 )
-=======
->>>>>>> Stashed changes

@@ -82,8 +82,6 @@ void turretAngleTo(void){
   robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - inertial.get_heading();
 
 }
-<<<<<<< Updated upstream
-=======
 
 void singSameOldSongTimeTurretTwister(void){
 
@@ -95,4 +93,3 @@ void singSameOldSongTimeTurretTwister(void){
   double D = 1000000000000;
   double T = 0.1;
 }
->>>>>>> Stashed changes
