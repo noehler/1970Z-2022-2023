@@ -1,10 +1,8 @@
 #ifndef __FLYWHEELCODE_H__
 #define __FLYWHEELCODE_H__
 
-extern void turretSpeed(void);
-extern void angleVertBetween(void);
-extern double angularVelocityCalc(double, double, double, double);
-extern double degreeHope;
-extern void turretAngleTo(void);
+extern void turretControl(void);
+extern double angularVelocityCalc(void);
+extern void singSameOldSongTimeTurretTwister(void);
 
 #endif

@@ -16,18 +16,12 @@ class robotGoalRelatives {
     double angleBetweenHorABS;
     double angleBetweenHorREL;
     double dx, dy,dz;
-
-    //storing angle between turret and goal
-    double angleBetweenV;
-
-    //storing the distance the frizbee will travel horizontally
-    double distBetweenH;
 };
 
 extern robotGoalRelatives robotGoal;
 extern position_t robot;
 extern position_t homeGoal;
 
-extern void basicOdometry(void);
+extern void odometry(void);
 
 #endif

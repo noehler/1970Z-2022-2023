@@ -57,14 +57,14 @@ void graphFunction(void){
     double tempi = i;
     homeGoal.xpos = tempi * 60 /479;
 
-    angleVertBetween();
+    //angleVertBetween();
 
-    double attackLow = sqrt((acceleration * robotGoal.distBetweenH) /
-                            fabs(2*tan(robotGoal.angleBetweenV - lowAngle)))         * cos(robotGoal.angleBetweenV) / cos(lowAngle);
+    //double attackLow = sqrt((acceleration * robotGoal.distBetweenH) /
+    //                        fabs(2*tan(robotGoal.angleBetweenV - lowAngle)))         * cos(robotGoal.angleBetweenV) / cos(lowAngle);
 
-    attackLow = robotGoal.distBetweenH*60 * fabs(robotGoal.distBetweenH*tan(robotGoal.angleBetweenV))/3;
+    //attackLow = robotGoal.distBetweenH*60 * fabs(robotGoal.distBetweenH*tan(robotGoal.angleBetweenV))/3;
 
-    finalDone[i] = attackLow;
+    //finalDone[i] = attackLow;
     //std::cout << std::to_string(robotGoal.angleBetweenV) + "\n";
     delay(20);
   }
@@ -300,27 +300,33 @@ void devMode(void){
   delay(50);
   master.clear();
   while(devPossible){
-    //diff1 = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_Y);
-		//diff2 = master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_Y);
-    basicOdometry();
-    //std::cout << "\n\nX: " << robot.xpos << "\nY: " << robot.ypos << "\nZ: " << robot.zpos << "\nH: " << inertial.get_heading()<< "\n";
-    master.print(0, 1, "X: %4f", robot.xpos);
-    delay(50);
-    master.print(0, 8, "H: %4f", inertial.get_heading());
-    delay(50);
-    master.print(1, 1, "Y: %4f", robot.ypos);
-    delay(50);
-    master.print(2, 1, "Z: %4f", robot.zpos);
-    delay(50);
-
-  
     //std::cout << leftEncoderFB.get_value() << "\n";
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
 			runLoop = true;
-      Task my_task(mainLoop);
+      Task my_task(startLoop);
       break;
     }
 	}
+}
+
+void devCheck(void){
+  static int startTime = millis();
+  
+  if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
+		 && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
+			delay(50);
+			master.clear_line(1);
+			delay(50);
+			master.print(1, 1, "Entering dev mode");
+			runLoop = false;
+			devMode();
+			delay(50);
+			master.clear_line(1);
+			delay(50);
+			master.print(1, 1, "Exiting dev mode");
+			runLoop = true;
+			startTime = millis();
+		}
 }

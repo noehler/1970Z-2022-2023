@@ -3,7 +3,7 @@
 #ifndef __BACKGROUNDFUNCS_H__
 #define __BACKGROUNDFUNCS_H__
 
-extern void mainLoop(void);
+extern void startLoop(void);
 extern bool runLoop;
 
 #endif

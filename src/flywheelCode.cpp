@@ -1,92 +1,89 @@
 #include "main.h"
 #include "odometry.h"
 #include "robotConfig.h"
+#define DEG2RAD M_PI/180
 
-double degreeHope = 0;
+double goalSpeed = 0;
+float wheelRad = 2.5;
+float gearRatio = 1;
+bool autoControl = true;
 
-double timeInAir(void){
-  double speed = 10;
-  double time = robotGoal.distBetweenH / speed;
-  return time;
-}
-
-//returns the absolute angle between the robot and the goal relative to the field, not the robot, accounting for velocity
-void angleHoriBetween(void){
-  //grobot.velocity = velocityCalc();
-  double angleB = atan((homeGoal.zpos - robot.zpos + (robot.velocity*sin(robot.angle)*timeInAir()))/(homeGoal.xpos - robot.xpos + (robot.velocity*cos(robot.angle)*timeInAir())));
-  angleB = atan((homeGoal.zpos - robot.zpos)/(homeGoal.xpos - robot.xpos))*180/M_PI;
-  robotGoal.angleBetweenHorABS = angleB;
-}
-
-
-//finds angle that the goal is above to robot and dist between
-void angleVertBetween(void){
-  double turretHeight = 10;
-
-  double distH = sqrt(fabs(
-    pow(robot.xpos - homeGoal.xpos, 2) +
-    pow(robot.zpos - homeGoal.zpos, 2)
-  ));
-
-  robotGoal.distBetweenH = distH;
-  turretHeight = 0;
-
-
-  double distVert = homeGoal.ypos - (robot.ypos + turretHeight);
-  //std::cout << "\nVertB: " << distVert;
-
-  double angleV = atan(distVert / distH);
-  robotGoal.angleBetweenV = angleV;
-  //std::cout << "sqrt((" + std::to_string(robot.xpos) + "-" + std::to_string(homeGoal.xpos) + ")^2" + "+" + "(" + std::to_string(robot.zpos) + "-" + std::to_string(homeGoal.zpos) + ")^2) = " + std::to_string(distH) + "\n";
-}
-
-double angularVelocityCalc(double angle, double distMult, double heightMult, double velPow){
-
-  double attackSpeed = robotGoal.distBetweenH * distMult * (3/fabs(robotGoal.distBetweenH*tan(robotGoal.angleBetweenV))) * heightMult * pow(10/robotGoal.distBetweenH, velPow);
-  std::cout << "\nDegree: " << robotGoal.angleBetweenV;
+double angularVelocityCalc(void){
+  double attackSpeed = goalSpeed/wheelRad/DEG2RAD *gearRatio;
+  std::cout << "W: " << attackSpeed << "Input: " << goalSpeed;
   return attackSpeed;
-
 }
 
-void turretSpeed(void){
-  /* constants */
-  double highAngle = M_PI/3;
-  double lowAngle = M_PI/4;
+void turretControl(void){
+  if (autoControl){
+    double topSpeed = 600 *gearRatio;
+    double rotNeeded = angularVelocityCalc()/topSpeed;
 
-  //setting constants for teting;
-  lowAngle = 0;
+    flyWheel1 = rotNeeded;
+    flyWheel2 = rotNeeded;
 
-  angleVertBetween();
+    if (fabs(float(turretAngle.get_position())/100 - robotGoal.angleBetweenHorREL) > 10){
+      if (float(turretAngle.get_position())/100 > robotGoal.angleBetweenHorREL){
+        diff1 = 33;
+        diff2 = -33;
+      }
+      else {
+        diff1 = -33;
+        diff2 = 33;
+      }
+    }
+    else{
+      diff1.brake();
+      diff2.brake();
+    }
+  }
+  else{
+    int intakeSPD;
+		if (master.get_digital(DIGITAL_R2)){
+			intakeSPD = -127;
+		}
+		else if (master.get_digital(DIGITAL_R1)){
+			intakeSPD = 127;
+		}
+		else{
+			intakeSPD = 0;
+		}
 
-  /* calculating speed and attack angle */
-  double attackHigh = angularVelocityCalc(highAngle, 57, 1, .5);
-  double attackLow = angularVelocityCalc(lowAngle, 57, 1, .5);
+		int turrSPD;
+		if (master.get_digital(DIGITAL_A)){
+			turrSPD = 50;
+		}
+		else if (master.get_digital(DIGITAL_B)){
+			turrSPD = -50;
+		}
+		else{
+			turrSPD = 0;
+		}
+
+		int d1SPD = intakeSPD + turrSPD;
+		int d2SPD = intakeSPD - turrSPD;
+
+		if (d1SPD > 127 || d2SPD > 127){
+			d1SPD -= abs(turrSPD);
+			d2SPD -= abs(turrSPD);
+		}
+		else if (d1SPD < -127 || d2SPD < -127){
+			d1SPD += abs(turrSPD);
+			d2SPD += abs(turrSPD);
+		}
 
 
-  attackLow = robotGoal.distBetweenH * 57 * (3/fabs(robotGoal.distBetweenH*tan(robotGoal.angleBetweenV))) * (sqrt((10/robotGoal.distBetweenH)));
-
-  double rad = 2.5/12;
-  double rotNeededH = attackHigh/rad/49;
-  double rotNeededL = attackLow/rad/49;
-  std::cout << "\n\n" + std::to_string(rotNeededL) + "\n\n";
-
-  flyWheel1 = rotNeededL;
-  flyWheel2 = rotNeededL;
-
-  lcd::print(2, "DistH: %f, theta: %f, ", robotGoal.distBetweenH, robotGoal.angleBetweenV);
-}
-
-void turretAngleTo(void){
-  //calculating the angle to drive the turret to
-  angleHoriBetween();
-  robotGoal.angleBetweenHorREL = robotGoal.angleBetweenHorABS - inertial.get_heading();
-
+		diff1 = d1SPD;
+		diff2 = d2SPD;
+  }
+  
 }
 
 //defining constants
 float g = 386.08858267717;
 double a = -pow(g,2)*.25;
 
+//means iterative time based turret rotation calculator
 void singSameOldSongTimeTurretTwister(void){
   //define quartic equation terms
   double c = pow(robot.xVelocity, 2) + pow(robot.yVelocity, 2) - robotGoal.dx * g;
@@ -114,6 +111,9 @@ void singSameOldSongTimeTurretTwister(void){
   double Tar_ang = atan(P1 / P2);
   double P3 = cos(Tar_ang) * 0.707106781187 * T;
   double V_disk = P2 / P3;
-  //return V_disk, Tar_ang*180/np.pi, T;
-  //idk what those things are
+
+  //outputting calculated values
+  robotGoal.angleBetweenHorABS = Tar_ang /DEG2RAD;
+  goalSpeed = V_disk;
+  std::cout << "\nAngle:" << robotGoal.angleBetweenHorABS;
 }
