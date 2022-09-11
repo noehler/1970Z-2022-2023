@@ -15,6 +15,17 @@ double angularVelocityCalc(void){
 }
 
 void turretControl(void){
+  while(1){
+    robotGoal.angleBetweenHorREL = (inertial.get_rotation() - robotGoal.angleBetweenHorABS);
+    double spd = pow(fabs(robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)), 1.0/3)*15;
+    if (robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)<0){
+      spd *= -1;
+    }
+    //std::cout << "\nSpeed" <<spd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
+    diff1 = spd;
+    diff2 = -spd;
+    delay(20);
+  }
   if (autoControl){
     double topSpeed = 600 *gearRatio;
     double rotNeeded = angularVelocityCalc()/topSpeed;
@@ -22,20 +33,6 @@ void turretControl(void){
     flyWheel1 = rotNeeded;
     flyWheel2 = rotNeeded;
 
-    if (fabs(float(turretAngle.get_position())/100 - robotGoal.angleBetweenHorREL) > 10){
-      if (float(turretAngle.get_position())/100 > robotGoal.angleBetweenHorREL){
-        diff1 = 33;
-        diff2 = -33;
-      }
-      else {
-        diff1 = -33;
-        diff2 = 33;
-      }
-    }
-    else{
-      diff1.brake();
-      diff2.brake();
-    }
   }
   else{
     int intakeSPD;
@@ -86,7 +83,7 @@ double a = -pow(g,2)*.25;
 //means iterative time based turret rotation calculator
 void singSameOldSongTimeTurretTwister(void){
   //define quartic equation terms
-  double c = pow(robot.xVelocity, 2) + pow(robot.yVelocity, 2) - robotGoal.dx * g;
+  double c = pow(robot.xVelocity, 2) + pow(robot.yVelocity, 2) - robotGoal.dz * g;
   double d = -2 * robotGoal.dx * robot.xVelocity - 2 * robotGoal.dy * robot.yVelocity;
   double e = pow(robotGoal.dx, 2) + pow(robotGoal.dy, 2) - pow(robotGoal.dz, 2);
   double D = 1000000000000;
@@ -113,7 +110,7 @@ void singSameOldSongTimeTurretTwister(void){
   double V_disk = P2 / P3;
 
   //outputting calculated values
-  robotGoal.angleBetweenHorABS = Tar_ang /DEG2RAD;
+  robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI;
   goalSpeed = V_disk;
   std::cout << "\nAngle:" << robotGoal.angleBetweenHorABS;
 }

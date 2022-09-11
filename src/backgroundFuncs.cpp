@@ -24,8 +24,8 @@ void updateInfoLoop(void){
 void startLoop(void)
 {
     //Task varUP(updateInfoLoop);
-    homeGoal.xpos = 132;
-    homeGoal.ypos = 132;
+    homeGoal.xpos = 20;
+    homeGoal.ypos = 20;
     homeGoal.zpos = 25;
     
     robot.xpos = 0;
@@ -34,9 +34,6 @@ void startLoop(void)
     robot.xVelocity = 0;
     robot.yVelocity = 0;
 
-    robotGoal.dx = robot.xpos-homeGoal.xpos;
-    robotGoal.dy = robot.ypos-homeGoal.ypos;
-    robotGoal.dz = -(robot.zpos-homeGoal.zpos);
     while (1){
         static bool oneRep = false;
 
@@ -45,15 +42,17 @@ void startLoop(void)
         robot.xVelocity = getNum("\nVX: ");
         robot.yVelocity = getNum("\nVY: ");
 
-        robotGoal.dx = robot.xpos-homeGoal.xpos;
-        robotGoal.dy = robot.ypos-homeGoal.ypos;
+        robotGoal.dx = homeGoal.xpos-robot.xpos;
+        robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = -(robot.zpos-homeGoal.zpos);
 
         singSameOldSongTimeTurretTwister();
+
         if (!oneRep){
             Task turrC(turretControl);
             oneRep = true;
         }
+        delay(20);
         
     }
     
