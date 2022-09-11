@@ -2,6 +2,7 @@
 
 #include "main.h"
 #include "robotConfig.h"
+#include <cmath>
 #define DEG2RAD M_PI/180
 
 position_t robot;
@@ -41,17 +42,25 @@ void odometry(void){
   float b = robot.length/2; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
   static float T =0;
   T = float(millis())/1000 - T;
-
   double P1 = (Arc1 - Arc2);
-  double Delta_heading = P1/a;
-  double Radius_side = (Arc1 + Arc2)*a/(2*P1);
-  double Radius_back = Arc3/Delta_heading - b;
-  double C_theta_side = cos(robot.angle+Delta_heading)-cos(robot.angle);
-  double C_theta_back = cos(robot.angle+Delta_heading-M_PI/2)-cos(robot.angle-M_PI/2);
-  double Delta_x = C_theta_side*Radius_side + C_theta_back * Radius_back;
-  double S_theta_side = sin(robot.angle+Delta_heading)-sin(robot.angle);
-  double S_theta_back = sin(robot.angle+Delta_heading-M_PI/2)-sin(robot.angle-M_PI/2);
-  double Delta_y = S_theta_side*Radius_side + S_theta_back * Radius_back;
+  double Delta_y , Delta_x;
+  double radRotation = -inertial.get_rotation()*M_PI/180;
+  if ( P1 != 0){
+    double Delta_heading = P1/a;
+    double Radius_side = (Arc1 + Arc2)*a/(2*P1);
+    double Radius_back = Arc3/Delta_heading - b;
+    double C_theta_side = cos(radRotation+Delta_heading)-cos(radRotation);
+    double C_theta_back = cos(radRotation+Delta_heading-M_PI/2)-cos(radRotation-M_PI/2);
+    Delta_x = C_theta_side*Radius_side + C_theta_back * Radius_back;
+    double S_theta_side = sin(radRotation+Delta_heading)-sin(radRotation);
+    double S_theta_back = sin(radRotation+Delta_heading-M_PI/2)-sin(radRotation-M_PI/2);
+    Delta_y = S_theta_side*Radius_side + S_theta_back * Radius_back;
+  }
+  else{
+    Delta_x = Arc1 * cos(radRotation) + Arc3* cos(radRotation-M_PI/2);
+    Delta_y = Arc1 * sin(radRotation) + Arc3* sin(radRotation-M_PI/2);
+  }
+
   robot.xpos +=Delta_x;
   robot.ypos +=Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)

@@ -16,14 +16,13 @@ void updateInfoLoop(void){
     //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
     while (1){
         odometry();
-        singSameOldSongTimeTurretTwister();
-        robotGoal.angleBetweenHorREL = (inertial.get_heading() - robotGoal.angleBetweenHorABS);
+        delay(20);
     }  
 }
 
 void startLoop(void)
 {
-    //Task varUP(updateInfoLoop);
+    
     homeGoal.xpos = 20;
     homeGoal.ypos = 20;
     homeGoal.zpos = 25;
@@ -31,27 +30,22 @@ void startLoop(void)
     robot.xpos = 0;
     robot.ypos = 0;
     robot.zpos = 14.4;
+
     robot.xVelocity = 0;
     robot.yVelocity = 0;
 
+    Task turrC(turretControl);
+    Task varUP(updateInfoLoop);
+
     while (1){
-        static bool oneRep = false;
 
-        robot.xpos = getNum("\nRX: ");
-        robot.ypos = getNum("\nRY: ");
-        robot.xVelocity = getNum("\nVX: ");
-        robot.yVelocity = getNum("\nVY: ");
-
-        robotGoal.dx = homeGoal.xpos-robot.xpos;
+        /*robotGoal.dx = homeGoal.xpos-robot.xpos;
         robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = -(robot.zpos-homeGoal.zpos);
 
-        singSameOldSongTimeTurretTwister();
+        singSameOldSongTimeTurretTwister();*/
+        std::cout << "\nX: " << robot.xpos << " Y: " << robot.ypos << " H: " << inertial.get_heading() << " R: " << inertial.get_rotation();
 
-        if (!oneRep){
-            Task turrC(turretControl);
-            oneRep = true;
-        }
         delay(20);
         
     }

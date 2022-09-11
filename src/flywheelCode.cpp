@@ -112,5 +112,5 @@ void singSameOldSongTimeTurretTwister(void){
   //outputting calculated values
   robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI;
   goalSpeed = V_disk;
-  std::cout << "\nAngle:" << robotGoal.angleBetweenHorABS;
+  //std::cout << "\nAngle:" << robotGoal.angleBetweenHorABS;
 }

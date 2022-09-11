@@ -2,9 +2,18 @@
 #include "backgroundFuncs.h"
 #include "devFunctions.h"
 #include "pros/llemu.hpp"
+#include "pros/rtos.h"
 #include "robotConfig.h"
 
 void initialize() {
+	/*while(1){
+		std::cout << "\nLENC:" << leftEncoderFB.get_value() << ", RENC:" << rightEncoderFB.get_value() << ", SENC:" << encoderLR.get_value();
+		delay(30);
+	}*/
+	robotGoal.dx = 10;
+	robotGoal.dy = 10;
+	robotGoal.dz = 10;
+
 	inertial.reset();
 
 	int startTime = millis();
