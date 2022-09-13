@@ -14,7 +14,7 @@ bool runLoop = true;
 
 void updateInfoLoop(void){
     //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
-    while (1){
+    while (runLoop){
         odometry();
         delay(20);
     }  
@@ -37,14 +37,13 @@ void startLoop(void)
     Task turrC(turretControl);
     Task varUP(updateInfoLoop);
 
-    while (1){
-
-        /*robotGoal.dx = homeGoal.xpos-robot.xpos;
+    while (runLoop){
+        robotGoal.dx = homeGoal.xpos-robot.xpos;
         robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = -(robot.zpos-homeGoal.zpos);
 
-        singSameOldSongTimeTurretTwister();*/
-        std::cout << "\nX: " << robot.xpos << " Y: " << robot.ypos << " H: " << inertial.get_heading() << " R: " << inertial.get_rotation();
+        singSameOldSongTimeTurretTwister();
+        std::cout << "\nX: " << robot.xpos << " Y: " << robot.ypos << " RR: " << radRotation;
 
         delay(20);
         

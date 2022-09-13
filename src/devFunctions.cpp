@@ -326,7 +326,6 @@ void devCheck(void){
 			master.clear_line(1);
 			delay(50);
 			master.print(1, 1, "Exiting dev mode");
-			runLoop = true;
 			startTime = millis();
 		}
 }

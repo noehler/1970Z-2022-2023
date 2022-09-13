@@ -20,49 +20,55 @@ double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
         radius = 0;
     }
 
-
-    //transfering from memory location to value at that memory location
-    ADIEncoder encoderVar = *encoderLoc;
-
-    double degreesTraveled = encoderVar.get_value();
+    double degreesTraveled = encoderLoc->get_value();
+    
     if (resetEncoder == true){
-        encoderVar.reset();
+        encoderLoc->reset();
     }
 
-    double distTraveled = degreesTraveled/360 * radius *2*M_PI;
+    double distTraveled = (degreesTraveled/360) * radius * 2 * M_PI;
 
     return distTraveled;
 }
 
+double radRotation = -M_PI/2;
 void odometry(void){
-  double Arc1 = distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
-  double Arc2 = distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positive
+  double Arc1 =distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
+  double Arc2 =distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positive
   double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
-  float a = robot.width; //distance between two tracking wheels
-  float b = robot.length/2; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
-  static float T =0;
-  T = float(millis())/1000 - T;
+  float a = 8; //distance between two tracking wheels
+  float b = 3.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+  static float T = 0;
+  T = float(millis())/1000 - T; // JLO - Is this right?  What units are T in?  usec or sec?
   double P1 = (Arc1 - Arc2);
-  double Delta_y , Delta_x;
-  double radRotation = -inertial.get_rotation()*M_PI/180;
-  if ( P1 != 0){
-    double Delta_heading = P1/a;
-    double Radius_side = (Arc1 + Arc2)*a/(2*P1);
-    double Radius_back = Arc3/Delta_heading - b;
-    double C_theta_side = cos(radRotation+Delta_heading)-cos(radRotation);
-    double C_theta_back = cos(radRotation+Delta_heading-M_PI/2)-cos(radRotation-M_PI/2);
-    Delta_x = C_theta_side*Radius_side + C_theta_back * Radius_back;
-    double S_theta_side = sin(radRotation+Delta_heading)-sin(radRotation);
-    double S_theta_back = sin(radRotation+Delta_heading-M_PI/2)-sin(radRotation-M_PI/2);
-    Delta_y = S_theta_side*Radius_side + S_theta_back * Radius_back;
+  double Delta_y, Delta_x;
+  double rotation = inertial.get_rotation();
+  if (rotation == PROS_ERR_F)
+  {
+    // JLO - handle error and exit, we can't continue
+    return;
   }
-  else{
-    Delta_x = Arc1 * cos(radRotation) + Arc3* cos(radRotation-M_PI/2);
-    Delta_y = Arc1 * sin(radRotation) + Arc3* sin(radRotation-M_PI/2);
+  double radRotation = -((rotation * M_PI) / 180) - (M_PI / 2);
+  double Delta_heading = P1 / a;
+  if ( P1 != 0) {
+    double Radius_side = ((Arc1 + Arc2) * a) / (2 * P1);
+    double Radius_back = (Arc3 / Delta_heading) - b;
+    double C_theta_side = cos(radRotation + Delta_heading) - cos(radRotation);
+    double C_theta_back = cos(radRotation + Delta_heading - (M_PI/2)) - cos(radRotation - (M_PI/2));
+    Delta_x = (C_theta_side * Radius_side) + (C_theta_back * Radius_back);
+    double S_theta_side = sin(radRotation + Delta_heading) - sin(radRotation);
+    double S_theta_back = sin(radRotation + Delta_heading - (M_PI/2)) - sin(radRotation-(M_PI/2));
+    Delta_y = (S_theta_side*Radius_side) + (S_theta_back * Radius_back);
+  }
+  else {
+    Delta_x = Arc1 * cos(radRotation) + (Arc3 * cos(radRotation-(M_PI/2)));
+    Delta_y = Arc1 * sin(radRotation) + (Arc3 * sin(radRotation-(M_PI/2)));
   }
 
-  robot.xpos +=Delta_x;
-  robot.ypos +=Delta_y;
+  //radRotation+=Delta_heading;
+  //std::cout << "\n" << radRotation;
+  robot.xpos += Delta_x;
+  robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
   robot.yVelocity = Delta_y/T; //same as above
 }

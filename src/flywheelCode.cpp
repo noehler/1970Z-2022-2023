@@ -14,16 +14,34 @@ double angularVelocityCalc(void){
   return attackSpeed;
 }
 
+//tV values and what they mean
+//0 is stopped
+//1 is reversed
+//2 is fwd
+int turretValue = 0;
+
 void turretControl(void){
   while(1){
     robotGoal.angleBetweenHorREL = (inertial.get_rotation() - robotGoal.angleBetweenHorABS);
-    double spd = pow(fabs(robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)), 1.0/3)*15;
+    double baseSPD;
+
+    double diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)), 1.0/3)*15;
     if (robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)<0){
-      spd *= -1;
+      diffInSpd *= -1;
+    }
+
+    if (turretValue == 2){
+      baseSPD = 100-fabs(diffInSpd);
+    }
+    else if (turretValue == 1){
+      baseSPD = -100+fabs(diffInSpd);
+    }
+    else{
+      baseSPD = 0;
     }
     //std::cout << "\nSpeed" <<spd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
-    diff1 = spd;
-    diff2 = -spd;
+    diff1 = diffInSpd;
+    diff2 = -diffInSpd;
     delay(20);
   }
   if (autoControl){
@@ -113,4 +131,16 @@ void singSameOldSongTimeTurretTwister(void){
   robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI;
   goalSpeed = V_disk;
   //std::cout << "\nAngle:" << robotGoal.angleBetweenHorABS;
+}
+
+void liftConrol(void){
+  if (master.get_digital(DIGITAL_R1)){
+    turretValue = 2;
+  }
+  else if (master.get_digital(DIGITAL_R1)){
+    turretValue = 1;
+  }
+  else{
+    turretValue = 0;
+  }
 }
