@@ -50,9 +50,15 @@ void odometry(void){
   }
   double radRotation = -((rotation * M_PI) / 180) - (M_PI / 2);
   double Delta_heading = P1 / a;
+  static double pDH = 0;
+  static double pDHM = 0;
   if ( P1 != 0) {
     double Radius_side = ((Arc1 + Arc2) * a) / (2 * P1);
     double Radius_back = (Arc3 / Delta_heading) - b;
+    /*
+        Arc3*a
+        
+    */
     double C_theta_side = cos(radRotation + Delta_heading) - cos(radRotation);
     double C_theta_back = cos(radRotation + Delta_heading - (M_PI/2)) - cos(radRotation - (M_PI/2));
     Delta_x = (C_theta_side * Radius_side) + (C_theta_back * Radius_back);
@@ -66,7 +72,9 @@ void odometry(void){
   }
 
   //radRotation+=Delta_heading;
-  //std::cout << "\n" << radRotation;
+  std::cout << "\nPrevInertialRO: " << pDH - pDHM << ", CalcPrevH: " << Delta_heading;
+  pDHM = pDH;
+  pDH = radRotation;
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
