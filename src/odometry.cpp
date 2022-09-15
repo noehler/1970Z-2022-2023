@@ -42,39 +42,29 @@ void odometry(void){
   T = float(millis())/1000 - T; // JLO - Is this right?  What units are T in?  usec or sec?
   double P1 = (Arc1 - Arc2);
   double Delta_y, Delta_x;
-  double rotation = inertial.get_rotation();
-  if (rotation == PROS_ERR_F)
+  double radRotation = -((inertial.get_rotation() * M_PI) / 180);
+  if (radRotation == PROS_ERR_F)
   {
     // JLO - handle error and exit, we can't continue
     return;
   }
-  double radRotation = -((rotation * M_PI) / 180) - (M_PI / 2);
-  double Delta_heading = P1 / a;
-  static double pDH = 0;
-  static double pDHM = 0;
-  if ( P1 != 0) {
-    double Radius_side = ((Arc1 + Arc2) * a) / (2 * P1);
-    double Radius_back = (Arc3 / Delta_heading) - b;
-    /*
-        Arc3*a
-        
-    */
-    double C_theta_side = cos(radRotation + Delta_heading) - cos(radRotation);
-    double C_theta_back = cos(radRotation + Delta_heading - (M_PI/2)) - cos(radRotation - (M_PI/2));
-    Delta_x = (C_theta_side * Radius_side) + (C_theta_back * Radius_back);
-    double S_theta_side = sin(radRotation + Delta_heading) - sin(radRotation);
-    double S_theta_back = sin(radRotation + Delta_heading - (M_PI/2)) - sin(radRotation-(M_PI/2));
-    Delta_y = (S_theta_side*Radius_side) + (S_theta_back * Radius_back);
+  double Delta_heading = P1 / a; // change of heading
+  if ( P1 != 0) { // if there are change of heading while moving, arc approximation
+    double Radius_side = (Arc1 + Arc2)*a/(2*P1); // radius to either side of the robot
+    double Radius_back = Arc3/Delta_heading - b; // radius to back or forward of the robot
+    // this could be changed to cos(radRotation + Delta_heading-M_PI/2) - cos(radRotation - M_PI/2);
+    // if are using encoder-based angle tracking ( recommanded for less noice)
+    double cos_side = cos(radRotation-M_PI/2) - cos(radRotation - Delta_heading -M_PI/2);
+    double cos_back = cos(radRotation-M_PI) - cos(radRotation - Delta_heading -M_PI);
+    double sin_side = sin(radRotation-M_PI/2) - sin(radRotation - Delta_heading -M_PI/2);
+    double sin_back = sin(radRotation-M_PI) - sin(radRotation - Delta_heading -M_PI);   
+    Delta_x = Radius_side * cos_side - Radius_back * cos_back;
+    Delta_y = Radius_side * sin_side - Radius_back * sin_back;
+  } 
+  else { // if there are no change of heading while moving, triangular approximation
+    Delta_x = Arc1 * cos(radRotation) + (Arc3 * cos(radRotation+(M_PI/2)));
+    Delta_y = Arc1 * sin(radRotation) + (Arc3 * sin(radRotation+(M_PI/2)));
   }
-  else {
-    Delta_x = Arc1 * cos(radRotation) + (Arc3 * cos(radRotation-(M_PI/2)));
-    Delta_y = Arc1 * sin(radRotation) + (Arc3 * sin(radRotation-(M_PI/2)));
-  }
-
-  //radRotation+=Delta_heading;
-  std::cout << "\nPrevInertialRO: " << pDH - pDHM << ", CalcPrevH: " << Delta_heading;
-  pDHM = pDH;
-  pDH = radRotation;
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
