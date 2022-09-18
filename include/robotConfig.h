@@ -3,6 +3,7 @@
 
 #include "api.h"
 #include "flywheelCode.h"
+#include "GUI.h"
 #include "devFunctions.h"
 #include "odometry.h"
 #include "backgroundFuncs.h"

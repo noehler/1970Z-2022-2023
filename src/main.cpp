@@ -1,16 +1,13 @@
 #include "main.h"
-#include "backgroundFuncs.h"
-#include "devFunctions.h"
-#include "odometry.h"
-#include "pros/llemu.hpp"
-#include "pros/rtos.h"
 #include "robotConfig.h"
+#include <cmath>
 
 void initialize() {
 	/*while(1){
 		std::cout << "\nLENC:" << leftEncoderFB.get_value() << ", RENC:" << rightEncoderFB.get_value() << ", SENC:" << encoderLR.get_value();
 		delay(30);
 	}*/
+	guiInit();
 	robotGoal.dx = 10;
 	robotGoal.dy = 10;
 	robotGoal.dz = 10;

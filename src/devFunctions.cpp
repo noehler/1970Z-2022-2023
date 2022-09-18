@@ -301,6 +301,7 @@ void devMode(void){
   master.clear();
   while(devPossible){
     //std::cout << leftEncoderFB.get_value() << "\n";
+    
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){

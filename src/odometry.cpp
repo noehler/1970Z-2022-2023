@@ -40,8 +40,8 @@ void odometry(void){
   Arc2 = getNum("Arc2: ");
   double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
   Arc3 = getNum("Arc3: ");
-  float a = 8; //distance between two tracking wheels
-  float b = 3.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+  double a = 8; //distance between two tracking wheels
+  double b = 3.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
   static float T = 0;
   T = float(millis())/1000 - T; // JLO - Is this right?  What units are T in?  usec or sec?
   double P1 = (Arc1 - Arc2);
@@ -66,22 +66,23 @@ void odometry(void){
 
     // Radius_back could be changed to cos(odoHeading + Delta_heading-M_PI/2) - cos(odoHeading - M_PI/2);
     // if are using encoder-based angle tracking ( recommanded for less noice)
-    double cos_side = cos(odoHeading+ Delta_heading-M_PI/2) - cos(odoHeading -M_PI/2);
-    double cos_back = cos(odoHeading+ Delta_heading-M_PI) - cos(odoHeading -M_PI);
-    double sin_side = sin(odoHeading+ Delta_heading-M_PI/2) - sin(odoHeading -M_PI/2);
-    double sin_back = sin(odoHeading+ Delta_heading-M_PI) - sin(odoHeading  -M_PI);   
+    double cos_side = -sin(odoHeading+ Delta_heading) + sin(odoHeading);
+    double cos_back = -cos(odoHeading+ Delta_heading) + cos(odoHeading);
+    double sin_side = -cos(odoHeading+ Delta_heading) + cos(odoHeading);
+    double sin_back = -sin(odoHeading+ Delta_heading) + sin(odoHeading);   
     std::cout <<"\n cos_side" << cos_side <<", cos_back" << cos_back;
     std::cout <<"\n sin_side" << sin_side <<", sin_back" << sin_back;
 
-    Delta_x = Radius_side * cos_side - Radius_back * cos_back;
+    Delta_x = -Radius_side * cos_side - Radius_back * cos_back;
     Delta_y = Radius_side * sin_side - Radius_back * sin_back;
-    std::cout << "\n DX: " << Delta_x << ", DY: " << Delta_y;
+    
   } 
   else { // if there are no change of heading while moving, triangular approximation
     Delta_x = Arc1 * cos(odoHeading) + (Arc3 * cos(odoHeading+(M_PI/2)));
     Delta_y = Arc1 * sin(odoHeading) + (Arc3 * sin(odoHeading+(M_PI/2)));
   }
   odoHeading += Delta_heading;
+  std::cout << "\n DX: " << Delta_x << ", DY: " << Delta_y;
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
