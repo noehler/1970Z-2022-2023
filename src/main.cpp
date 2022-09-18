@@ -33,6 +33,10 @@ void initialize() {
 			}
 		}
 	}
+	while(1){
+		odometry();
+		delay(20);
+	}
 	delay(50);
 	master.clear();
 	delay(50);
