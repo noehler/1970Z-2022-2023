@@ -21,6 +21,10 @@ class robotGoalRelatives {
 extern robotGoalRelatives robotGoal;
 extern position_t robot;
 extern position_t homeGoal;
+#include <iostream>
+#include "string.h"
+extern char outNames[20][50];
+extern double outVals[20];
 
 extern void odometry(void);
 extern double radRotation;

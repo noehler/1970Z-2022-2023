@@ -30,19 +30,16 @@ static lv_res_t btn_click_action(lv_obj_t * btn)
 
     if(id == 0)
     {
-        //char buffer[100];
-        for (double angle = -1; angle <= 1;angle += 1.0/100){
-            std::cout << "\n(" << angle << " , " << asin(angle) << " )";
-        }
-        //sprintf(buffer, "button was clicked %i milliseconds from start", pros::millis());
-		//lv_label_set_text(myLabel, buffer);
+        char buffer[100];
+        sprintf(buffer, "button was clicked %i milliseconds from start", pros::millis());
+		lv_label_set_text(myLabel, buffer);
     }
 
     return LV_RES_OK;
 }
 
 void guiInit(void){
-    lv_style_copy(&myButtonStyleREL, &lv_style_plain);
+    /*lv_style_copy(&myButtonStyleREL, &lv_style_plain);
     myButtonStyleREL.body.main_color = LV_COLOR_MAKE(150, 0, 0);
     myButtonStyleREL.body.grad_color = LV_COLOR_MAKE(0, 0, 150);
     myButtonStyleREL.body.radius = 0;
@@ -69,5 +66,5 @@ void guiInit(void){
 
     myLabel = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
     lv_label_set_text(myLabel, "Button has not been clicked yet"); //sets label text
-    //lv_obj_align(myLabel, NULL, LV_ALIGN_LEFT_MID, 10, 0); //set the position to center
+    lv_obj_align(myLabel, NULL, LV_ALIGN_IN_LEFT_MID, 10, 30); //set the position to center*/
 }

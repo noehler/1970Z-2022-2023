@@ -30,10 +30,6 @@ void initialize() {
 			}
 		}
 	}
-	while(1){
-		odometry();
-		delay(20);
-	}
 	delay(50);
 	master.clear();
 	delay(50);
@@ -51,16 +47,30 @@ void autonomous() {}
 
 void opcontrol() {
 	runLoop = false;
-	leftEncoderFB.reset();
-	rightEncoderFB.reset();
-	encoderLR.reset();
 	while(1){
-		while(!master.get_digital_new_press(DIGITAL_A)){
-			delay(20);
+		std::cout<<"\nentering turrTest";
+		static int spd = 0;
+		if (master.get_digital(DIGITAL_R1)){
+			spd+=1;
 		}
-		odometry();
-		delay(20);
+		else if (master.get_digital(DIGITAL_R2)){
+			spd-=1;
+		}
+
+		delay(50);
+		master.clear();
+		delay(50);
+		master.print(0, 1, "Goal pct: %d", spd);
+		flyWheel1 = spd;
+		flyWheel2 = spd;
+		shootPiston.set_value(master.get_digital(DIGITAL_A));
+		if (master.get_digital_new_press(DIGITAL_B)){
+			static bool lifting = false;
+			lifting = !lifting;
+			elevatePiston.set_value(lifting);
+		}
 	}
+
 	while(1){
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
 		int LNSpeed = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
@@ -77,6 +87,8 @@ void opcontrol() {
 		liftConrol();
 
 		devCheck();
+
+		delay(20);
 
 	}
 }

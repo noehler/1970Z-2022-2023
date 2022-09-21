@@ -10,8 +10,8 @@ Motor lbD(2, driveGear, true);
 Motor rfD(7, driveGear, false);
 Motor rbD(4, driveGear, false);
 
-Motor flyWheel1(9, E_MOTOR_GEARSET_36, false);
-Motor flyWheel2(10, E_MOTOR_GEARSET_36, true);
+Motor flyWheel1(18, E_MOTOR_GEARSET_36, true);
+Motor flyWheel2(19, E_MOTOR_GEARSET_36, false);
 
 Motor diff1(5, E_MOTOR_GEARSET_06, true);
 Motor diff2(6, E_MOTOR_GEARSET_06, true);
@@ -19,8 +19,8 @@ Imu inertial(11);
 Rotation turretAngle(8);
 
 
-ADIDigitalOut shootPiston({{22,'A'}});
-ADIDigitalOut elevatePiston({{22,'B'}});
+ADIDigitalOut shootPiston({{22,'G'}});
+ADIDigitalOut elevatePiston({{22,'H'}});
 
 ADIUltrasonic leftUltra({{22,'A', 'B'}});
 ADIUltrasonic rightUltra({{22,'B','B'}});

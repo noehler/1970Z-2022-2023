@@ -25,7 +25,7 @@ void turretControl(void){
     robotGoal.angleBetweenHorREL = (inertial.get_rotation() - robotGoal.angleBetweenHorABS);
     double baseSPD;
 
-    double diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)), 1.0/3)*15;
+    double diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)), 1.4/3)*18;
     if (robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)<0){
       diffInSpd *= -1;
     }

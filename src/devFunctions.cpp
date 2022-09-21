@@ -299,9 +299,31 @@ void devMode(void){
   int startTime = millis();
   delay(50);
   master.clear();
+  
+
+  lv_obj_t * myLabel[10];
+  for (int i = 0; i <10; i++){
+    myLabel[i] = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
+    lv_label_set_text(myLabel[i], "No value Assigned yet"); //sets label text
+    lv_obj_align(myLabel[i], NULL, LV_ALIGN_IN_LEFT_MID, 10, i*20-100); //set the position to center
+    //std::cout << "\n" << i << "\n";
+    delay(20);
+  }
+  
+  
   while(devPossible){
     //std::cout << leftEncoderFB.get_value() << "\n";
-    
+    for (int i = 0; i < 20; i++){
+      char buffer[50];
+      sprintf(buffer, (outNames[i]));
+      //sprintf(buffer, ": ");
+      //char arr[sizeof(outVals[i])];
+      //memcpy(arr,&outVals[i],sizeof(outVals[i]));
+      //sprintf(buffer, arr);
+		  lv_label_set_text(myLabel[i], buffer);
+      delay(20);
+    }
+        
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
@@ -309,11 +331,27 @@ void devMode(void){
       Task my_task(startLoop);
       break;
     }
+    delay(20);
 	}
 }
 
 void devCheck(void){
   static int startTime = millis();
+  /*if (master.get_digital(DIGITAL_A)){
+    std::cout << "\nApressed";
+  }
+  
+  if (master.get_digital(DIGITAL_B)){
+    std::cout << "\nBpressed";
+  }
+
+  if (master.get_digital(DIGITAL_X)){
+    std::cout << "\nXpressed";
+  }
+
+  if (master.get_digital(DIGITAL_Y)){
+    std::cout << "\nYpressed";
+  }*/
   
   if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
 		 && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
@@ -321,7 +359,8 @@ void devCheck(void){
 			master.clear_line(1);
 			delay(50);
 			master.print(1, 1, "Entering dev mode");
-			runLoop = false;
+			//runLoop = false;
+      std::cout << "\nDevmode\n";
 			devMode();
 			delay(50);
 			master.clear_line(1);
@@ -330,3 +369,4 @@ void devCheck(void){
 			startTime = millis();
 		}
 }
+
