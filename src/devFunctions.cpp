@@ -12,7 +12,7 @@ double getNum(std::string Output){
 
     bool notValid = false;
     try{
-      realNum = std::stol(tempDist);
+      realNum = std::stod(tempDist);
     }
     catch(std::invalid_argument){
       notValid = true;
@@ -175,125 +175,6 @@ void trackNums(void){
   }
 }
 
-/*
-void numTrain(void){
-  double constants[3];
-  double prevConstants[3][5];
-  constants[0] = 45;
-  constants[1] = 1;
-  constants[2] = 1;
-  while (1){
-    double expectedDist;
-    double expectedHeight = 0;
-    robot.xpos = 0;
-    robot.ypos = 3;
-    robot.zpos = 0;
-    homeGoal.zpos = 0;
-    homeGoal.ypos = 0;
-
-    static double addAmt[3];
-    addAmt[0] = 5;
-    addAmt[1] = 1;
-    addAmt[2] = 1;
-
-    for (int i = 0; i< 3; i++){
-
-      //filling empty lists
-      static double pctErrorPrev[5][3];
-      for (int j = 0; j < 5; j++){
-        pctErrorPrev[j][i] = 10000;
-        prevConstants[i][j] = constants[i];
-      }
-      while (1)
-      {
-        //generating expected values
-        expectedDist = (randMotor()*35);
-        homeGoal.xpos = expectedDist;
-        while (expectedDist < 10){
-          expectedDist = (randMotor()*35);
-          delay(40);
-        }
-
-        angleVertBetween();
-
-        master.clear();
-        delay(50);
-        master.print(0, 0, "Ex Dist: %f", expectedDist);
-        std::cout << "\n" << expectedDist;
-        delay(50);
-
-        //calculating speed for motors to spin at
-        double linear = angularVelocityCalc(0, constants[0], constants[1], constants[2]);
-
-
-        double rad = 2.5/12;
-        double motorSpeed = linear/rad/49;
-
-        std::cout << "\n\nC1:" << constants[0] << "\nC2:" << constants[1] << "\nC3:" << constants[2]<< "\nSpeed:" << linear;
-
-
-        //spinning motors and shooting disk;
-        flyWheel1 = motorSpeed;
-        flyWheel2 = motorSpeed;
-        flyWheel3 = motorSpeed;
-        flyWheel4 = motorSpeed;
-
-        while((fabs(flyWheel1.get_actual_velocity()) < abs(flyWheel1.get_target_velocity()) *.9)){
-					//std::cout << "\n" <<fabs(flyWheel1.get_actual_velocity()) << " : " << abs(flyWheel1.get_target_velocity())*.9;
-					delay(40);
-				}
-				std::cout << "\n\nFire!\n\n";
-				while(!shootButton.get_new_press() && !master.get_digital(E_CONTROLLER_DIGITAL_A) ){
-					//std::cout << "\n" <<fabs(flyWheel1.get_actual_velocity()) << " : " << abs(flyWheel1.get_target_velocity())*.9;
-					delay(40);
-				}
-
-
-        //getting info from user;
-        std::string tempDist;
-        double realNum;
-        while (1){
-          std::cout << "\nDist: ";
-          std::cin >> tempDist;
-
-          bool notValid = false;
-          try{
-            realNum = std::stol(tempDist);
-          }
-          catch(std::invalid_argument){
-            notValid = true;
-          }
-          if (!notValid){
-            break;
-          }
-          else{
-            std::cout << "\n\n Please input valid number";
-          }
-        }
-
-        //calculating new value
-        double pctError = fabs(realNum-expectedDist)/expectedDist;
-        if (pctError < pctErrorPrev[0][i]){
-          for (int j = 4; j > 0; j--){
-            pctErrorPrev[j][i] = pctErrorPrev[j-1][i];
-            prevConstants[i][j] = pctErrorPrev[i][j-1];
-          }
-          pctErrorPrev[0][i] = pctError;
-          prevConstants[i][0] = constants[i];
-        }
-        else
-        {
-          addAmt[i] = addAmt[i/2];
-          constants[i] = prevConstants[i][0];
-
-        }
-        constants[i] += addAmt[i];
-
-      }
-    }
-  }
-}*/
-
 bool devPossible = true;
 void devMode(void){
   int startTime = millis();
@@ -301,25 +182,26 @@ void devMode(void){
   master.clear();
   
 
-  lv_obj_t * myLabel[10];
-  for (int i = 0; i <10; i++){
+  lv_obj_t * myLabel[20];
+  for (int i = 0; i <20; i++){
     myLabel[i] = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
     lv_label_set_text(myLabel[i], "No value Assigned yet"); //sets label text
-    lv_obj_align(myLabel[i], NULL, LV_ALIGN_IN_LEFT_MID, 10, i*20-100); //set the position to center
+    if(i <=10){
+      lv_obj_align(myLabel[i], NULL, LV_ALIGN_IN_LEFT_MID, 10, i*20-100); 
+    }
+    else{
+      lv_obj_align(myLabel[i], NULL, LV_ALIGN_IN_LEFT_MID, 280, (i-10)*20-100);
+    }
+    
     //std::cout << "\n" << i << "\n";
     delay(20);
   }
   
   
   while(devPossible){
-    //std::cout << leftEncoderFB.get_value() << "\n";
     for (int i = 0; i < 20; i++){
       char buffer[50];
-      sprintf(buffer, (outNames[i]));
-      //sprintf(buffer, ": ");
-      //char arr[sizeof(outVals[i])];
-      //memcpy(arr,&outVals[i],sizeof(outVals[i]));
-      //sprintf(buffer, arr);
+      sprintf(buffer, "%s : %.3f", outNames[i], outVals[i]);
 		  lv_label_set_text(myLabel[i], buffer);
       delay(20);
     }
@@ -337,21 +219,6 @@ void devMode(void){
 
 void devCheck(void){
   static int startTime = millis();
-  /*if (master.get_digital(DIGITAL_A)){
-    std::cout << "\nApressed";
-  }
-  
-  if (master.get_digital(DIGITAL_B)){
-    std::cout << "\nBpressed";
-  }
-
-  if (master.get_digital(DIGITAL_X)){
-    std::cout << "\nXpressed";
-  }
-
-  if (master.get_digital(DIGITAL_Y)){
-    std::cout << "\nYpressed";
-  }*/
   
   if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
 		 && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){

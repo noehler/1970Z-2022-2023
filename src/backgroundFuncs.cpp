@@ -43,7 +43,7 @@ void startLoop(void)
         robotGoal.dz = -(robot.zpos-homeGoal.zpos);
 
         singSameOldSongTimeTurretTwister();
-        std::cout << "\nX: " << robot.xpos << " Y: " << robot.ypos << " RR: " << radRotation;
+        //std::cout << "\nX: " << robot.xpos << " Y: " << robot.ypos << " RR: " << radRotation;
 
         delay(20);
         

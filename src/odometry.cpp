@@ -36,23 +36,27 @@ double radRotation = -M_PI/2;
 
 double outVals[20];
 char outNames[20][50];
-//memcpy(&outNames[20], 0,1)
+//sprintf(&outNames[20], 0,1)
 
 void odometry(void){
   double Arc1 =distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
+  //Arc1 = getNum("Arc1: ");
   double Arc2 =distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positive
+  //Arc2 = getNum("Arc2: ");
   double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
+  //Arc3 = getNum("Arc3: ");
 
   int i = 0;
   //checkingVals
   outVals[i] = Arc1;
-  memcpy(outNames[i], "Arc1",sizeof("Arc1"));
+  sprintf(outNames[i], "%s", "Arc1");
   i++;
+
   outVals[i] = Arc2;
-  memcpy(outNames[i], "Arc2",sizeof("Arc2"));
+  sprintf(outNames[i], "%s", "Arc2");
   i++;
   outVals[i] = Arc3;
-  memcpy(outNames[i], "Arc3",sizeof("Arc3"));
+  sprintf(outNames[i], "%s", "Arc3");
   i++;
 
   double a = 8; //distance between two tracking wheels
@@ -62,16 +66,17 @@ void odometry(void){
   double P1 = (Arc1 - Arc2);
   double Delta_y, Delta_x;
   double radRotation = -((inertial.get_rotation() * M_PI) / 180); 
+  //radRotation = getNum("Angle: ");
 
   //checkingVals
   outVals[i] = P1;
-  memcpy(outNames[i], "P1",sizeof("P1"));
+  sprintf(outNames[i], "%s","P1");
   i++;
   outVals[i] = radRotation;
-  memcpy(outNames[i], "Angle",sizeof("Angle"));
+  sprintf(outNames[i], "%s","Angle");
   i++;
   outVals[i] = T;
-  memcpy(outNames[i], "Time",sizeof("Time"));
+  sprintf(outNames[i], "%s","Time");
   i++;
 
   if (radRotation == PROS_ERR_F)
@@ -90,7 +95,7 @@ void odometry(void){
   double Delta_heading = P1 / a; // change of heading
 
   outVals[i] = Delta_heading;
-  memcpy(outNames[i], "Delta Heading",sizeof("Delta Heading"));
+  sprintf(outNames[i], "%s","Delta Heading");
   i++;
 
   if ( P1 != 0) { // if there are change of heading while moving, arc approximation
@@ -98,10 +103,10 @@ void odometry(void){
     double Radius_back = Arc3/Delta_heading - b; // radius to back or forward of the robot
 
     outVals[i] = Radius_side;
-    memcpy(outNames[i], "Side Radius",sizeof("Side Radius"));
+    sprintf(outNames[i], "%s","Side Radius");
     i++;
     outVals[i] = Radius_back;
-    memcpy(outNames[i], "Back Radius",sizeof("Back Radius"));
+    sprintf(outNames[i], "%s","Back Radius");
     i++;
 
     // Radius_back could be changed to cos(odoHeading + Delta_heading-M_PI/2) - cos(odoHeading - M_PI/2);
@@ -113,26 +118,26 @@ void odometry(void){
 
     //outPutting vals
     outVals[i] = cos_side;
-    memcpy(outNames[i], "cos side",sizeof("cos side"));
+    sprintf(outNames[i], "%s","cos side");
     i++;
     outVals[i] = cos_back;
-    memcpy(outNames[i], "cos back",sizeof("cos back"));
+    sprintf(outNames[i], "%s","cos back");
     i++;
     outVals[i] = sin_side;
-    memcpy(outNames[i], "sin side",sizeof("sin side"));
+    sprintf(outNames[i], "%s","sin side");
     i++;
     outVals[i] = sin_back;
-    memcpy(outNames[i], "sin back",sizeof("sin back"));
+    sprintf(outNames[i], "%s","sin back");
     i++;
 
     Delta_x = -Radius_side * cos_side - Radius_back * cos_back;
     Delta_y = Radius_side * sin_side - Radius_back * sin_back;
 
     outVals[i] = Delta_x;
-    memcpy(outNames[i], "deltaX",sizeof("deltaX"));
+    sprintf(outNames[i], "%s","deltaX");
     i++;
     outVals[i] = Delta_y;
-    memcpy(outNames[i], "deltaY",sizeof("deltaY"));
+    sprintf(outNames[i], "%s","deltaY");
     i++;
     
   } 
@@ -147,4 +152,21 @@ void odometry(void){
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
   robot.yVelocity = Delta_y/T; //same as above
+
+  outVals[i] = robot.xpos;
+  sprintf(outNames[i], "%s","xPos");
+  i++;
+  outVals[i] = robot.ypos;
+  sprintf(outNames[i], "%s","yPos");
+  i++;
+  outVals[i] = robot.xVelocity;
+  sprintf(outNames[i], "%s","xVel");
+  i++;
+  outVals[i] = robot.yVelocity;
+  sprintf(outNames[i], "%s","yVel");
+  i++;
+  while(i < 20){
+    sprintf(outNames[i], "%s","Not Set");
+    i++;
+  }
 }

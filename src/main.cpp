@@ -35,8 +35,7 @@ void initialize() {
 	delay(50);
 	master.print(1,1,"Calibration Success.");
 	std::cout << "\nDone Calibrating!\n\n\n";
-	//Task sLoop(startLoop);
-	
+	Task sLoop(startLoop);
 }
 
 void disabled() {}

@@ -12,6 +12,7 @@ extern void calcRadius(void);
 
 extern void trackNums(void);
 extern void devCheck(void);
+extern void devMode(void);
 
 
 #endif
