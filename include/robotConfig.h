@@ -36,6 +36,10 @@ extern ADIEncoder encoderLR;
 extern Rotation turretAngle;
 
 
+extern ADIAnalogIn upLoaded;
+extern ADIAnalogIn deckLoaded;
+extern ADIAnalogIn holeLoaded;
+
 extern Imu inertial;
 
 #endif

@@ -42,6 +42,17 @@ void startLoop(void)
         robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = -(robot.zpos-homeGoal.zpos);
 
+        static int spd = 0;
+		if (master.get_digital(DIGITAL_L1)){
+			spd+=1;
+		}
+		else if (master.get_digital(DIGITAL_L2)){
+			spd-=1;
+		}
+
+		flyWheel1 = spd;
+		flyWheel2 = spd;
+
         singSameOldSongTimeTurretTwister();
         //std::cout << "\nX: " << robot.xpos << " Y: " << robot.ypos << " RR: " << radRotation;
 

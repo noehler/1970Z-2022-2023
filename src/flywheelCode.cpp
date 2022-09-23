@@ -1,12 +1,13 @@
 #include "main.h"
 #include "odometry.h"
+#include "pros/optical.h"
+#include "pros/rtos.h"
 #include "robotConfig.h"
 #define DEG2RAD M_PI/180
 
 double goalSpeed = 0;
 float wheelRad = 2.5;
 float gearRatio = 1;
-bool autoControl = true;
 
 double angularVelocityCalc(void){
   double attackSpeed = goalSpeed/wheelRad/DEG2RAD *gearRatio;
@@ -23,7 +24,7 @@ int turretValue = 0;
 void turretControl(void){
   while(1){
     robotGoal.angleBetweenHorREL = (inertial.get_rotation() - robotGoal.angleBetweenHorABS);
-    double baseSPD;
+    int baseSPD;
 
     double diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)), 1.4/3)*18;
     if (robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)<0){
@@ -40,56 +41,9 @@ void turretControl(void){
       baseSPD = 0;
     }
     //std::cout << "\nSpeed" <<spd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
-    diff1 = diffInSpd;
-    diff2 = -diffInSpd;
+    diff1 = diffInSpd+baseSPD;
+    diff2 = -diffInSpd + baseSPD;
     delay(20);
-  }
-  if (autoControl){
-    double topSpeed = 600 *gearRatio;
-    double rotNeeded = angularVelocityCalc()/topSpeed;
-
-    flyWheel1 = rotNeeded;
-    flyWheel2 = rotNeeded;
-
-  }
-  else{
-    int intakeSPD;
-		if (master.get_digital(DIGITAL_R2)){
-			intakeSPD = -127;
-		}
-		else if (master.get_digital(DIGITAL_R1)){
-			intakeSPD = 127;
-		}
-		else{
-			intakeSPD = 0;
-		}
-
-		int turrSPD;
-		if (master.get_digital(DIGITAL_A)){
-			turrSPD = 50;
-		}
-		else if (master.get_digital(DIGITAL_B)){
-			turrSPD = -50;
-		}
-		else{
-			turrSPD = 0;
-		}
-
-		int d1SPD = intakeSPD + turrSPD;
-		int d2SPD = intakeSPD - turrSPD;
-
-		if (d1SPD > 127 || d2SPD > 127){
-			d1SPD -= abs(turrSPD);
-			d2SPD -= abs(turrSPD);
-		}
-		else if (d1SPD < -127 || d2SPD < -127){
-			d1SPD += abs(turrSPD);
-			d2SPD += abs(turrSPD);
-		}
-
-
-		diff1 = d1SPD;
-		diff2 = d2SPD;
   }
   
 }
@@ -134,13 +88,34 @@ void singSameOldSongTimeTurretTwister(void){
 }
 
 void liftConrol(void){
+  static int elevateTime = 0;
+  static bool elevatePist = true;
+  static bool shootPist = true;
+
+  shootPist = !master.get_digital(DIGITAL_A);
+  elevatePist = master.get_digital(DIGITAL_B);
+
+  /*if (deckLoaded.get_value() <1900 && upLoaded.get_value() > 1900 && shootPist == true){
+    elevateTime = millis();
+    elevatePist = true;
+  }
+  std::cout << "\n UP: " << upLoaded.get_value() << ", Deck: " << deckLoaded.get_value();
+
+  if (millis() - elevateTime > 300){
+    elevatePist = false;
+  }*/
+  
+  shootPiston.set_value(shootPist);
+  elevatePiston.set_value(elevatePist);
+
   if (master.get_digital(DIGITAL_R1)){
     turretValue = 2;
   }
-  else if (master.get_digital(DIGITAL_R1)){
+  else if (master.get_digital(DIGITAL_R2)){
     turretValue = 1;
   }
   else{
     turretValue = 0;
   }
+  
 }

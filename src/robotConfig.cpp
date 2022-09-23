@@ -1,4 +1,5 @@
 #include "main.h"
+#include "pros/adi.hpp"
 
 using namespace pros;
 
@@ -21,6 +22,10 @@ Rotation turretAngle(8);
 
 ADIDigitalOut shootPiston({{22,'G'}});
 ADIDigitalOut elevatePiston({{22,'H'}});
+
+ADIAnalogIn upLoaded({22,'F'});
+ADIAnalogIn deckLoaded({20,'H'});
+ADIAnalogIn holeLoaded({22,'E'});
 
 ADIUltrasonic leftUltra({{22,'A', 'B'}});
 ADIUltrasonic rightUltra({{22,'B','B'}});

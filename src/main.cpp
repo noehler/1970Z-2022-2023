@@ -45,8 +45,7 @@ void competition_initialize() {}
 void autonomous() {}
 
 void opcontrol() {
-	runLoop = false;
-	while(1){
+	/*while(1){
 		std::cout<<"\nentering turrTest";
 		static int spd = 0;
 		if (master.get_digital(DIGITAL_R1)){
@@ -68,7 +67,7 @@ void opcontrol() {
 			lifting = !lifting;
 			elevatePiston.set_value(lifting);
 		}
-	}
+	}*/
 
 	while(1){
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
@@ -83,6 +82,7 @@ void opcontrol() {
 		rfD.move(-RNSpeed - MSpeed);
 		rbD.move(-RNSpeed + MSpeed);
 
+		
 		liftConrol();
 
 		devCheck();

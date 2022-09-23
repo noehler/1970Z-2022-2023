@@ -48,7 +48,7 @@ void odometry(void){
 
   int i = 0;
   //checkingVals
-  outVals[i] = Arc1;
+  /*outVals[i] = Arc1;
   sprintf(outNames[i], "%s", "Arc1");
   i++;
 
@@ -57,7 +57,7 @@ void odometry(void){
   i++;
   outVals[i] = Arc3;
   sprintf(outNames[i], "%s", "Arc3");
-  i++;
+  i++;*/
 
   double a = 8; //distance between two tracking wheels
   double b = 3.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
@@ -69,7 +69,7 @@ void odometry(void){
   //radRotation = getNum("Angle: ");
 
   //checkingVals
-  outVals[i] = P1;
+  /*outVals[i] = P1;
   sprintf(outNames[i], "%s","P1");
   i++;
   outVals[i] = radRotation;
@@ -77,7 +77,7 @@ void odometry(void){
   i++;
   outVals[i] = T;
   sprintf(outNames[i], "%s","Time");
-  i++;
+  i++;*/
 
   if (radRotation == PROS_ERR_F)
   {
@@ -94,20 +94,20 @@ void odometry(void){
 
   double Delta_heading = P1 / a; // change of heading
 
-  outVals[i] = Delta_heading;
+  /*outVals[i] = Delta_heading;
   sprintf(outNames[i], "%s","Delta Heading");
-  i++;
+  i++;*/
 
   if ( P1 != 0) { // if there are change of heading while moving, arc approximation
     double Radius_side = (Arc1 + Arc2)*a/(2*P1); // radius to either side of the robot
     double Radius_back = Arc3/Delta_heading - b; // radius to back or forward of the robot
 
-    outVals[i] = Radius_side;
+    /*outVals[i] = Radius_side;
     sprintf(outNames[i], "%s","Side Radius");
     i++;
     outVals[i] = Radius_back;
     sprintf(outNames[i], "%s","Back Radius");
-    i++;
+    i++;*/
 
     // Radius_back could be changed to cos(odoHeading + Delta_heading-M_PI/2) - cos(odoHeading - M_PI/2);
     // if are using encoder-based angle tracking ( recommanded for less noice)
@@ -117,7 +117,7 @@ void odometry(void){
     double sin_back = -sin(odoHeading+ Delta_heading) + sin(odoHeading);   
 
     //outPutting vals
-    outVals[i] = cos_side;
+    /*outVals[i] = cos_side;
     sprintf(outNames[i], "%s","cos side");
     i++;
     outVals[i] = cos_back;
@@ -128,31 +128,32 @@ void odometry(void){
     i++;
     outVals[i] = sin_back;
     sprintf(outNames[i], "%s","sin back");
-    i++;
+    i++;*/
 
     Delta_x = -Radius_side * cos_side - Radius_back * cos_back;
     Delta_y = Radius_side * sin_side - Radius_back * sin_back;
 
-    outVals[i] = Delta_x;
+    /*outVals[i] = Delta_x;
     sprintf(outNames[i], "%s","deltaX");
     i++;
     outVals[i] = Delta_y;
     sprintf(outNames[i], "%s","deltaY");
-    i++;
+    i++;*/
     
   } 
   else { // if there are no change of heading while moving, triangular approximation
-    std::cout << "\nNo diff in a1 and a2";
+    //std::cout << "\nNo diff in a1 and a2";
     Delta_x = Arc1 * cos(odoHeading) + (Arc3 * cos(odoHeading+(M_PI/2)));
     Delta_y = Arc1 * sin(odoHeading) + (Arc3 * sin(odoHeading+(M_PI/2)));
   }
   odoHeading += Delta_heading;
-  std::cout << "\n DX: " << Delta_x << ", DY: " << Delta_y;
+  //std::cout << "\n DX: " << Delta_x << ", DY: " << Delta_y;
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
   robot.yVelocity = Delta_y/T; //same as above
 
+  /*i = 16;
   outVals[i] = robot.xpos;
   sprintf(outNames[i], "%s","xPos");
   i++;
@@ -164,9 +165,6 @@ void odometry(void){
   i++;
   outVals[i] = robot.yVelocity;
   sprintf(outNames[i], "%s","yVel");
-  i++;
-  while(i < 20){
-    sprintf(outNames[i], "%s","Not Set");
-    i++;
-  }
+  i++;*/
+  
 }
