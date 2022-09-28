@@ -7,11 +7,11 @@
 
 double goalSpeed = 0;
 float wheelRad = 2.5;
-float gearRatio = 1;
+float gearRatio = 9;
 
 double angularVelocityCalc(void){
-  double attackSpeed = goalSpeed/wheelRad/DEG2RAD *gearRatio;
-  std::cout << "W: " << attackSpeed << "Input: " << goalSpeed;
+  double attackSpeed = goalSpeed/wheelRad*180/M_PI *gearRatio/600;
+  //std::cout << "\nW: " << attackSpeed << ", Input: " << goalSpeed;
   return attackSpeed;
 }
 
@@ -43,6 +43,8 @@ void turretControl(void){
     //std::cout << "\nSpeed" <<spd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
     diff1 = diffInSpd+baseSPD;
     diff2 = -diffInSpd + baseSPD;
+    flyWheel1 = angularVelocityCalc();
+    flyWheel2 = angularVelocityCalc();
     delay(20);
   }
   
@@ -89,17 +91,18 @@ void singSameOldSongTimeTurretTwister(void){
 
 void liftConrol(void){
   static int elevateTime = 0;
+  //static int shootTime = 0;
   static bool elevatePist = true;
   static bool shootPist = true;
 
-  shootPist = !master.get_digital(DIGITAL_A);
+  shootPist = master.get_digital(DIGITAL_A);
   elevatePist = master.get_digital(DIGITAL_B);
 
-  /*if (deckLoaded.get_value() <1900 && upLoaded.get_value() > 1900 && shootPist == true){
+  /*if (deckLoaded.get_value() <1900 && upLoaded.get_value() > 1900 && shootPist == false && millis() - elevateTime > 400 ){
     elevateTime = millis();
     elevatePist = true;
   }
-  std::cout << "\n UP: " << upLoaded.get_value() << ", Deck: " << deckLoaded.get_value();
+  //std::cout << "\n UP: " << upLoaded.get_value() << ", Deck: " << deckLoaded.get_value();
 
   if (millis() - elevateTime > 300){
     elevatePist = false;

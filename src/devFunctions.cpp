@@ -205,7 +205,11 @@ void devMode(void){
 		  lv_label_set_text(myLabel[i], buffer);
       delay(20);
     }
-        
+    if (master.get_digital(DIGITAL_UP)){
+      robot.xpos = 0;
+      robot.ypos = 0;
+      robot.zpos = 0;
+    }
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){

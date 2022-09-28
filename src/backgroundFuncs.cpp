@@ -23,18 +23,18 @@ void updateInfoLoop(void){
 void startLoop(void)
 {
     
-    homeGoal.xpos = 20;
-    homeGoal.ypos = 20;
+    homeGoal.xpos = 120;
+    homeGoal.ypos = 120;
     homeGoal.zpos = 25;
     
-    robot.xpos = 0;
-    robot.ypos = 0;
-    robot.zpos = 14.4;
+    robot.xpos = 24;
+    robot.ypos = 24;
+    robot.zpos = 12.2;
 
     robot.xVelocity = 0;
     robot.yVelocity = 0;
 
-    Task turrC(turretControl);
+    //Task turrC(turretControl);
     Task varUP(updateInfoLoop);
 
     while (runLoop){
@@ -42,7 +42,7 @@ void startLoop(void)
         robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = -(robot.zpos-homeGoal.zpos);
 
-        static int spd = 0;
+        /*static int spd = 0;
 		if (master.get_digital(DIGITAL_L1)){
 			spd+=1;
 		}
@@ -51,9 +51,9 @@ void startLoop(void)
 		}
 
 		flyWheel1 = spd;
-		flyWheel2 = spd;
+		flyWheel2 = spd;*/
 
-        singSameOldSongTimeTurretTwister();
+        //singSameOldSongTimeTurretTwister();
         //std::cout << "\nX: " << robot.xpos << " Y: " << robot.ypos << " RR: " << radRotation;
 
         delay(20);

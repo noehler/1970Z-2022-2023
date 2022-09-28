@@ -40,15 +40,15 @@ char outNames[20][50];
 
 void odometry(void){
   double Arc1 =distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
-  //Arc1 = getNum("Arc1: ");
+  Arc1 = getNum("Arc1: ");
   double Arc2 =distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positive
-  //Arc2 = getNum("Arc2: ");
+  Arc2 = getNum("Arc2: ");
   double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
-  //Arc3 = getNum("Arc3: ");
+  Arc3 = getNum("Arc3: ");
 
   int i = 0;
   //checkingVals
-  /*outVals[i] = Arc1;
+  outVals[i] = Arc1;
   sprintf(outNames[i], "%s", "Arc1");
   i++;
 
@@ -57,7 +57,7 @@ void odometry(void){
   i++;
   outVals[i] = Arc3;
   sprintf(outNames[i], "%s", "Arc3");
-  i++;*/
+  i++;
 
   double a = 8; //distance between two tracking wheels
   double b = 3.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
@@ -66,10 +66,10 @@ void odometry(void){
   double P1 = (Arc1 - Arc2);
   double Delta_y, Delta_x;
   double radRotation = -((inertial.get_rotation() * M_PI) / 180); 
-  //radRotation = getNum("Angle: ");
+  radRotation = getNum("Angle: ");
 
   //checkingVals
-  /*outVals[i] = P1;
+  outVals[i] = P1;
   sprintf(outNames[i], "%s","P1");
   i++;
   outVals[i] = radRotation;
@@ -77,7 +77,7 @@ void odometry(void){
   i++;
   outVals[i] = T;
   sprintf(outNames[i], "%s","Time");
-  i++;*/
+  i++;
 
   if (radRotation == PROS_ERR_F)
   {
@@ -86,28 +86,28 @@ void odometry(void){
   }
 
   // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-  if (fabs(odoHeading - radRotation) >= 5){
+  /*if (fabs(odoHeading - radRotation) >= 5){
     odoHeading = radRotation;
     std::cout << "\n angleDiff too big";
-  }
+  }*/
   //odoHeading = getNum("Heading: ");
 
   double Delta_heading = P1 / a; // change of heading
 
-  /*outVals[i] = Delta_heading;
+  outVals[i] = Delta_heading;
   sprintf(outNames[i], "%s","Delta Heading");
-  i++;*/
+  i++;
 
   if ( P1 != 0) { // if there are change of heading while moving, arc approximation
     double Radius_side = (Arc1 + Arc2)*a/(2*P1); // radius to either side of the robot
     double Radius_back = Arc3/Delta_heading - b; // radius to back or forward of the robot
 
-    /*outVals[i] = Radius_side;
+    outVals[i] = Radius_side;
     sprintf(outNames[i], "%s","Side Radius");
     i++;
     outVals[i] = Radius_back;
     sprintf(outNames[i], "%s","Back Radius");
-    i++;*/
+    i++;
 
     // Radius_back could be changed to cos(odoHeading + Delta_heading-M_PI/2) - cos(odoHeading - M_PI/2);
     // if are using encoder-based angle tracking ( recommanded for less noice)
@@ -117,7 +117,7 @@ void odometry(void){
     double sin_back = -sin(odoHeading+ Delta_heading) + sin(odoHeading);   
 
     //outPutting vals
-    /*outVals[i] = cos_side;
+    outVals[i] = cos_side;
     sprintf(outNames[i], "%s","cos side");
     i++;
     outVals[i] = cos_back;
@@ -128,17 +128,17 @@ void odometry(void){
     i++;
     outVals[i] = sin_back;
     sprintf(outNames[i], "%s","sin back");
-    i++;*/
+    i++;
 
     Delta_x = -Radius_side * cos_side - Radius_back * cos_back;
     Delta_y = Radius_side * sin_side - Radius_back * sin_back;
 
-    /*outVals[i] = Delta_x;
+    outVals[i] = Delta_x;
     sprintf(outNames[i], "%s","deltaX");
     i++;
     outVals[i] = Delta_y;
     sprintf(outNames[i], "%s","deltaY");
-    i++;*/
+    i++;
     
   } 
   else { // if there are no change of heading while moving, triangular approximation
@@ -153,7 +153,7 @@ void odometry(void){
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
   robot.yVelocity = Delta_y/T; //same as above
 
-  /*i = 16;
+  i = 16;
   outVals[i] = robot.xpos;
   sprintf(outNames[i], "%s","xPos");
   i++;
@@ -165,6 +165,75 @@ void odometry(void){
   i++;
   outVals[i] = robot.yVelocity;
   sprintf(outNames[i], "%s","yVel");
-  i++;*/
+  i++;
+  
+}
+
+void moveToPoint(float xPos, double yPos, double angleTo = 400){
+  //checking if we care about final angle, since default is 400 degrees
+  bool careAboutAngle = true;
+  if (angleTo == 400){
+    careAboutAngle = false;
+  }
+
+  //converting to radians for easier use
+  angleTo = M_PI*180;
+
+  //setting up values to check if new line needs to be made. 
+  static double startTime = double(millis())/1000;
+  static double checkChanged[3];
+  bool needNewCalcs = false;
+
+  //checking if we are too far away from the destined path and need to recalculate
+  //for linevals 0 is slope, 1 is x, 2 is y
+  static double linevals[3] = {0,0,0};
+  double pointToLineSlope = -1.0/linevals[0];
+
+  //0 is x, 1 is y
+  double lineCoors[2];
+  lineCoors[0] = (-linevals[0]*(-linevals[0]*linevals[1] + linevals[2] + linevals[0] * robot.ypos + robot.xpos)) / 
+                                    (linevals[0] * linevals[0] +1);
+  lineCoors[1] = linevals[0]*(lineCoors[0] - linevals[1]) + linevals[2];
+
+  double distAwayFromLine = sqrt(pow(linevals[1] - robot.xpos, 2) + pow(linevals[2] - robot.ypos, 2));
+  double distAwayFromTarget = sqrt(pow(linevals[1] - robot.xpos, 2) + pow(linevals[2] - robot.ypos, 2));
+  double ratioAway = distAwayFromTarget /distAwayFromLine;
+
+  if (checkChanged[0] != xPos || checkChanged[1] != yPos ||checkChanged[2] != angleTo || ratioAway < 6 || 
+      (startTime >.5 && sqrt(robot.xVelocity* robot.xVelocity + robot.yVelocity * robot.yVelocity)/startTime <3)){
+    checkChanged[0] = xPos;
+    checkChanged[1] = yPos;
+    checkChanged[2] = angleTo;
+    needNewCalcs = true;
+  }
+
+
+  //setting speeds to calculate path for.
+  //inches per second
+  double topDriveSpeed = 10;
+  double topStrafeSpeed = 5;
+  //radians per second
+  double topRotSpeed = M_PI/2;
+
+  linevals[0] = atan((yPos - robot.ypos) / (xPos - robot.xpos));
+  linevals[1] = xPos;
+  linevals[2] = yPos;
+  double angleBetDriveAFinal = angleTo - linevals[0];
+
+  double distToStartTurn = (angleBetDriveAFinal/topRotSpeed)*topDriveSpeed;
+  if (!careAboutAngle){
+    distToStartTurn = 0;
+  }
+
+  double xToStartTurn = cos(angleTo)*distToStartTurn;
+
+  double angleBetween;
+  if (fabs(robot.xpos-xPos) < xToStartTurn) {
+    angleBetween = angleTo - inertial.get_heading()*M_PI/180;
+  }
+  else{
+    angleBetween = linevals[0] - inertial.get_heading()*M_PI/180;
+  }
+
   
 }
