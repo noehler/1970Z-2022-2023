@@ -30,6 +30,25 @@ void initialize() {
 			}
 		}
 	}
+
+	inertialTurret.reset();
+
+	startTime = millis();
+	while (inertialTurret.is_calibrating() ){
+		std::cout << "\nTurr Calibrating!";
+		delay(40);
+		if (millis() - startTime > 3000){
+			delay(50);
+			master.clear();
+			delay(50);
+			master.print(2,1,"Turr Calibration Failing.");
+			delay(50);
+			master.print(1,1,"B to ignore.");
+			if (master.get_digital(DIGITAL_B)){
+				break;
+			}
+		}
+	}
 	delay(50);
 	master.clear();
 	delay(50);

@@ -241,3 +241,13 @@ void devCheck(void){
 		}
 }
 
+void alert(std::string message){
+  delay(50);
+  master.clear();
+  delay(50);
+  master.print(1,1, "%s", alert);
+  while (master.get_digital_new_press(DIGITAL_B)){
+    delay(300);
+    master.rumble("..");
+  }
+}

@@ -26,7 +26,27 @@ void turretControl(void){
     robotGoal.angleBetweenHorREL = (inertial.get_rotation() - robotGoal.angleBetweenHorABS);
     int baseSPD;
 
-    double diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)), 1.4/3)*18;
+    static bool inertWorks = false;
+    double turrAngle;
+    double diffInSpd;
+
+    if (inertWorks){
+      turrAngle = inertialTurret.get_rotation();
+      diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL+turrAngle), 1.4/3)*18;
+    }
+    else{
+      turrAngle = float(turretAngle.get_position())/100/259*12;
+      diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-turrAngle), 1.4/3)*18;
+    }
+    if (radRotation == PROS_ERR_F)
+    {
+      turrAngle = float(turretAngle.get_position())/100/259*12;
+      diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-turrAngle), 1.4/3)*18;
+      alert("Turr Inert Alert");
+      inertWorks = false;
+    }
+
+
     if (robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)<0){
       diffInSpd *= -1;
     }
@@ -40,7 +60,7 @@ void turretControl(void){
     else{
       baseSPD = 0;
     }
-    //std::cout << "\nSpeed" <<spd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
+    //std::cout << "\nSpeed" << diffInSpd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
     diff1 = diffInSpd+baseSPD;
     diff2 = -diffInSpd + baseSPD;
     flyWheel1 = angularVelocityCalc();

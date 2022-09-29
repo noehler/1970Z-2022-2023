@@ -34,7 +34,7 @@ void startLoop(void)
     robot.xVelocity = 0;
     robot.yVelocity = 0;
 
-    //Task turrC(turretControl);
+    Task turrC(turretControl);
     Task varUP(updateInfoLoop);
 
     while (runLoop){

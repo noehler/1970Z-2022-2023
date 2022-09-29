@@ -40,11 +40,11 @@ char outNames[20][50];
 
 void odometry(void){
   double Arc1 =distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
-  Arc1 = getNum("Arc1: ");
+  //Arc1 = getNum("Arc1: ");
   double Arc2 =distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positive
-  Arc2 = getNum("Arc2: ");
+  //Arc2 = getNum("Arc2: ");
   double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
-  Arc3 = getNum("Arc3: ");
+  //Arc3 = getNum("Arc3: ");
 
   int i = 0;
   //checkingVals
@@ -66,7 +66,7 @@ void odometry(void){
   double P1 = (Arc1 - Arc2);
   double Delta_y, Delta_x;
   double radRotation = -((inertial.get_rotation() * M_PI) / 180); 
-  radRotation = getNum("Angle: ");
+  //radRotation = getNum("Angle: ");
 
   //checkingVals
   outVals[i] = P1;
@@ -86,10 +86,10 @@ void odometry(void){
   }
 
   // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-  /*if (fabs(odoHeading - radRotation) >= 5){
+  if (fabs(odoHeading - radRotation) >= 5){
     odoHeading = radRotation;
     std::cout << "\n angleDiff too big";
-  }*/
+  }
   //odoHeading = getNum("Heading: ");
 
   double Delta_heading = P1 / a; // change of heading
