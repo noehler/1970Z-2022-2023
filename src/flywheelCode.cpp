@@ -6,11 +6,11 @@
 #define DEG2RAD M_PI/180
 
 double goalSpeed = 0;
-float wheelRad = 2.5;
+float wheelRad = 3;
 float gearRatio = 9;
 
 double angularVelocityCalc(void){
-  double attackSpeed = goalSpeed/wheelRad*180/M_PI *gearRatio/600;
+  double attackSpeed = ((goalSpeed*0.3543) + 8.892)*.95;
   //std::cout << "\nW: " << attackSpeed << ", Input: " << goalSpeed;
   return attackSpeed;
 }
@@ -23,28 +23,30 @@ int turretValue = 0;
 
 void turretControl(void){
   while(1){
-    robotGoal.angleBetweenHorREL = (inertial.get_rotation() - robotGoal.angleBetweenHorABS);
+    robotGoal.angleBetweenHorREL = (inertial.get_rotation() + robotGoal.angleBetweenHorABS);
     int baseSPD;
 
     static bool inertWorks = false;
     double turrAngle;
     double diffInSpd;
 
-    if (inertWorks){
-      turrAngle = inertialTurret.get_rotation();
-      diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL+turrAngle), 1.4/3)*18;
-    }
-    else{
-      turrAngle = float(turretAngle.get_position())/100/259*12;
-      diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-turrAngle), 1.4/3)*18;
-    }
-    if (radRotation == PROS_ERR_F)
-    {
-      turrAngle = float(turretAngle.get_position())/100/259*12;
-      diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-turrAngle), 1.4/3)*18;
-      alert("Turr Inert Alert");
-      inertWorks = false;
-    }
+    turrAngle = float(turretAngle.get_position())/100/259*12;
+
+    double initTurrAngle = 360-inertialTurret.get_rotation();
+    std::cout<< "\nAngle: " << turrAngle << ", inertA: " << initTurrAngle;
+    //if (initTurrAngle != PROS_ERR_F)
+    //{
+      if (fabs(turrAngle - initTurrAngle) > 5){
+        //alert("Chassis and Inert disagree");
+        turretAngle.set_position(initTurrAngle*100*259/12);
+      }
+    //}
+    //else{
+      //alert("turrInertFailed");
+    //}
+
+    diffInSpd = pow(fabs(robotGoal.angleBetweenHorREL-turrAngle), 1.4/3)*18;
+
 
 
     if (robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12)<0){
@@ -100,6 +102,15 @@ void singSameOldSongTimeTurretTwister(void){
   double P1 = robotGoal.dy - robot.yVelocity * T;
   double P2 = robotGoal.dx - robot.xVelocity * T;
   double Tar_ang = atan(P1 / P2);
+  if (P2 < 0){
+    Tar_ang = Tar_ang + M_PI;
+  }
+  while(Tar_ang < 0){
+    Tar_ang+=2*M_PI;
+  }
+  while(Tar_ang > 2*M_PI){
+    Tar_ang-=2*M_PI;
+  }
   double P3 = cos(Tar_ang) * 0.707106781187 * T;
   double V_disk = P2 / P3;
 
@@ -115,8 +126,8 @@ void liftConrol(void){
   static bool elevatePist = true;
   static bool shootPist = true;
 
-  shootPist = master.get_digital(DIGITAL_A);
-  elevatePist = master.get_digital(DIGITAL_B);
+  shootPist = master.get_digital(DIGITAL_L2);
+  elevatePist = master.get_digital(DIGITAL_L1);
 
   /*if (deckLoaded.get_value() <1900 && upLoaded.get_value() > 1900 && shootPist == false && millis() - elevateTime > 400 ){
     elevateTime = millis();

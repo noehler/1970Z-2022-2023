@@ -13,11 +13,14 @@ robotGoalRelatives robotGoal;
 //using pointers so that I can determine what ratio is needed to convert from degrees to distance without using a second variable
 double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
     double radius;
-    if ((encoderLoc == &leftEncoderFB) || (encoderLoc == &rightEncoderFB) || (encoderLoc == &encoderLR)){
-        radius=1.40723013;
+    if (encoderLoc == &leftEncoderFB){
+        radius=1.411811948;
+    }
+    if (encoderLoc == &rightEncoderFB){
+        radius=1.449;
     }
     else{
-        radius = 0;
+        radius = 1.41326;
     }
 
     double degreesTraveled = encoderLoc->get_value();
@@ -60,7 +63,7 @@ void odometry(void){
   i++;
 
   double a = 8; //distance between two tracking wheels
-  double b = 3.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+  double b = -2.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
   static float T = 0;
   T = float(millis())/1000 - T; // JLO - Is this right?  What units are T in?  usec or sec?
   double P1 = (Arc1 - Arc2);
@@ -86,10 +89,14 @@ void odometry(void){
   }
 
   // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-  if (fabs(odoHeading - radRotation) >= 5){
+  /*if (fabs(odoHeading - radRotation) >= 5){
     odoHeading = radRotation;
     std::cout << "\n angleDiff too big";
-  }
+  }*/
+
+  outVals[i] = odoHeading;
+  sprintf(outNames[i], "%s","OdoAngle");
+  i++;
   //odoHeading = getNum("Heading: ");
 
   double Delta_heading = P1 / a; // change of heading
@@ -111,10 +118,11 @@ void odometry(void){
 
     // Radius_back could be changed to cos(odoHeading + Delta_heading-M_PI/2) - cos(odoHeading - M_PI/2);
     // if are using encoder-based angle tracking ( recommanded for less noice)
-    double cos_side = -sin(odoHeading+ Delta_heading) + sin(odoHeading);
-    double cos_back = -cos(odoHeading+ Delta_heading) + cos(odoHeading);
-    double sin_side = -cos(odoHeading+ Delta_heading) + cos(odoHeading);
-    double sin_back = -sin(odoHeading+ Delta_heading) + sin(odoHeading);   
+
+    double cos_side = -sin(radRotation) + sin(radRotation-Delta_heading);
+    double cos_back = -cos(radRotation) + cos(radRotation-Delta_heading);
+    double sin_side = -cos(radRotation) + cos(radRotation-Delta_heading);
+    double sin_back = -sin(radRotation) + sin(radRotation-Delta_heading);   
 
     //outPutting vals
     outVals[i] = cos_side;
@@ -146,8 +154,8 @@ void odometry(void){
     Delta_x = Arc1 * cos(odoHeading) + (Arc3 * cos(odoHeading+(M_PI/2)));
     Delta_y = Arc1 * sin(odoHeading) + (Arc3 * sin(odoHeading+(M_PI/2)));
   }
-  odoHeading += Delta_heading;
   //std::cout << "\n DX: " << Delta_x << ", DY: " << Delta_y;
+  odoHeading += Delta_heading;
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)

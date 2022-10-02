@@ -121,9 +121,9 @@ void calcRadius(void){
   using namespace std;
 
   //getting target distance
-  //cout << "Select distance to travel in inches (larger is better): \n";
+  cout << "Select distance to travel in inches (larger is better): \n";
   int targetDist = 74;
-  //cin >> targetDist;
+  cin >> targetDist;
 
   //getting encoder to test
   bool completed = false;
@@ -131,7 +131,7 @@ void calcRadius(void){
   while(!completed){
     cout << "Encoder nicks as follows:\n\n" << "\tLeft Forward Reverse: 1\n" << "\tRight Forward Reverse: 2\n" << "\tSide Side: 3\n\n";
     cout << "Select encoder to test: \n";
-    //cin >> encoderNum;
+    cin >> encoderNum;
     if (encoderNum == 1){
       completed = true;
     }
@@ -241,13 +241,21 @@ void devCheck(void){
 		}
 }
 
+void warn(void){
+  while (!master.get_digital_new_press(DIGITAL_B)){
+    delay(1000);
+    master.rumble(". .");
+  }
+  delay(50);
+  master.clear();
+}
+
 void alert(std::string message){
   delay(50);
   master.clear();
   delay(50);
-  master.print(1,1, "%s", alert);
-  while (master.get_digital_new_press(DIGITAL_B)){
-    delay(300);
-    master.rumble("..");
-  }
+  master.print(0,1, "%s", message);
+  delay(50);
+  master.print(1,1, "B to ignore");
+  Task rumble(warn);
 }
