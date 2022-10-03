@@ -3,6 +3,9 @@
 #include "pros/rtos.h"
 #include "robotConfig.h"
 
+double outVals[20];
+char outNames[20][50];
+
 double getNum(std::string Output){
   std::string tempDist;
   double realNum;
@@ -235,5 +238,26 @@ void devCheck(void){
 			master.print(1, 1, "Exiting dev mode");
 			startTime = millis();
 		}
+}
+
+void logVals(char name[50],double value){
+  static int i = 0;
+  if (name == "reset"){
+    i = 0;
+  }
+  else{
+    outVals[i] = value;
+    sprintf(outNames[i], "%s", name);
+    i++;
+  }
+}
+
+void setAngle(objectType object, int degree){
+  if (object == base){
+
+  }
+  else{
+
+  }
 }
 

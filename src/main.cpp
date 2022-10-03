@@ -3,10 +3,6 @@
 #include <cmath>
 
 void initialize() {
-	/*while(1){
-		std::cout << "\nLENC:" << leftEncoderFB.get_value() << ", RENC:" << rightEncoderFB.get_value() << ", SENC:" << encoderLR.get_value();
-		delay(30);
-	}*/
 	guiInit();
 	robotGoal.dx = 10;
 	robotGoal.dy = 10;
@@ -34,7 +30,8 @@ void initialize() {
 	master.clear();
 	delay(50);
 	master.print(1,1,"Calibration Success.");
-	std::cout << "\nDone Calibrating!\n\n\n";
+
+
 	Task sLoop(startLoop);
 }
 
