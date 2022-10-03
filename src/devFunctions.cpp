@@ -263,7 +263,7 @@ void warn(void){
   master.clear();
 }
 
-void logVals(char name[50],double value){
+void logVals(std::string name,double value){
   static int i = 0;
   if (name == "reset"){
     i = 0;
@@ -277,10 +277,11 @@ void logVals(char name[50],double value){
 
 void setAngle(objectType object, int degree){
   if (object == base){
-
+    inertial.set_rotation(-degree);
   }
   else{
-
+    inertialTurret.set_rotation(-degree);
+    turretEncoder.set_position(degree *100*259/12);
   }
 }
 

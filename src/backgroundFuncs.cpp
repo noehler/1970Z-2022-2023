@@ -34,10 +34,7 @@ void startLoop(void)
     robot.xVelocity = 0;
     robot.yVelocity = 0;
 
-    double initialTurrAngle = 180;
-    
-    inertialTurret.set_rotation(initialTurrAngle);
-    turretAngle.set_position(initialTurrAngle *100*259/12);
+    setAngle(turret, 180);
 
     Task turrC(turretControl);
     Task varUP(updateInfoLoop);
@@ -46,8 +43,6 @@ void startLoop(void)
         robotGoal.dx = homeGoal.xpos-robot.xpos;
         robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = -(robot.zpos-homeGoal.zpos);
-
-
 
         singSameOldSongTimeTurretTwister();
 

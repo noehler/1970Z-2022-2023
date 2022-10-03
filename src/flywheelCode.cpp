@@ -24,19 +24,19 @@ int turretValue = 0;
 
 void turretControl(void){
   while(runLoop){
-    double turrAngle = -float(turretAngle.get_position())/100/259*12;
+    double turrAngle = -float(turretEncoder.get_position())/100/259*12;
     double turrAngleABS  = inertial.get_rotation() + turrAngle;
 
     static double diffInSpd;
     //std::cout << "\nTAngleRel: " << turrAngle;  
     bool dtb = false;
 
-    /*if (fabs(turrAngleABS + inertialTurret.get_rotation()) > 3 && abs(turretAngle.get_velocity()) < 300){
-      turretAngle.set_position((- inertial.get_rotation() + inertialTurret.get_rotation() )*100*259/12);
+    /*if (fabs(turrAngleABS + inertialTurret.get_rotation()) > 3 && abs(turretEncoder.get_velocity()) < 300){
+      turretEncoder.set_position((- inertial.get_rotation() + inertialTurret.get_rotation() )*100*259/12);
       dtb = 1;
     }
     std::cout << "\ndiff: " << fabs(turrAngleABS + inertialTurret.get_rotation()) << ",     IturrAngle: " << inertialTurret.get_rotation() << ",    AbsRot: " << turrAngleABS
-      << ",    IbaseRot: "<< inertial.get_rotation() << ",    vel: " << turretAngle.get_velocity() << ",     diff2Big: " << dtb;*/
+      << ",    IbaseRot: "<< inertial.get_rotation() << ",    vel: " << turretEncoder.get_velocity() << ",     diff2Big: " << dtb;*/
 
     double turrAngleBet = robotGoal.angleBetweenHorABS + turrAngleABS;
 
@@ -66,7 +66,7 @@ void turretControl(void){
     else{
       baseSPD = 0;
     }
-    //std::cout << "\nSpeed" << diffInSpd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretAngle.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
+    //std::cout << "\nSpeed" << diffInSpd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretEncoder.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
     diff1 = diffInSpd + baseSPD;
     diff2 = -diffInSpd + baseSPD;
     flyWheel1 = angularVelocityCalc();

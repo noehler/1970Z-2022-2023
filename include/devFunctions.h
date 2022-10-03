@@ -21,7 +21,7 @@ extern void trackNums(void);
 extern void devCheck(void);
 extern void devMode(void);
 
-void logVals(char name[50] = "reset",double value = 0);
+void logVals(std::string name = "reset",double value = 0);
 extern void setAngle(objectType, int);
 
 
