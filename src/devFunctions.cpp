@@ -185,7 +185,7 @@ void devMode(void){
   master.clear();
   
 
-  /*lv_obj_t * myLabel[20];
+  lv_obj_t * myLabel[20];
   for (int i = 0; i <20; i++){
     myLabel[i] = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
     lv_label_set_text(myLabel[i], "No value Assigned yet"); //sets label text
@@ -198,11 +198,11 @@ void devMode(void){
     
     //std::cout << "\n" << i << "\n";
     delay(20);
-  }*/
+  }
   
-  lv_obj_t * rpm = lv_label_create(lv_scr_act(), NULL);
+  /*lv_obj_t * rpm = lv_label_create(lv_scr_act(), NULL);
   lv_label_set_text(rpm, "No value Assigned yet");
-  lv_obj_align(rpm, NULL, LV_ALIGN_IN_LEFT_MID, 280, 50);
+  lv_obj_align(rpm, NULL, LV_ALIGN_IN_LEFT_MID, 280, 50);*/
   diff1.set_brake_mode(E_MOTOR_BRAKE_COAST);
   diff2.set_brake_mode(E_MOTOR_BRAKE_COAST);
   
@@ -219,10 +219,16 @@ void devMode(void){
     flyWheel1 = flySpeed;
     flyWheel2 = flySpeed;
 
-    char buffer[50];
+    /*char buffer[50];
     sprintf(buffer, "RPM : %d", flySpeed);
     lv_label_set_text(rpm, buffer);
-    delay(20);
+    delay(20);*/
+    for (int i=0, i < 20, i++){
+      char buffer[50];
+      sprintf(buffer, "%s : %d",outNames[i] ,outVals[i]);
+      lv_label_set_text(myLabel[i], buffer);
+      delay(20)
+    }
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
