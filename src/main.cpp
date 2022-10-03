@@ -9,9 +9,10 @@ void initialize() {
 	robotGoal.dz = 10;
 
 	inertial.reset();
+	inertialTurret.reset();
 
 	int startTime = millis();
-	while (inertial.is_calibrating() ){
+	while (inertial.is_calibrating()  || inertialTurret.is_calibrating()){
 		std::cout << "\nCalibrating!";
 		delay(40);
 		if (millis() - startTime > 3000){
@@ -26,6 +27,7 @@ void initialize() {
 			}
 		}
 	}
+
 	delay(50);
 	master.clear();
 	delay(50);
@@ -42,30 +44,6 @@ void competition_initialize() {}
 void autonomous() {}
 
 void opcontrol() {
-	runLoop = false;
-	while(1){
-		std::cout<<"\nentering turrTest";
-		static int spd = 0;
-		if (master.get_digital(DIGITAL_R1)){
-			spd+=1;
-		}
-		else if (master.get_digital(DIGITAL_R2)){
-			spd-=1;
-		}
-
-		delay(50);
-		master.clear();
-		delay(50);
-		master.print(0, 1, "Goal pct: %d", spd);
-		flyWheel1 = spd;
-		flyWheel2 = spd;
-		shootPiston.set_value(master.get_digital(DIGITAL_A));
-		if (master.get_digital_new_press(DIGITAL_B)){
-			static bool lifting = false;
-			lifting = !lifting;
-			elevatePiston.set_value(lifting);
-		}
-	}
 
 	while(1){
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
@@ -80,6 +58,7 @@ void opcontrol() {
 		rfD.move(-RNSpeed - MSpeed);
 		rbD.move(-RNSpeed + MSpeed);
 
+		
 		liftConrol();
 
 		devCheck();

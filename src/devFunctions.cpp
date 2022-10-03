@@ -124,9 +124,9 @@ void calcRadius(void){
   using namespace std;
 
   //getting target distance
-  //cout << "Select distance to travel in inches (larger is better): \n";
+  cout << "Select distance to travel in inches (larger is better): \n";
   int targetDist = 74;
-  //cin >> targetDist;
+  cin >> targetDist;
 
   //getting encoder to test
   bool completed = false;
@@ -134,7 +134,7 @@ void calcRadius(void){
   while(!completed){
     cout << "Encoder nicks as follows:\n\n" << "\tLeft Forward Reverse: 1\n" << "\tRight Forward Reverse: 2\n" << "\tSide Side: 3\n\n";
     cout << "Select encoder to test: \n";
-    //cin >> encoderNum;
+    cin >> encoderNum;
     if (encoderNum == 1){
       completed = true;
     }
@@ -185,7 +185,7 @@ void devMode(void){
   master.clear();
   
 
-  lv_obj_t * myLabel[20];
+  /*lv_obj_t * myLabel[20];
   for (int i = 0; i <20; i++){
     myLabel[i] = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
     lv_label_set_text(myLabel[i], "No value Assigned yet"); //sets label text
@@ -198,17 +198,31 @@ void devMode(void){
     
     //std::cout << "\n" << i << "\n";
     delay(20);
-  }
+  }*/
   
+  lv_obj_t * rpm = lv_label_create(lv_scr_act(), NULL);
+  lv_label_set_text(rpm, "No value Assigned yet");
+  lv_obj_align(rpm, NULL, LV_ALIGN_IN_LEFT_MID, 280, 50);
+  diff1.set_brake_mode(E_MOTOR_BRAKE_COAST);
+  diff2.set_brake_mode(E_MOTOR_BRAKE_COAST);
   
   while(devPossible){
-    for (int i = 0; i < 20; i++){
-      char buffer[50];
-      sprintf(buffer, "%s : %.3f", outNames[i], outVals[i]);
-		  lv_label_set_text(myLabel[i], buffer);
-      delay(20);
+    static int flySpeed = 0;
+
+    if (master.get_digital(DIGITAL_UP) && flySpeed < 127){
+      flySpeed += 1;
     }
-        
+    if (master.get_digital(DIGITAL_DOWN) && flySpeed > -127){
+      flySpeed -= 1;
+    }
+
+    flyWheel1 = flySpeed;
+    flyWheel2 = flySpeed;
+
+    char buffer[50];
+    sprintf(buffer, "RPM : %d", flySpeed);
+    lv_label_set_text(rpm, buffer);
+    delay(20);
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
@@ -229,7 +243,7 @@ void devCheck(void){
 			master.clear_line(1);
 			delay(50);
 			master.print(1, 1, "Entering dev mode");
-			//runLoop = false;
+			runLoop = false;
       std::cout << "\nDevmode\n";
 			devMode();
 			delay(50);
@@ -238,6 +252,15 @@ void devCheck(void){
 			master.print(1, 1, "Exiting dev mode");
 			startTime = millis();
 		}
+}
+
+void warn(void){
+  while (!master.get_digital_new_press(DIGITAL_B)){
+    delay(1000);
+    master.rumble(". .");
+  }
+  delay(50);
+  master.clear();
 }
 
 void logVals(char name[50],double value){

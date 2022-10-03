@@ -13,11 +13,14 @@ robotGoalRelatives robotGoal;
 //using pointers so that I can determine what ratio is needed to convert from degrees to distance without using a second variable
 double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
     double radius;
-    if ((encoderLoc == &leftEncoderFB) || (encoderLoc == &rightEncoderFB) || (encoderLoc == &encoderLR)){
-        radius=1.40723013;
+    if (encoderLoc == &leftEncoderFB){
+        radius=1.411811948;
+    }
+    if (encoderLoc == &rightEncoderFB){
+        radius=1.449;
     }
     else{
-        radius = 0;
+        radius = 1.41326;
     }
 
     double degreesTraveled = encoderLoc->get_value();
@@ -45,7 +48,7 @@ void odometry(void){
   int i = 0;
   
   double a = 8; //distance between two tracking wheels
-  double b = 3.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+  double b = -2.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
   static float T = 0;
   T = float(millis())/1000 - T; // JLO - Is this right?  What units are T in?  usec or sec?
   double P1 = (Arc1 - Arc2);
@@ -83,10 +86,11 @@ void odometry(void){
 
     // Radius_back could be changed to cos(odoHeading + Delta_heading-M_PI/2) - cos(odoHeading - M_PI/2);
     // if are using encoder-based angle tracking ( recommanded for less noice)
-    double cos_side = -sin(odoHeading+ Delta_heading) + sin(odoHeading);
-    double cos_back = -cos(odoHeading+ Delta_heading) + cos(odoHeading);
-    double sin_side = -cos(odoHeading+ Delta_heading) + cos(odoHeading);
-    double sin_back = -sin(odoHeading+ Delta_heading) + sin(odoHeading);   
+
+    double cos_side = -sin(radRotation) + sin(radRotation-Delta_heading);
+    double cos_back = -cos(radRotation) + cos(radRotation-Delta_heading);
+    double sin_side = -cos(radRotation) + cos(radRotation-Delta_heading);
+    double sin_back = -sin(radRotation) + sin(radRotation-Delta_heading);   
 
     Delta_x = -Radius_side * cos_side - Radius_back * cos_back;
     Delta_y = Radius_side * sin_side - Radius_back * sin_back;
@@ -102,12 +106,12 @@ void odometry(void){
     logVals("deltaY" , Delta_y);
   } 
   else { // if there are no change of heading while moving, triangular approximation
-    std::cout << "\nNo diff in a1 and a2";
+    //std::cout << "\nNo diff in a1 and a2";
     Delta_x = Arc1 * cos(odoHeading) + (Arc3 * cos(odoHeading+(M_PI/2)));
     Delta_y = Arc1 * sin(odoHeading) + (Arc3 * sin(odoHeading+(M_PI/2)));
   }
+  //std::cout << "\n DX: " << Delta_x << ", DY: " << Delta_y;
   odoHeading += Delta_heading;
-  std::cout << "\n DX: " << Delta_x << ", DY: " << Delta_y;
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
@@ -119,4 +123,73 @@ void odometry(void){
   logVals("xVel" , robot.xVelocity);
   logVals("yVel" , robot.yVelocity);
   logVals();
+}
+
+void moveToPoint(float xPos, double yPos, double angleTo = 400){
+  //checking if we care about final angle, since default is 400 degrees
+  bool careAboutAngle = true;
+  if (angleTo == 400){
+    careAboutAngle = false;
+  }
+
+  //converting to radians for easier use
+  angleTo = M_PI*180;
+
+  //setting up values to check if new line needs to be made. 
+  static double startTime = double(millis())/1000;
+  static double checkChanged[3];
+  bool needNewCalcs = false;
+
+  //checking if we are too far away from the destined path and need to recalculate
+  //for linevals 0 is slope, 1 is x, 2 is y
+  static double linevals[3] = {0,0,0};
+  double pointToLineSlope = -1.0/linevals[0];
+
+  //0 is x, 1 is y
+  double lineCoors[2];
+  lineCoors[0] = (-linevals[0]*(-linevals[0]*linevals[1] + linevals[2] + linevals[0] * robot.ypos + robot.xpos)) / 
+                                    (linevals[0] * linevals[0] +1);
+  lineCoors[1] = linevals[0]*(lineCoors[0] - linevals[1]) + linevals[2];
+
+  double distAwayFromLine = sqrt(pow(linevals[1] - robot.xpos, 2) + pow(linevals[2] - robot.ypos, 2));
+  double distAwayFromTarget = sqrt(pow(linevals[1] - robot.xpos, 2) + pow(linevals[2] - robot.ypos, 2));
+  double ratioAway = distAwayFromTarget /distAwayFromLine;
+
+  if (checkChanged[0] != xPos || checkChanged[1] != yPos ||checkChanged[2] != angleTo || ratioAway < 6 || 
+      (startTime >.5 && sqrt(robot.xVelocity* robot.xVelocity + robot.yVelocity * robot.yVelocity)/startTime <3)){
+    checkChanged[0] = xPos;
+    checkChanged[1] = yPos;
+    checkChanged[2] = angleTo;
+    needNewCalcs = true;
+  }
+
+
+  //setting speeds to calculate path for.
+  //inches per second
+  double topDriveSpeed = 10;
+  double topStrafeSpeed = 5;
+  //radians per second
+  double topRotSpeed = M_PI/2;
+
+  linevals[0] = atan((yPos - robot.ypos) / (xPos - robot.xpos));
+  linevals[1] = xPos;
+  linevals[2] = yPos;
+  double angleBetDriveAFinal = angleTo - linevals[0];
+
+  double distToStartTurn = (angleBetDriveAFinal/topRotSpeed)*topDriveSpeed;
+  if (!careAboutAngle){
+    distToStartTurn = 0;
+  }
+
+  double xToStartTurn = cos(angleTo)*distToStartTurn;
+
+  double angleBetween;
+  if (fabs(robot.xpos-xPos) < xToStartTurn) {
+    angleBetween = angleTo - inertial.get_heading()*M_PI/180;
+  }
+  else{
+    angleBetween = linevals[0] - inertial.get_heading()*M_PI/180;
+  }
+
+  
 }

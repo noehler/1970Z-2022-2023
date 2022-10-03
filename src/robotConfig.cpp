@@ -1,4 +1,5 @@
 #include "main.h"
+#include "pros/adi.hpp"
 
 using namespace pros;
 
@@ -10,22 +11,27 @@ Motor lbD(2, driveGear, true);
 Motor rfD(7, driveGear, false);
 Motor rbD(4, driveGear, false);
 
-Motor flyWheel1(18, E_MOTOR_GEARSET_36, true);
-Motor flyWheel2(19, E_MOTOR_GEARSET_36, false);
+Motor flyWheel1(11, E_MOTOR_GEARSET_36, false);
+Motor flyWheel2(14, E_MOTOR_GEARSET_36, true);
 
 Motor diff1(5, E_MOTOR_GEARSET_06, true);
 Motor diff2(6, E_MOTOR_GEARSET_06, true);
-Imu inertial(11);
-Rotation turretAngle(8);
+Imu inertial(8);
+Imu inertialTurret(12);
+Rotation turretAngle(10);
 
 
-ADIDigitalOut shootPiston({{22,'G'}});
-ADIDigitalOut elevatePiston({{22,'H'}});
+ADIDigitalOut shootPiston({{22,'B'}});
+ADIDigitalOut elevatePiston({{9,'G'}});
 
-ADIUltrasonic leftUltra({{22,'A', 'B'}});
-ADIUltrasonic rightUltra({{22,'B','B'}});
-ADIUltrasonic revUltra({{22,'A','B'}});
+ADIAnalogIn upLoaded({22,'F'});
+ADIAnalogIn deckLoaded({9,'H'});
+ADIAnalogIn holeLoaded({22,'E'});
 
-ADIEncoder leftEncoderFB({{20,'C','D'}, true});
-ADIEncoder rightEncoderFB({{22,'C', 'D'}});
-ADIEncoder encoderLR({{20,'A','B'}});
+ADIUltrasonic leftUltra({{22,'E', 'F'}});
+ADIUltrasonic rightUltra({{22,'G','H'}});
+ADIUltrasonic revUltra({{22,'C','D'}});
+
+ADIEncoder leftEncoderFB({{9,'C','D'}, true});
+ADIEncoder rightEncoderFB({{9,'E', 'F'},true });
+ADIEncoder encoderLR({{9,'A','B'}});
