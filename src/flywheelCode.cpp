@@ -54,10 +54,14 @@ void turretControl(void){
     }
 
     int baseSPD;
+    //feed forward code todo here, 
+    //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
+    //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
+    //turret target speed = -chassie rotation rate (because turret need to go to opposite of chassie rotation) + turret target speed
+    //feed above calculated speed into a PID
+    diffInSpd = pow(fabs(turrAngleBet), 1.4/3)*18; // put that PID here
 
-
-    diffInSpd = pow(fabs(turrAngleBet), 1.4/3)*18;
-
+    //---------------------this might be the reason turret is turrning the opposite way
     if (turrAngleBet<0){
       diffInSpd *= -1;
     }
@@ -71,7 +75,10 @@ void turretControl(void){
     }
     else{
       baseSPD = 0;
-    }
+    } 
+    //---------------------this might be the reason turret is turrning the opposite way, 
+    //this is not necessary because difference of angle can define the direction of rotation
+
     //std::cout << "\nSpeed" << diffInSpd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretEncoder.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
     diff1 = diffInSpd + baseSPD;
     diff2 = -diffInSpd + baseSPD;
@@ -121,6 +128,9 @@ void singSameOldSongTimeTurretTwister(void){
   while(Tar_ang > 2*M_PI){
     Tar_ang-=2*M_PI;
   }*/
+  
+  // why take this mod calculation out?
+
   //std::cout<< "\nAngle: " << Tar_ang;
   double P3 = cos(Tar_ang) * 0.707106781187 * T;
   double V_disk = P2 / P3;

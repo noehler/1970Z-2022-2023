@@ -44,7 +44,7 @@ void competition_initialize() {}
 void autonomous() {}
 
 void opcontrol() {
-
+	// i want to go to world...
 	while(1){
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
 		int LNSpeed = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
