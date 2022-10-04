@@ -6,5 +6,6 @@ extern double angularVelocityCalc(void);
 extern void singSameOldSongTimeTurretTwister(void);
 extern void liftConrol(void);
 extern double flySpdMult;
+extern int turretValue;
 
 #endif

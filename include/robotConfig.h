@@ -7,6 +7,7 @@
 #include "devFunctions.h"
 #include "odometry.h"
 #include "backgroundFuncs.h"
+#include "motorControl.h"
 
 using namespace pros;
 
