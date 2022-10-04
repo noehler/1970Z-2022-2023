@@ -4,6 +4,7 @@
 using namespace pros;
 
 Controller master(pros::E_CONTROLLER_MASTER);
+Controller sidecar(pros::E_CONTROLLER_PARTNER);
 motor_gearset_e driveGear = E_MOTOR_GEARSET_06 ;
 
 Motor lfD(1, driveGear, true);

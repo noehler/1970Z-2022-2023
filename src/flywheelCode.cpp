@@ -10,8 +10,9 @@ double goalSpeed = 0;
 float wheelRad = 3;
 float gearRatio = 9;
 
+double flySpdMult = 0.95;
 double angularVelocityCalc(void){
-  double attackSpeed = ((goalSpeed*0.3543) + 8.892)*.95;
+  double attackSpeed = ((goalSpeed*0.3543) + 8.892)*flySpdMult;
   //std::cout << "\nW: " << attackSpeed << ", Input: " << goalSpeed;
   return attackSpeed;
 }

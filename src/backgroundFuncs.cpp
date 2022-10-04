@@ -38,6 +38,7 @@ void startLoop(void)
 
     Task turrC(turretControl);
     Task varUP(updateInfoLoop);
+    Task sideController(controller2);
 
     while (runLoop){
         robotGoal.dx = homeGoal.xpos-robot.xpos;

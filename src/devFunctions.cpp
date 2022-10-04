@@ -223,11 +223,11 @@ void devMode(void){
     sprintf(buffer, "RPM : %d", flySpeed);
     lv_label_set_text(rpm, buffer);
     delay(20);*/
-    for (int i=0, i < 20, i++){
+    for (int i=0; i < 20; i++){
       char buffer[50];
       sprintf(buffer, "%s : %d",outNames[i] ,outVals[i]);
       lv_label_set_text(myLabel[i], buffer);
-      delay(20)
+      delay(20);
     }
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)

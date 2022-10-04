@@ -11,6 +11,7 @@
 using namespace pros;
 
 extern Controller master;
+extern Controller sidecar;
 
 extern Motor lfD;
 extern Motor lbD;
