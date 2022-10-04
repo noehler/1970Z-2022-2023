@@ -82,6 +82,11 @@ void turretControl(void){
     //std::cout << "\nSpeed" << diffInSpd << ", RelA:" << robotGoal.angleBetweenHorREL-(float(turretEncoder.get_position())/100/259*12) << ", bA:" << inertial.get_rotation();
     diff1 = diffInSpd + baseSPD;
     diff2 = -diffInSpd + baseSPD;
+    //also put a speed controller for flywheel here, PID is not going to optimal.
+    //currently, driver have to wait for flywheel to drop speed down while moving, and the amount of decceleration seems to have no difference than turnning the motor off.
+    //I looked up bangbang ctl from https://wiki.purduesigbots.com/software/control-algorithms/bang-bang
+    //in the description it said to have low acc, but in vex game nothing but net, sigbots used this controller for their flywheels
+    //considering the simplisity and the amount of tolerance we have, this would be a good solution for now.
     flyWheel1 = angularVelocityCalc();
     flyWheel2 = angularVelocityCalc();
     delay(20);
@@ -128,7 +133,7 @@ void singSameOldSongTimeTurretTwister(void){
   while(Tar_ang > 2*M_PI){
     Tar_ang-=2*M_PI;
   }*/
-  
+
   // why take this mod calculation out?
 
   //std::cout<< "\nAngle: " << Tar_ang;
