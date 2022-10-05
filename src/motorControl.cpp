@@ -6,40 +6,34 @@ chassis_t chassis;
 double turrControl(void){
   static double PIDSpeedSpin = 0;
   static double prevPIDSpeedSpin = 0;
-  double turrAngle = -float(turretEncoder.get_position())/100/259*12;
-  double turrAngleABS  = inertial.get_rotation() + turrAngle;
+    double turrAngle = -float(turretEncoder.get_position())/100/259*12;
+    double turrAngleABS  = inertial.get_rotation() + turrAngle;
 
-  //std::cout << "\nTAngleRel: " << turrAngle;  
-  bool dtb = false;
-
-  static double diffInSpd;
-
-  std::cout << "\ninert: " << inertialTurret.get_rotation() << ", enc: " << -turrAngleABS;
-
-  if (fabs(-turrAngleABS + inertialTurret.get_rotation()) > 3 && abs(turretEncoder.get_velocity()) < 300){
-      turretEncoder.set_position((-inertialTurret.get_rotation() + inertial.get_rotation())*100*259/12);
-      dtb = 1;
-      std::cout << "\ndiff: " << turrAngleABS + inertialTurret.get_rotation() << ", new: " << -turrAngleABS;
-  }
-  else{
-  }
-  /*std::cout << "\ndiff: " << fabs(turrAngleABS + inertialTurret.get_rotation()) << ",     IturrAngle: " << inertialTurret.get_rotation() << ",    AbsRot: " << turrAngleABS
-      << ",    IbaseRot: "<< inertial.get_rotation() << ",    vel: " << turretEncoder.get_velocity() << ",     diff2Big: " << dtb;*/
-
-  double turrAngleBet = robotGoal.angleBetweenHorABS + turrAngleABS;
-
-  if (turrAngleBet > 180){
-      turrAngleBet -= 360;
-  }
-  else if( turrAngleBet < -180){
-      turrAngleBet += 360;
-  }
-
-  //feed forward code todo here, 
-  //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
-  //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
-  //turret target speed = -chassie rotation rate (because turret need to go to opposite of chassie rotation) + turret target speed
-  //feed above calculated speed into a PID
+    //std::cout << "\nTAngleRel: " << turrAngle;  
+    bool dtb = false;
+    static double diffInSpd;
+    std::cout << "\ninert: " << inertialTurret.get_rotation() << ", enc: " << -turrAngleABS;
+    if (fabs(-turrAngleABS + inertialTurret.get_rotation()) > 3 && abs(turretEncoder.get_velocity()) < 300){
+        turretEncoder.set_position((-inertialTurret.get_rotation() + inertial.get_rotation())*100*259/12);
+        dtb = 1;
+        std::cout << "\ndiff: " << turrAngleABS + inertialTurret.get_rotation() << ", new: " << -turrAngleABS;
+    }
+    else{
+    }
+    /*std::cout << "\ndiff: " << fabs(turrAngleABS + inertialTurret.get_rotation()) << ",     IturrAngle: " << inertialTurret.get_rotation() << ",    AbsRot: " << turrAngleABS
+        << ",    IbaseRot: "<< inertial.get_rotation() << ",    vel: " << turretEncoder.get_velocity() << ",     diff2Big: " << dtb;*/
+    double turrAngleBet = robotGoal.angleBetweenHorABS + turrAngleABS;
+    if (turrAngleBet > 180){
+        turrAngleBet -= 360;
+    }
+    else if( turrAngleBet < -180){
+        turrAngleBet += 360;
+    }
+    //feed forward code todo here, 
+    //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
+    //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
+    //turret target speed = -chassie rotation rate (because turret need to go to opposite of chassie rotation) + turret target speed
+    //feed above calculated speed into a PID
 
     //slowing down turret when nothing is loaded or on deck so intake can run faster
     if (deckLoaded.get_value() > 1900){
