@@ -12,8 +12,8 @@ Motor lbD(2, driveGear, true);
 Motor rfD(7, driveGear, false);
 Motor rbD(4, driveGear, false);
 
-Motor flyWheel1(11, E_MOTOR_GEARSET_36, false);
-Motor flyWheel2(14, E_MOTOR_GEARSET_36, true);
+Motor flyWheel1(11, E_MOTOR_GEARSET_06, false);
+Motor flyWheel2(13, E_MOTOR_GEARSET_06, true);
 
 Motor diff1(5, E_MOTOR_GEARSET_06, true);
 Motor diff2(6, E_MOTOR_GEARSET_06, true);

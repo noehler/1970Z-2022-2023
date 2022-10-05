@@ -41,7 +41,12 @@ void disabled() {}
 
 void competition_initialize() {}
 
-void autonomous() {}
+void autonomous() {
+	robot.xpos = 0;
+	robot.ypos = 0;
+	moveToxpos = 30;
+	moveToypos = 0;
+}
 
 void opcontrol() {
 	// i want to go to world...

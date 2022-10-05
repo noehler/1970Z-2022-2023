@@ -2,6 +2,7 @@
 #include "odometry.h"
 #include "pros/rtos.h"
 #include "robotConfig.h"
+#include <cstring>
 
 double outVals[20];
 char outNames[20][50];
@@ -185,7 +186,7 @@ void devMode(void){
   master.clear();
   
 
-  lv_obj_t * myLabel[20];
+  /*lv_obj_t * myLabel[20];
   for (int i = 0; i <20; i++){
     myLabel[i] = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
     lv_label_set_text(myLabel[i], "No value Assigned yet"); //sets label text
@@ -198,14 +199,22 @@ void devMode(void){
     
     //std::cout << "\n" << i << "\n";
     delay(20);
-  }
+  }*/
   
-  /*lv_obj_t * rpm = lv_label_create(lv_scr_act(), NULL);
+  lv_obj_t * rpm = lv_label_create(lv_scr_act(), NULL);
   lv_label_set_text(rpm, "No value Assigned yet");
-  lv_obj_align(rpm, NULL, LV_ALIGN_IN_LEFT_MID, 280, 50);*/
+  lv_obj_align(rpm, NULL, LV_ALIGN_IN_LEFT_MID, 280, 50);
+
   diff1.set_brake_mode(E_MOTOR_BRAKE_COAST);
   diff2.set_brake_mode(E_MOTOR_BRAKE_COAST);
   
+  int rpmSize = 300;
+  double rpmCounter[rpmSize];
+
+  for (int j = 0; j <rpmSize; j++){
+      rpmCounter[j] = 0;
+    }
+  //memcpy(rpmCounter, 0, 50);
   while(devPossible){
     static int flySpeed = 0;
 
@@ -218,17 +227,41 @@ void devMode(void){
 
     flyWheel1 = flySpeed;
     flyWheel2 = flySpeed;
+    static double rpmAVG;
 
-    /*char buffer[50];
-    sprintf(buffer, "RPM : %d", flySpeed);
+    double rpmTemp = (flyWheel1.get_actual_velocity() + flyWheel1.get_actual_velocity())/2;
+    for (int j = 1; j <rpmSize; j++){
+      rpmCounter[j] = rpmCounter[j-1];
+    }
+    
+    rpmCounter[0] =rpmTemp;
+    
+    static int c = 0;
+    if (c > 50){
+      for (int j = 0;j < rpmSize; j++){
+        rpmAVG += rpmCounter[j];
+      }
+      rpmAVG = rpmAVG/rpmSize;
+      
+      c = 0;
+    }
+    else{
+      c++;
+    }
+
+    char buffer[200];
+    sprintf(buffer, "PCT : %d, RPM: %.02f", flySpeed, rpmAVG);
     lv_label_set_text(rpm, buffer);
-    delay(20);*/
-    for (int i=0; i < 20; i++){
+    
+    delay(20);
+    /*for (int i=0; i < 20; i++){
       char buffer[50];
       sprintf(buffer, "%s : %d",outNames[i] ,outVals[i]);
       lv_label_set_text(myLabel[i], buffer);
       delay(20);
-    }
+    }*/
+
+    liftConrol();
 
     if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
      && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
@@ -270,7 +303,7 @@ void warn(void){
 }
 
 void logVals(std::string name,double value){
-  static int i = 0;
+  /*static int i = 0;
   if (name == "reset"){
     i = 0;
   }
@@ -278,7 +311,7 @@ void logVals(std::string name,double value){
     outVals[i] = value;
     sprintf(outNames[i], "%s", name);
     i++;
-  }
+  }*/
 }
 
 void setAngle(objectType object, int degree){

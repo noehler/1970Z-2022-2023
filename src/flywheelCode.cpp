@@ -22,12 +22,6 @@ double angularVelocityCalc(void){
   return attackSpeed;
 }
 
-//tV values and what they mean
-//0 is stopped
-//1 is reversed
-//2 is fwd
-int turretValue = 0;
-
 //defining constants
 float g = 386.08858267717;
 double a = -pow(g,2)*.25;
@@ -88,28 +82,18 @@ void liftConrol(void){
 
   shootPist = master.get_digital(DIGITAL_L2);
   elevatePist = master.get_digital(DIGITAL_L1);
-
-  /*if (deckLoaded.get_value() <1900 && upLoaded.get_value() > 1900 && shootPist == false && millis() - elevateTime > 400 ){
-    elevateTime = millis();
-    elevatePist = true;
-  }
-  //std::cout << "\n UP: " << upLoaded.get_value() << ", Deck: " << deckLoaded.get_value();
-
-  if (millis() - elevateTime > 300){
-    elevatePist = false;
-  }*/
   
   shootPiston.set_value(shootPist);
   elevatePiston.set_value(elevatePist);
 
   if (master.get_digital(DIGITAL_R1)){
-    turretValue = 2;
+    chassis.intakeRunning = 2;
   }
   else if (master.get_digital(DIGITAL_R2)){
-    turretValue = 1;
+    chassis.intakeRunning = 1;
   }
   else{
-    turretValue = 0;
+    chassis.intakeRunning = 0;
   }
   
 }
