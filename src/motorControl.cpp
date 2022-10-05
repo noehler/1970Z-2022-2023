@@ -4,6 +4,8 @@
 chassis_t chassis;
 
 double turrControl(void){
+  static double PIDSpeedSpin = 0;
+  static double prevPIDSpeedSpin = 0;
     double turrAngle = -float(turretEncoder.get_position())/100/259*12;
     double turrAngleABS  = inertial.get_rotation() + turrAngle;
 
@@ -41,13 +43,10 @@ double turrControl(void){
 
     //slowing down turret when nothing is loaded or on deck so intake can run faster
     if (deckLoaded.get_value() > 1900){
-        diffInSpd = pow(fabs(turrAngleBet), 1.4/3)*18; // put that PID here
-    }
-    else{
-        diffInSpd = pow(fabs(turrAngleBet), 1.4/3)*5; // put that PID here
-    }
-    if (turrAngleBet<0){
-      diffInSpd *= -1;
+    PIDSpeedSpin = 0.1*turrAngleBet + 0.001*prevPIDSpeedSpin*.01 + 0.1*(PIDSpeedSpin - prevPIDSpeedSpin)/.01;
+    prevPIDSpeedSpin = PIDSpeedSpin;
+    }else{
+        diffInSpd = 0; // put that PID here
     }
     return diffInSpd;
 }
@@ -55,10 +54,10 @@ double turrControl(void){
 double intakeControl(double diffInSpd){
     int baseSPD;
     if (turretValue == 2){
-      baseSPD = 100-fabs(diffInSpd);
+      baseSPD = 127-fabs(diffInSpd);
     }
     else if (turretValue == 1){
-      baseSPD = -100+fabs(diffInSpd);
+      baseSPD = -127+fabs(diffInSpd);
     }
     else{
       baseSPD = 0;
@@ -183,8 +182,17 @@ void motorControl(void){
 
     diff1 = diffInSpd + baseSPD;
     diff2 = -diffInSpd + baseSPD;
-    flyWheel1 = angularVelocityCalc();
-    flyWheel2 = angularVelocityCalc();
+    double flyWheelVelocity = flyWheel1.get_actual_velocity()/2 + flyWheel2.get_actual_velocity()/2;
+    if (angularVelocityCalc()-flyWheelVelocity<-5){
+      flyWheel1 = 127;
+      flyWheel2 = 127;
+    } else if (angularVelocityCalc()-flyWheelVelocity>5){
+      flyWheel1 = -127;
+      flyWheel2 = -127;
+    } else(
+      flyWheel1 = angularVelocityCalc();
+      flyWheel2 = angularVelocityCalc();
+    )
     lfD.move(LNSpeed + MSpeed);
     lbD.move(LNSpeed - MSpeed);
     rfD.move(RNSpeed - MSpeed);
