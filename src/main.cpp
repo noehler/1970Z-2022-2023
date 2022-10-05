@@ -44,8 +44,8 @@ void competition_initialize() {}
 void autonomous() {
 	robot.xpos = 0;
 	robot.ypos = 0;
-	moveToxpos = 30;
-	moveToypos = 0;
+	move.moveToxpos = 30;
+	move.moveToypos = 0;
 }
 
 void opcontrol() {
