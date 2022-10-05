@@ -47,17 +47,11 @@ void opcontrol() {
 	// i want to go to world...
 	while(1){
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
-		int LNSpeed = master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
-		int RNSpeed = master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_X);
+		chassis.driveTrain.leftSpd = -master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_X);
+		chassis.driveTrain.rightSpd = -master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
 
 		//mechanum(magic) speed
-		int MSpeed = -master.get_analog(ANALOG_LEFT_X);
-
-		lfD.move(-LNSpeed + MSpeed);
-		lbD.move(-LNSpeed - MSpeed);
-		rfD.move(-RNSpeed - MSpeed);
-		rbD.move(-RNSpeed + MSpeed);
-
+		chassis.driveTrain.mechSpd = -master.get_analog(ANALOG_LEFT_X);
 		
 		liftConrol();
 

@@ -1,6 +1,8 @@
 #include "pros/misc.h"
 #include "robotConfig.h"
 
+chassis_t chassis;
+
 double turrControl(void){
     double turrAngle = -float(turretEncoder.get_position())/100/259*12;
     double turrAngleABS  = inertial.get_rotation() + turrAngle;
@@ -64,29 +66,6 @@ double intakeControl(double diffInSpd){
     return baseSPD;
 }
 
-void motorControl(void){
-  while(runLoop){
-    //getting speeds that diff needs to run at
-    double diffInSpd = turrControl();
-    int baseSPD = intakeControl(diffInSpd);
-
-    diff1 = diffInSpd + baseSPD;
-    diff2 = -diffInSpd + baseSPD;
-    //also put a speed controller for flywheel here, PID is not going to optimal.
-    //currently, driver have to wait for flywheel to drop speed down while moving, and the amount of decceleration seems to have no difference than turnning the motor off.
-    //I looked up bangbang ctl from https://wiki.purduesigbots.com/software/control-algorithms/bang-bang
-    //in the description it said to have low acc, but in vex game nothing but net, sigbots used this controller for their flywheels
-    //considering the simplisity and the amount of tolerance we have, this would be a good solution for now.
-
-    flyWheel1 = angularVelocityCalc();
-    flyWheel2 = angularVelocityCalc();
-    delay(20);
-    if (competition_is_autonomous()){
-      moveTo();
-    }
-  }
-  
-}
 void moveTo(){
       if (resetMoveTo) {
         dist = 0;          // change of position
@@ -188,4 +167,32 @@ void moveTo(){
       prevPIDSS = PIDSS;
       prevPIDFW = PIDFW;
       task::sleep(10);
+}
+
+void motorControl(void){
+  while(runLoop){
+    //getting speeds that diff needs to run at
+    double diffInSpd = turrControl();
+    int baseSPD = intakeControl(diffInSpd);
+
+    //also put a speed controller for flywheel here, PID is not going to optimal.
+    //currently, driver have to wait for flywheel to drop speed down while moving, and the amount of decceleration seems to have no difference than turnning the motor off.
+    //I looked up bangbang ctl from https://wiki.purduesigbots.com/software/control-algorithms/bang-bang
+    //in the description it said to have low acc, but in vex game nothing but net, sigbots used this controller for their flywheels
+    //considering the simplisity and the amount of tolerance we have, this would be a good solution for now.
+
+    diff1 = diffInSpd + baseSPD;
+    diff2 = -diffInSpd + baseSPD;
+    flyWheel1 = angularVelocityCalc();
+    flyWheel2 = angularVelocityCalc();
+    lfD.move(LNSpeed + MSpeed);
+    lbD.move(LNSpeed - MSpeed);
+    rfD.move(RNSpeed - MSpeed);
+    rbD.move(RNSpeed + MSpeed);
+    delay(20);
+    if (competition_is_autonomous()){
+      moveTo();
+    }
+  }
+  
 }
