@@ -34,6 +34,24 @@ void initialize() {
 	master.print(1,1,"Calibration Success.");
 
 
+    homeGoal.xpos = 120;
+    homeGoal.ypos = 120;
+    homeGoal.zpos = 25;
+    
+    robot.xpos = 0;
+    robot.ypos = 0;
+    robot.zpos = 12.2;
+    
+	move.moveToxpos = 30;
+	move.moveToypos = 0;
+
+    robot.xVelocity = 0;
+    robot.yVelocity = 0;
+
+    setAngle(turret, 180);
+
+    Task turrC(motorControl);
+    Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);
 }
 
@@ -42,23 +60,24 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-	robot.xpos = 0;
-	robot.ypos = 0;
-	move.moveToxpos = 30;
-	move.moveToypos = 0;
+	runLoop = true;
+	
 }
 
 void opcontrol() {
 	// i want to go to world...
+	delay(500);
+	robot.xpos = 0;
+	robot.ypos = 0;
 	while(1){
-		//left normal speed and right normal speed (as in not using mechanum superpowers)
+		/*//left normal speed and right normal speed (as in not using mechanum superpowers)
 		chassis.driveTrain.leftSpd = -master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_X);
 		chassis.driveTrain.rightSpd = -master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
 
 		//mechanum(magic) speed
 		chassis.driveTrain.mechSpd = -master.get_analog(ANALOG_LEFT_X);
 		
-		liftConrol();
+		liftConrol();*/
 
 		devCheck();
 

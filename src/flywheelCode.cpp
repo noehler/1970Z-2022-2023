@@ -54,15 +54,9 @@ void singSameOldSongTimeTurretTwister(void){
   double Tar_ang = atan(P1 / P2);
   if (P2 < 0){
     Tar_ang = Tar_ang + M_PI;
+  } else {
+    Tar_ang = Tar_ang +2*M_PI;
   }
-  /*while(Tar_ang < 0){
-    Tar_ang+=2*M_PI;
-  }
-  while(Tar_ang > 2*M_PI){
-    Tar_ang-=2*M_PI;
-  }*/
-
-  // why take this mod calculation out?
 
   //std::cout<< "\nAngle: " << Tar_ang;
   double P3 = cos(Tar_ang) * 0.707106781187 * T;

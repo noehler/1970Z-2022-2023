@@ -32,7 +32,7 @@ class chassis_t {
 };
 class moveToInfo_t{
   public:
-    double moveToxpos, moveToypos, targetHeading, ets, speed_limit, errtheta;
+    double moveToxpos=0, moveToypos=0, targetHeading, ets=0, speed_limit=100, errtheta=30;
     double dist = 0;          // change of position
     double distR = 0;         // chagne of right postion
     double distL = 0;         // change of left position
@@ -44,8 +44,8 @@ class moveToInfo_t{
     double prevPIDSS = 0;     // PID turning speed at t = -1
     double PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
     double PIDSSFLAT = 0;   
-    int moveToforwardToggle, Stop_type;
-    bool reset;
+    int moveToforwardToggle = 1, Stop_type = 2;
+    bool reset = true;
 };
 
 extern moveToInfo_t move;

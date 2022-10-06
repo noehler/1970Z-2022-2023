@@ -6,61 +6,59 @@ chassis_t chassis;
 double turrControl(void){
   static double PIDSpeedSpin = 0;
   static double prevPIDSpeedSpin = 0;
-    double turrAngle = -float(turretEncoder.get_position())/100/259*12;
-    double turrAngleABS  = inertial.get_rotation() + turrAngle;
+  double turrAngle = -float(turretEncoder.get_position())/100/259*12;
+  double turrAngleABS  = inertial.get_rotation() + turrAngle;
 
-    //std::cout << "\nTAngleRel: " << turrAngle;  
-    bool dtb = false;
-    static double diffInSpd;
-    std::cout << "\ninert: " << inertialTurret.get_rotation() << ", enc: " << -turrAngleABS;
-    if (fabs(-turrAngleABS + inertialTurret.get_rotation()) > 3 && abs(turretEncoder.get_velocity()) < 300){
-        turretEncoder.set_position((-inertialTurret.get_rotation() + inertial.get_rotation())*100*259/12);
-        dtb = 1;
-        std::cout << "\ndiff: " << turrAngleABS + inertialTurret.get_rotation() << ", new: " << -turrAngleABS;
-    }
-    else{
-    }
-    /*std::cout << "\ndiff: " << fabs(turrAngleABS + inertialTurret.get_rotation()) << ",     IturrAngle: " << inertialTurret.get_rotation() << ",    AbsRot: " << turrAngleABS
-        << ",    IbaseRot: "<< inertial.get_rotation() << ",    vel: " << turretEncoder.get_velocity() << ",     diff2Big: " << dtb;*/
-    double turrAngleBet = robotGoal.angleBetweenHorABS + turrAngleABS;
-    if (turrAngleBet > 180){
-        turrAngleBet -= 360;
-    }
-    else if( turrAngleBet < -180){
-        turrAngleBet += 360;
-    }
-    //feed forward code todo here, 
-    //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
-    //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
-    //turret target speed = -chassie rotation rate (because turret need to go to opposite of chassie rotation) + turret target speed
-    //feed above calculated speed into a PID
+  //std::cout << "\nTAngleRel: " << turrAngle;  
+  bool dtb = false;
+  if (fabs(-turrAngleABS + inertialTurret.get_rotation()) > 3 && abs(turretEncoder.get_velocity()) < 300){
+      turretEncoder.set_position((-inertialTurret.get_rotation() + inertial.get_rotation())*100*259/12);
+      dtb = 1;
+      std::cout << "\ndiff: " << turrAngleABS + inertialTurret.get_rotation() << ", new: " << -turrAngleABS;
+  }
+  else{
+  }
+  
+  double turrAngleBet = robotGoal.angleBetweenHorABS + turrAngleABS;
+  if (turrAngleBet > 180){
+      turrAngleBet -= 360;
+  }
+  else if( turrAngleBet < -180){
+      turrAngleBet += 360;
+  }
+  //feed forward code todo here, 
+  //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
+  //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
+  //turret target speed = -chassie rotation rate (because turret need to go to opposite of chassie rotation) + turret target speed
+  //feed above calculated speed into a PID
 
-    //slowing down turret when nothing is loaded or on deck so intake can run faster
-    if (deckLoaded.get_value() > 1900){
-    PIDSpeedSpin = 0.1*turrAngleBet + 0.001*prevPIDSpeedSpin*.01 + 0.1*(PIDSpeedSpin - prevPIDSpeedSpin)/.01;
-    prevPIDSpeedSpin = PIDSpeedSpin;
-    }else{
-        diffInSpd = 0; // put that PID here
-    }
-    return diffInSpd;
+  //slowing down turret when nothing is loaded or on deck so intake can run faster
+  //if (deckLoaded.get_value() > 1900){
+  PIDSpeedSpin = 0.1*turrAngleBet + 0.001*prevPIDSpeedSpin*.01 + 0.1*(PIDSpeedSpin - prevPIDSpeedSpin)/.01;
+  prevPIDSpeedSpin = PIDSpeedSpin;
+  //}else{
+  //    diffInSpd = 0; // put that PID here
+  //}
+  //std::cout << "\ndiffInSpd: " << PIDSpeedSpin;
+  return PIDSpeedSpin;
 }
 
 double intakeControl(double diffInSpd){
-    int baseSPD;
-    if (chassis.intakeRunning == 2){
-      baseSPD = 127-fabs(diffInSpd);
-    }
-    else if (chassis.intakeRunning == 1){
-      baseSPD = -127+fabs(diffInSpd);
-    }
-    else{
-      baseSPD = 0;
-    } 
-    return baseSPD;
+  int baseSPD;
+  if (chassis.intakeRunning == 2){
+    baseSPD = 127-fabs(diffInSpd);
+  }
+  else if (chassis.intakeRunning == 1){
+    baseSPD = -127+fabs(diffInSpd);
+  }
+  else{
+    baseSPD = 0;
+  } 
+  return baseSPD;
 }
 
 moveToInfo_t move;
-void moveTo(){
+void moveTo(void){
   if (move.reset) {
     move.dist = 0;          // change of position
     move.distR = 0;         // chagne of right postion
@@ -73,10 +71,16 @@ void moveTo(){
     move.prevPIDSS = 0;     // PID turning speed at t = -1
     move.PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
     move.PIDSSFLAT = 0;     // variable used for keeping turning speed < 20
-    move.targetHeading = 0; // variable for for calculating first turning.
+ // variable for for calculating first turning.
     move.reset = false;
   }
-  double currentheading = -inertial.get_rotation();
+  double currentheading =(360 -inertial.get_rotation())/180 * M_PI;
+  if (currentheading == PROS_ERR_F)
+  {
+    // JLO - handle error and exit, we can't continue
+    std::cout << "\n headingFudge";
+    return;
+  }
   /*
   function logic:
   find errors of position, turn to target if robot cannot move in a arc to
@@ -88,40 +92,28 @@ void moveTo(){
   double etx = move.moveToxpos - robot.xpos;//change of x
   double ety = move.moveToypos - robot.ypos;//change of y
   double dist = sqrt(pow(etx, 2) + pow(ety, 2));
-  double et = dist * 41.6696578277;
-  double r = ety / dist;
-  if ((etx) < 0) {
-  move.targetHeading = 180 - asin(r) * 180 / M_PI;
-  } else if (et == 0) {
-  move.targetHeading = currentheading * 180 / M_PI;
-  } else {
-  move.targetHeading = asin(r) * 180 / M_PI;
+  double et = dist * 10;
+  std::cout << "\n Hi5";
+  move.targetHeading = atan(ety/etx);
+  if (etx<0){
+    move.targetHeading +=M_PI;
+  } else if(etx ==0){
+    move.targetHeading = M_PI/2*(fabs(ety)/ety);
   }
-  if (move.moveToforwardToggle == -1) {
-  move.targetHeading += 180;
+  if (move.moveToforwardToggle == -1){
+    move.ets +=M_PI;
   }
-  while (move.targetHeading < 0) {
-  move.targetHeading += 360;
+  move.ets = move.targetHeading - currentheading;
+  if (move.ets < -M_PI) {
+  move.ets += 2*M_PI;
   }
-  while (move.targetHeading > 360) {
-  move.targetHeading -= 360;
+  if (move.ets > M_PI) {
+  move.ets -= 2*M_PI;
   }
-  while (currentheading * 180 / M_PI < 0) {
-  move.targetHeading = (currentheading * 180 / M_PI + 360) * 0.01745329251;
-  }
-  while (currentheading * 180 / M_PI > 360) {
-  move.targetHeading = (currentheading * 180 / M_PI - 360) * 0.01745329251;
-  }
-  move.ets = move.targetHeading - currentheading * 180 / M_PI;
-  while (move.ets < -180) {
-  move.ets += 360;
-  }
-  while (move.ets > 180) {
-  move.ets -= 360;
-  }
-  move.PIDSS = 1 * move.ets + 0.1 * move.prevPIDSS * .01 + 1 * (move.PIDSS - move.prevPIDSS) / .01;
-  if (fabs(move.ets) < move.errtheta) {
-    move.PIDFW = move.moveToforwardToggle * (3 * et + 1 * move.prevPIDFW * .01 + 0.4 * (move.PIDFW - move.prevPIDFW) / .01);
+  move.ets = move.ets*180/M_PI;
+  move.PIDSS = 3 * move.ets + 0.1 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
+  if (fabs(move.ets) < 10) {
+    move.PIDFW = move.moveToforwardToggle * (3 * et + 0.1 * move.prevPIDFW * .01 + 0.1 * (move.PIDFW - move.prevPIDFW) / .01);
   } else {
     move.PIDFW = 0;
   }
@@ -141,14 +133,14 @@ void moveTo(){
     move.PIDSSFLAT = -2 * move.speed_limit;
   }
   if (move.moveToforwardToggle) {
-    move.PIDSpeedR = move.PIDFWFLAT + move.PIDSSFLAT;
-    move.PIDSpeedL = move.PIDFWFLAT - move.PIDSSFLAT;
+    move.PIDSpeedR = -move.PIDFWFLAT - move.PIDSSFLAT;
+    move.PIDSpeedL = -move.PIDFWFLAT + move.PIDSSFLAT;
 
   } else {
-    move.PIDSpeedR = move.PIDFWFLAT + move.PIDSSFLAT;
-    move.PIDSpeedL = move.PIDFWFLAT - move.PIDSSFLAT;
+    move.PIDSpeedR = -move.PIDFWFLAT - move.PIDSSFLAT;
+    move.PIDSpeedL = -move.PIDFWFLAT + move.PIDSSFLAT;
   }
-  if (dist < 3) {
+  if (dist < 5) {
     move.reset = true;
     if (move.Stop_type == 1) {
         //motor stop (hold)
@@ -170,19 +162,22 @@ void moveTo(){
         rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
 
     }
-    //continue;
+  } else {
+  chassis.driveTrain.leftSpd = move.PIDSpeedL;
+  chassis.driveTrain.rightSpd = move.PIDSpeedR;
+  chassis.driveTrain.mechSpd = 0;
   }
   //output motor speeds
-  chassis.driveTrain.leftSpd = move.PIDFW + move.PIDSS;
-  chassis.driveTrain.rightSpd = move.PIDFW - move.PIDSS;
-  chassis.driveTrain.mechSpd = 0;
+
+  std::cout << "\net: " << dist << ", ets: " << move.ets;
+  std::cout << "\npidfw: " << move.PIDFW << ", pidss: " << move.PIDSS;
 
   move.prevPIDSS = move.PIDSS;
   move.prevPIDFW = move.PIDFW;
 }
 
 void motorControl(void){
-  while(runLoop){
+  while(1){moveTo();
     //getting speeds that diff needs to run at
     double diffInSpd = turrControl();
     int baseSPD = intakeControl(diffInSpd);
@@ -207,7 +202,7 @@ void motorControl(void){
       flyWheel1 = angularVelocityCalc();
       flyWheel2 = angularVelocityCalc();
     }
-
+    
     if (chassis.driveTrain.leftSpd != 0 || chassis.driveTrain.rightSpd != 0 ||chassis.driveTrain.mechSpd != 0){
       lfD.move(chassis.driveTrain.leftSpd + chassis.driveTrain.mechSpd); 
       lbD.move(chassis.driveTrain.leftSpd - chassis.driveTrain.mechSpd);
@@ -220,11 +215,12 @@ void motorControl(void){
       rfD.brake();
       rbD.brake();
     }
+    //std::cout << "\n motorControl entered";
+    
 
     delay(20);
-    if (competition::is_autonomous()){
-      moveTo();
-    }
+    //if (competition::is_autonomous()){
+    //}
   }
   
 }

@@ -14,7 +14,7 @@ bool runLoop = true;
 
 void updateInfoLoop(void){
     //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
-    while (runLoop){
+    while (1){
         odometry();
         delay(20);
     }  
@@ -22,24 +22,8 @@ void updateInfoLoop(void){
 
 void startLoop(void)
 {
-    
-    homeGoal.xpos = 120;
-    homeGoal.ypos = 120;
-    homeGoal.zpos = 25;
-    
-    robot.xpos = 72;
-    robot.ypos = 72;
-    robot.zpos = 12.2;
 
-    robot.xVelocity = 0;
-    robot.yVelocity = 0;
-
-    setAngle(turret, 180);
-
-    Task turrC(motorControl);
-    Task varUP(updateInfoLoop);
-
-    while (runLoop){
+    while (1){
         robotGoal.dx = homeGoal.xpos-robot.xpos;
         robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = -(robot.zpos-homeGoal.zpos);

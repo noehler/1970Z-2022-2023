@@ -282,7 +282,7 @@ void devCheck(void){
 			master.clear_line(1);
 			delay(50);
 			master.print(1, 1, "Entering dev mode");
-			runLoop = false;
+			//runLoop = false;
       std::cout << "\nDevmode\n";
 			devMode();
 			delay(50);
