@@ -23,6 +23,10 @@ class chassis_t {
 
     double flyRPM;
 
+    bool isSpinner = true;
+
+    //0 is blue, 1 is red
+    bool teamColor = 0;
 
     //tV values and what they mean
     //0 is stopped

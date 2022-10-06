@@ -93,7 +93,7 @@ void moveTo(void){
   double ety = move.moveToypos - robot.ypos;//change of y
   double dist = sqrt(pow(etx, 2) + pow(ety, 2));
   double et = dist * 10;
-  std::cout << "\n Hi5";
+  //std::cout << "\n Hi5";
   move.targetHeading = atan(ety/etx);
   if (etx<0){
     move.targetHeading +=M_PI;
@@ -169,19 +169,44 @@ void moveTo(void){
   }
   //output motor speeds
 
-  std::cout << "\net: " << dist << ", ets: " << move.ets;
-  std::cout << "\npidfw: " << move.PIDFW << ", pidss: " << move.PIDSS;
+  //std::cout << "\net: " << dist << ", ets: " << move.ets;
+  //std::cout << "\npidfw: " << move.PIDFW << ", pidss: " << move.PIDSS;
 
   move.prevPIDSS = move.PIDSS;
   move.prevPIDFW = move.PIDFW;
 }
 
+void spinRoller(void){
+  opticalSensor.set_led_pwm(50);
+  double redVal = opticalSensor.get_rgb().red;
+  double blueVal = opticalSensor.get_rgb().blue;
+  //std::cout << "\n r:" << opticalSensor.get_rgb().red << ",  g:" << opticalSensor.get_rgb().green << ",  b:" << opticalSensor.get_rgb().blue;
+  if (chassis.isSpinner == true){
+    //0 is blue
+    //1 is red
+    bool colorDown;
+    if (redVal - blueVal > 50){
+      colorDown = 1;
+    }
+    else if (redVal - blueVal < 20){
+      colorDown = 0;
+    }
+    if (chassis.teamColor == colorDown){
+      //chassis.intakeRunning = 2;
+    }
+    else{
+      //chassis.intakeRunning = 0;
+    }
+    
+  }
+}
+
 void motorControl(void){
-  while(1){moveTo();
+  while(1){
     //getting speeds that diff needs to run at
     double diffInSpd = turrControl();
     int baseSPD = intakeControl(diffInSpd);
-
+    double FlyWVolt, prevFlyWVolt;
     //also put a speed controller for flywheel here, PID is not going to optimal.
     //currently, driver have to wait for flywheel to drop speed down while moving, and the amount of decceleration seems to have no difference than turnning the motor off.
     //I looked up bangbang ctl from https://wiki.purduesigbots.com/software/control-algorithms/bang-bang
@@ -190,19 +215,16 @@ void motorControl(void){
 
     diff1 = diffInSpd + baseSPD;
     diff2 = -diffInSpd + baseSPD;
-
-    double flyWheelVelocity = flyWheel1.get_actual_velocity()/2 + flyWheel2.get_actual_velocity()/2;
-    if (angularVelocityCalc()-flyWheelVelocity<-5){
-      flyWheel1 = 127;
-      flyWheel2 = 127;
-    } else if (angularVelocityCalc()-flyWheelVelocity>5){
-      flyWheel1 = -127;
-      flyWheel2 = -127;
-    } else{
-      flyWheel1 = angularVelocityCalc();
-      flyWheel2 = angularVelocityCalc();
+    double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/10;
+    double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
+   FlyWVolt = (3 * diffFlyWheelW + 2.3 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
+    if (FlyWVolt > 127){
+      FlyWVolt = 127;
     }
-    
+    prevFlyWVolt = FlyWVolt;
+    std::cout <<"\ndiffV:" <<FlyWVolt-flyWheelW*0.94776119<<" V:"<<flyWheelW;
+    flyWheel1.move(FlyWVolt); 
+    flyWheel2.move(FlyWVolt);
     if (chassis.driveTrain.leftSpd != 0 || chassis.driveTrain.rightSpd != 0 ||chassis.driveTrain.mechSpd != 0){
       lfD.move(chassis.driveTrain.leftSpd + chassis.driveTrain.mechSpd); 
       lbD.move(chassis.driveTrain.leftSpd - chassis.driveTrain.mechSpd);
@@ -217,10 +239,12 @@ void motorControl(void){
     }
     //std::cout << "\n motorControl entered";
     
+    spinRoller();
 
     delay(20);
-    //if (competition::is_autonomous()){
-    //}
+    if (competition::is_autonomous()){
+      moveTo();
+    }
   }
   
 }

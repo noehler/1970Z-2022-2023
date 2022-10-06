@@ -20,7 +20,7 @@ Motor diff2(6, E_MOTOR_GEARSET_06, true);
 Imu inertial(8);
 Imu inertialTurret(12);
 Rotation turretEncoder(10);
-
+Optical opticalSensor(17);
 
 ADIDigitalOut shootPiston({{22,'B'}});
 ADIDigitalOut elevatePiston({{9,'G'}});

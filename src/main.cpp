@@ -59,26 +59,18 @@ void disabled() {}
 
 void competition_initialize() {}
 
-void autonomous() {
-	runLoop = true;
-	
-}
-
 void opcontrol() {
 	// i want to go to world...
-	delay(500);
-	robot.xpos = 0;
-	robot.ypos = 0;
 	while(1){
-		/*//left normal speed and right normal speed (as in not using mechanum superpowers)
+		//left normal speed and right normal speed (as in not using mechanum superpowers)
 		chassis.driveTrain.leftSpd = -master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_X);
 		chassis.driveTrain.rightSpd = -master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
 
 		//mechanum(magic) speed
 		chassis.driveTrain.mechSpd = -master.get_analog(ANALOG_LEFT_X);
 		
-		liftConrol();*/
-
+		liftConrol();
+		
 		devCheck();
 
 		delay(20);

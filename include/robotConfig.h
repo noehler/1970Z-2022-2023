@@ -6,6 +6,7 @@
 #include "GUI.h"
 #include "devFunctions.h"
 #include "odometry.h"
+#include "autonomous.h"
 #include "backgroundFuncs.h"
 #include "motorControl.h"
 
@@ -44,5 +45,7 @@ extern ADIAnalogIn deckLoaded;
 extern ADIAnalogIn holeLoaded;
 
 extern Imu inertial;
+
+extern Optical opticalSensor;
 
 #endif
