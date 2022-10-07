@@ -38,35 +38,46 @@ static lv_res_t btn_click_action(lv_obj_t * btn)
     return LV_RES_OK;
 }
 
+double targetAngleOffest = 0;
+
 void controller2(void){
-    double offsetxbot = 0;
-    double offsetybot = 0;
-    double offsetxgoal = 0;
-    double offsetgoal = 0;
-
-    while(sidecar.is_connected()){
-        double addxbot = float(sidecar.get_analog(ANALOG_LEFT_X))/64;
-        double addybot = float(sidecar.get_analog(ANALOG_LEFT_Y))/64;
-
+    while (1){
         static double offsetxbot = 0;
         static double offsetybot = 0;
+        static double offsetxgoal = 0;
+        static double offsetygoal = 0;
+
+        double addxbot = 0;
+        double addybot = 0;
+
+        if (sidecar.get_digital(DIGITAL_UP)){
+            addybot+=1;
+        }
+        if (sidecar.get_digital(DIGITAL_DOWN)){
+            addybot-=1;
+        }
+        if (sidecar.get_digital(DIGITAL_RIGHT)){
+            addxbot+=1;
+        }
+        if (sidecar.get_digital(DIGITAL_LEFT)){
+            addxbot-=1;
+        }
+
+        if (sidecar.get_digital(DIGITAL_A) && sidecar.get_digital(DIGITAL_B)
+        && sidecar.get_digital(DIGITAL_X) && sidecar.get_digital(DIGITAL_Y)){
+            boomShackalacka.set_value(true);
+        }
+
+        targetAngleOffest += sidecar.get_analog(ANALOG_LEFT_X);
+        if (sidecar.get_digital(DIGITAL_A)){
+            targetAngleOffest = 0;
+        }
 
         offsetxbot+=addxbot;
         offsetybot+=addybot;
 
         robot.xpos +=addxbot;
         robot.ypos +=addybot;
-
-        double addxgoal = float(sidecar.get_analog(ANALOG_RIGHT_X))/64;
-        double addygoal = float(sidecar.get_analog(ANALOG_RIGHT_Y))/64;
-        
-        static double offsetxgoal = 0;
-        static double offsetygoal = 0;
-        offsetxgoal+=addxgoal;
-        offsetygoal+=addygoal;
-
-        homeGoal.xpos +=addxgoal;
-        homeGoal.ypos +=addygoal;
 
         bool multchanged = false;
         if (sidecar.get_digital(DIGITAL_R1)){
@@ -78,20 +89,16 @@ void controller2(void){
             multchanged = true;
         }
 
-        if (addxbot != 0 || addybot != 0 || addxgoal != 0 || addygoal != 0 || multchanged){
-            delay(50);
-            sidecar.clear();
-            delay(50);
-            sidecar.print(0,1,"Goal: X: %.2f, Y: %.2f, oX: %.2f, oY: %.2f", robot.xpos, robot.ypos, addxbot, addybot);
-            delay(50);
-            sidecar.print(1,1,"Bot: X: %.2f, Y: %.2f, oX: %.2f, oY: %.2f", homeGoal.xpos, homeGoal.ypos, addxgoal, addygoal);
-            delay(50);
-            sidecar.print(2,1,"FlyMult: %.2f", flySpdMult);
-        }
-        else{
-            delay(400);
-        }
+        delay(50);
+        sidecar.clear();
+        delay(50);
+        sidecar.print(0,1,"(%.2f|%.2f)", robot.xpos, robot.ypos);
+        delay(50);
+        sidecar.print(2,1,"FlyMult: %.2f", flySpdMult);
+        delay(50);
     }
+    
+    
 }
 
 void guiInit(void){

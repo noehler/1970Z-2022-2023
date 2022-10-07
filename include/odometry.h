@@ -7,7 +7,7 @@ class position_t {
   public:
     double xpos, ypos, zpos, width = 10, length = 6;
     double angle;
-    double velocity, xVelocity, yVelocity;
+    double velocity, xVelocity, yVelocity,wVelocity;
 };
 
 class robotGoalRelatives {

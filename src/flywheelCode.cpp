@@ -63,7 +63,7 @@ void singSameOldSongTimeTurretTwister(void){
   double V_disk = P2 / P3;
 
   //outputting calculated values
-  robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI;
+  robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest;
   goalSpeed = V_disk;
   //std::cout << "\nAngle:" << robotGoal.angleBetweenHorABS;
 }
@@ -74,8 +74,8 @@ void liftConrol(void){
   static bool elevatePist = true;
   static bool shootPist = true;
 
-  shootPist = master.get_digital(DIGITAL_L2);
-  elevatePist = master.get_digital(DIGITAL_L1);
+  shootPist = master.get_digital(DIGITAL_L1)+ sidecar.get_digital(DIGITAL_L2);
+  elevatePist = master.get_digital(DIGITAL_L2)+ sidecar.get_digital(DIGITAL_L1);
   
   shootPiston.set_value(shootPist);
   elevatePiston.set_value(elevatePist);

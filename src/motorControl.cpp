@@ -6,26 +6,56 @@ chassis_t chassis;
 double turrControl(void){
   static double PIDSpeedSpin = 0;
   static double prevPIDSpeedSpin = 0;
-  double turrAngle = -float(turretEncoder.get_position())/100/259*12;
-  double turrAngleABS  = inertial.get_rotation() + turrAngle;
-
+  double encAng = float(turretEncoder.get_position())/2158.3333;//convert to angle btw turret and robot chassie
+  double turrHeadingEnc  = 360-inertial.get_rotation() + encAng;//convert to angle btw turret and xaxis
+  double turrHeadingInr = 360-inertialTurret.get_rotation();
+  static double T = 0;
+  static double previousT=0;
+  T = float(millis())/1000 - previousT; // JLO - Is this right?  What units are T in?  usec or sec?
+  previousT+=T;
   //std::cout << "\nTAngleRel: " << turrAngle;  
   bool dtb = false;
-  if (fabs(-turrAngleABS + inertialTurret.get_rotation()) > 3 && abs(turretEncoder.get_velocity()) < 300){
+  /*if (encAng > 360){
+      encAng -= 360;
+  }
+  else if( encAng < -360){
+      encAng += 360;
+  }
+  if (turrHeadingEnc > 360){
+      turrHeadingEnc -= 360;
+  }
+  else if( turrHeadingEnc < -360){
+      turrHeadingEnc += 360;
+  }
+  if (turrHeadingInr > 360){
+      turrHeadingInr -= 360;
+  }
+  else if( turrHeadingInr < -360){
+      turrHeadingInr += 360;
+  } */
+  double headingerror = turrHeadingEnc- turrHeadingInr;
+  /*if (headingerror > 360){
+      headingerror -= 360;
+  }
+  else if( headingerror < -360){
+      headingerror += 360;
+  } */
+ /* if (fabs(headingerror)>5){
       turretEncoder.set_position((-inertialTurret.get_rotation() + inertial.get_rotation())*100*259/12);
       dtb = 1;
-      std::cout << "\ndiff: " << turrAngleABS + inertialTurret.get_rotation() << ", new: " << -turrAngleABS;
+      std::cout << "\ndiff: " << turrHeadingEnc + inertialTurret.get_rotation() << ", new: " << -turrHeadingEnc;
   }
   else{
-  }
+  }*/
   
-  double turrAngleBet = robotGoal.angleBetweenHorABS + turrAngleABS;
-  if (turrAngleBet > 180){
-      turrAngleBet -= 360;
+  double angdiff = robotGoal.angleBetweenHorABS - turrHeadingEnc;
+  if (angdiff > 180){
+      angdiff -= 360;
   }
-  else if( turrAngleBet < -180){
-      turrAngleBet += 360;
+  else if( angdiff < -180){
+      angdiff += 360;
   }
+
   //feed forward code todo here, 
   //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
   //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
@@ -34,7 +64,11 @@ double turrControl(void){
 
   //slowing down turret when nothing is loaded or on deck so intake can run faster
   //if (deckLoaded.get_value() > 1900){
-  PIDSpeedSpin = 0.1*turrAngleBet + 0.001*prevPIDSpeedSpin*.01 + 0.1*(PIDSpeedSpin - prevPIDSpeedSpin)/.01;
+
+  double PIDscalar = 1.5;
+  double gyroScalar = 13;
+
+  PIDSpeedSpin =(1.3*angdiff + 0.001*prevPIDSpeedSpin*.01 + 0.1*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*12;
   prevPIDSpeedSpin = PIDSpeedSpin;
   //}else{
   //    diffInSpd = 0; // put that PID here
@@ -91,6 +125,7 @@ void moveTo(void){
   */
   double etx = move.moveToxpos - robot.xpos;//change of x
   double ety = move.moveToypos - robot.ypos;//change of y
+  //std::cout << "\nX: " << robot.xpos << ", Y: " << robot.ypos << ", heading: " << inertial.get_rotation()<< " tarx:"<< move.moveToxpos << "tary:"<<move.moveToypos;
   double dist = sqrt(pow(etx, 2) + pow(ety, 2));
   double et = dist * 10;
   //std::cout << "\n Hi5";
@@ -174,10 +209,19 @@ void moveTo(void){
 
   move.prevPIDSS = move.PIDSS;
   move.prevPIDFW = move.PIDFW;
+
+  std::cout << "\n(" << robot.xpos << "," << robot.ypos << ")";
+
+  logVals("heading" , currentheading);
+  logVals("pidSS" , move.PIDSS);
+  logVals("pidFW" , move.PIDFW);
+  logVals("xPos" , robot.xpos);
+  logVals("yPos" , robot.ypos);
+  logVals();
 }
 
 void spinRoller(void){
-  opticalSensor.set_led_pwm(50);
+  //opticalSensor.set_led_pwm(50);
   double redVal = opticalSensor.get_rgb().red;
   double blueVal = opticalSensor.get_rgb().blue;
   //std::cout << "\n r:" << opticalSensor.get_rgb().red << ",  g:" << opticalSensor.get_rgb().green << ",  b:" << opticalSensor.get_rgb().blue;
@@ -192,10 +236,10 @@ void spinRoller(void){
       colorDown = 0;
     }
     if (chassis.teamColor == colorDown){
-      //chassis.intakeRunning = 2;
+      chassis.intakeRunning = 2;
     }
     else{
-      //chassis.intakeRunning = 0;
+      chassis.intakeRunning = 0;
     }
     
   }
@@ -217,14 +261,14 @@ void motorControl(void){
     diff2 = -diffInSpd + baseSPD;
     double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/10;
     double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
-   FlyWVolt = (3 * diffFlyWheelW + 2.3 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
+    FlyWVolt = (3 * diffFlyWheelW + 2.3 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
     if (FlyWVolt > 127){
       FlyWVolt = 127;
     }
     prevFlyWVolt = FlyWVolt;
-    std::cout <<"\ndiffV:" <<FlyWVolt-flyWheelW*0.94776119<<" V:"<<flyWheelW;
     flyWheel1.move(FlyWVolt); 
-    flyWheel2.move(FlyWVolt);
+    flyWheel2.move(FlyWVolt);//this input is ranged from 0 to 127, either scaled or not voltage
+
     if (chassis.driveTrain.leftSpd != 0 || chassis.driveTrain.rightSpd != 0 ||chassis.driveTrain.mechSpd != 0){
       lfD.move(chassis.driveTrain.leftSpd + chassis.driveTrain.mechSpd); 
       lbD.move(chassis.driveTrain.leftSpd - chassis.driveTrain.mechSpd);
@@ -245,6 +289,7 @@ void motorControl(void){
     if (competition::is_autonomous()){
       moveTo();
     }
+    delay(20);
   }
   
 }

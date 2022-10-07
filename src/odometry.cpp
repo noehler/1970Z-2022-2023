@@ -50,7 +50,9 @@ void odometry(void){
   double a = 8; //distance between two tracking wheels
   double b = -2.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
   static float T = 0;
-  T = float(millis())/1000 - T; // JLO - Is this right?  What units are T in?  usec or sec?
+  static double previousT =0;
+  T = float(millis())/1000 - previousT; // JLO - Is this right?  What units are T in?  usec or sec?
+  previousT+=T;
   double P1 = (Arc1 - Arc2);
   double Delta_y, Delta_x;
   double radRotation = -((inertial.get_rotation() * M_PI) / 180); 
@@ -63,7 +65,7 @@ void odometry(void){
   }
 
   // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-  if (fabs(odoHeading - radRotation) >= 5){
+  if (fabs(odoHeading - radRotation) >= 0.1){
     odoHeading = radRotation;
     std::cout << "\n angleDiff too big";
   }
@@ -72,13 +74,13 @@ void odometry(void){
   double Delta_heading = P1 / a; // change of heading
 
   //checkingVals
-  logVals("Arc1", Arc1);
+  /*logVals("Arc1", Arc1);
   logVals("Arc2" , Arc2);
   logVals("Arc3" , Arc3);
   logVals("P1" , P1);
   logVals("Angle" , radRotation);
   logVals("Time" , T);
-  logVals("Delta Heading" , Delta_heading);
+  logVals("Delta Heading" , Delta_heading);*/
 
   if ( P1 != 0) { // if there are change of heading while moving, arc approximation
     double Radius_side = (Arc1 + Arc2)*a/(2*P1); // radius to either side of the robot
@@ -96,14 +98,14 @@ void odometry(void){
     Delta_y = Radius_side * sin_side - Radius_back * sin_back;
 
     //outPutting vals
-    logVals("Side Radius" , Radius_side);
+    /*logVals("Side Radius" , Radius_side);
     logVals("Back Radius" , Radius_back);
     logVals("cos side" , cos_side);
     logVals("cos back" , cos_back);
     logVals("sin side" , sin_side);
     logVals("sin back" , sin_back);
     logVals("deltaX" , Delta_x);
-    logVals("deltaY" , Delta_y);
+    logVals("deltaY" , Delta_y);*/
   } 
   else { // if there are no change of heading while moving, triangular approximation
     //std::cout << "\nNo diff in a1 and a2";
@@ -116,11 +118,11 @@ void odometry(void){
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
   robot.yVelocity = Delta_y/T; //same as above
-
+  robot.wVelocity = Delta_heading/T;
   //outputting values
-  logVals("xPos" , robot.xpos);
+  /*logVals("xPos" , robot.xpos);
   logVals("yPos" , robot.ypos);
   logVals("xVel" , robot.xVelocity);
   logVals("yVel" , robot.yVelocity);
-  logVals();
+  logVals("reset");*/
 }

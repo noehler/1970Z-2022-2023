@@ -23,7 +23,7 @@ class chassis_t {
 
     double flyRPM;
 
-    bool isSpinner = true;
+    bool isSpinner = false;
 
     //0 is blue, 1 is red
     bool teamColor = 0;
@@ -36,7 +36,7 @@ class chassis_t {
 };
 class moveToInfo_t{
   public:
-    double moveToxpos=0, moveToypos=0, targetHeading, ets=0, speed_limit=100, errtheta=30;
+    double moveToxpos=0, moveToypos=0, targetHeading, ets=0, speed_limit=100, errtheta=5;
     double dist = 0;          // change of position
     double distR = 0;         // chagne of right postion
     double distL = 0;         // change of left position

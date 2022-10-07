@@ -19,6 +19,7 @@ extern Motor lfD;
 extern Motor lbD;
 extern Motor rfD;
 extern Motor rbD;
+extern ADIDigitalOut boomShackalacka;
 
 extern Motor flyWheel1;
 extern Motor flyWheel2;

@@ -3,5 +3,6 @@
 
 extern void guiInit(void);
 extern void controller2(void);
+extern double targetAngleOffest;
 
 #endif

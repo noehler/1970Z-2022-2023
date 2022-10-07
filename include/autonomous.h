@@ -1,6 +1,6 @@
 #ifndef __AUTONOMOUS_H__
 #define __AUTONOMOUS_H__
 
-extern void autonomous();
+extern void autonomousReal();
 
 #endif

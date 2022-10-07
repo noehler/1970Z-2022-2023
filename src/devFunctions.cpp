@@ -186,7 +186,7 @@ void devMode(void){
   master.clear();
   
 
-  /*lv_obj_t * myLabel[20];
+  lv_obj_t * myLabel[20];
   for (int i = 0; i <20; i++){
     myLabel[i] = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
     lv_label_set_text(myLabel[i], "No value Assigned yet"); //sets label text
@@ -199,9 +199,9 @@ void devMode(void){
     
     //std::cout << "\n" << i << "\n";
     delay(20);
-  }*/
+  }
   
-  lv_obj_t * rpm = lv_label_create(lv_scr_act(), NULL);
+  /*lv_obj_t * rpm = lv_label_create(lv_scr_act(), NULL);
   lv_label_set_text(rpm, "No value Assigned yet");
   lv_obj_align(rpm, NULL, LV_ALIGN_IN_LEFT_MID, 280, 50);
 
@@ -212,11 +212,10 @@ void devMode(void){
   double rpmCounter[rpmSize];
 
   for (int j = 0; j <rpmSize; j++){
-      rpmCounter[j] = 0;
-    }
-  //memcpy(rpmCounter, 0, 50);
+    rpmCounter[j] = 0;
+  }*/
   while(devPossible){
-    static int flySpeed = 0;
+    /*static int flySpeed = 0;
 
     if (master.get_digital(DIGITAL_UP) && flySpeed < 127){
       flySpeed += 1;
@@ -247,19 +246,19 @@ void devMode(void){
     }
     else{
       c++;
-    }
+    }*/
 
-    char buffer[200];
+    /*char buffer[200];
     sprintf(buffer, "PCT : %d, RPM: %.02f", flySpeed, rpmAVG);
-    lv_label_set_text(rpm, buffer);
+    lv_label_set_text(rpm, buffer);*/
     
     delay(20);
-    /*for (int i=0; i < 20; i++){
+    for (int i=0; i < 20; i++){
       char buffer[50];
-      sprintf(buffer, "%s : %d",outNames[i] ,outVals[i]);
+      sprintf(buffer, "%s : %f",outNames[i] ,outVals[i]);
       lv_label_set_text(myLabel[i], buffer);
       delay(20);
-    }*/
+    }
 
     liftConrol();
 
@@ -303,24 +302,24 @@ void warn(void){
 }
 
 void logVals(std::string name,double value){
-  /*static int i = 0;
+  static int i = 0;
   if (name == "reset"){
     i = 0;
   }
   else{
     outVals[i] = value;
-    sprintf(outNames[i], "%s", name);
+    sprintf(outNames[i], "%s", name.c_str());
     i++;
-  }*/
+  }
 }
 
 void setAngle(objectType object, int degree){
   if (object == base){
-    inertial.set_rotation(-degree);
+    inertial.set_rotation(360-degree);
   }
   else{
-    inertialTurret.set_rotation(-degree);
-    turretEncoder.set_position(degree *100*259/12);
+    inertialTurret.set_rotation(360-degree);
+    turretEncoder.set_position(-degree *100*259/12);
   }
 }
 

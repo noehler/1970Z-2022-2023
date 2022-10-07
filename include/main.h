@@ -66,6 +66,7 @@ extern "C" {
 void initialize(void);
 void disabled(void);
 void competition_initialize(void);
+void autonomous();
 void opcontrol(void);
 #ifdef __cplusplus
 }

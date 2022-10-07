@@ -58,6 +58,9 @@ void initialize() {
 void disabled() {}
 
 void competition_initialize() {}
+void autonomous(){
+	autonomousReal();
+}
 
 void opcontrol() {
 	// i want to go to world...
