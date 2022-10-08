@@ -1,16 +1,22 @@
 #include "main.h"
+#include "odometry.h"
 #include "robotConfig.h"
 #include <cmath>
 
+double mod(double base, double var){
+  while (base<var){//e.g. 361mod360 = 1
+    var-=base;
+  }
+  while (var<0){ // e.g. -361mod 360 = 359
+    var+=base;
+  }
+  return var;
+}
 void initialize() {
-	guiInit();
-	robotGoal.dx = 10;
-	robotGoal.dy = 10;
-	robotGoal.dz = 10;
-
 	inertial.reset();
 	inertialTurret.reset();
-
+	guiInit();
+		
 	int startTime = millis();
 	while (inertial.is_calibrating()  || inertialTurret.is_calibrating()){
 		std::cout << "\nCalibrating!";
@@ -27,29 +33,26 @@ void initialize() {
 			}
 		}
 	}
-
+	inertial.set_heading(0);
+	inertialTurret.set_heading(0);
 	delay(50);
 	master.clear();
 	delay(50);
+	robot.xVelocity=0;
+		robot.yVelocity = 0;
+		robot.wVelocity = 0;
+		robot.velocity = 0;
+        robot.chaIntAng = 270;
+        robot.TurintAng = 90;
+
+        robot.xpos = 30;
+        robot.ypos = 13;
+		robot.zpos = 12.2;
+
+        homeGoal.xpos = 20;
+        homeGoal.ypos = 124;
+		homeGoal.zpos = 25;
 	master.print(1,1,"Calibration Success.");
-
-
-    homeGoal.xpos = 120;
-    homeGoal.ypos = 120;
-    homeGoal.zpos = 25;
-    
-    robot.xpos = 0;
-    robot.ypos = 0;
-    robot.zpos = 12.2;
-    
-	move.moveToxpos = 30;
-	move.moveToypos = 0;
-
-    robot.xVelocity = 0;
-    robot.yVelocity = 0;
-
-    setAngle(turret, 180);
-
     Task turrC(motorControl);
     Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);
@@ -64,7 +67,7 @@ void autonomous(){
 
 void opcontrol() {
 	// i want to go to world...
-	while(1){
+	while(1){/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
 		chassis.driveTrain.leftSpd = -master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_X);
 		chassis.driveTrain.rightSpd = -master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
@@ -72,6 +75,7 @@ void opcontrol() {
 		//mechanum(magic) speed
 		chassis.driveTrain.mechSpd = -master.get_analog(ANALOG_LEFT_X);
 		
+		//std::cout << "\nturenc:"<<double(turretEncoder.get_position())/2158.3333<<"chHeading:"<<-inertial.get_heading();
 		liftConrol();
 		
 		devCheck();

@@ -1,52 +1,30 @@
+#include "pros/adi.h"
 #include "pros/misc.h"
 #include "robotConfig.h"
-
+#include "main.h"
 chassis_t chassis;
-
 double turrControl(void){
   static double PIDSpeedSpin = 0;
   static double prevPIDSpeedSpin = 0;
-  double encAng = float(turretEncoder.get_position())/2158.3333;//convert to angle btw turret and robot chassie
-  double turrHeadingEnc  = 360-inertial.get_rotation() + encAng;//convert to angle btw turret and xaxis
-  double turrHeadingInr = 360-inertialTurret.get_rotation();
+  static double error =0;
+  double encAng = double(turretEncoder.get_position())/2158.3333- error;//convert to angle btw turret and robot chassie
+  double turrHeadingEnc = mod(360,robot.TurintAng-robot.chaIntAng+encAng+robot.angle);//
+  double turrHeadingInr = mod(360,-inertialTurret.get_heading()+robot.TurintAng);//
   static double T = 0;
   static double previousT=0;
   T = float(millis())/1000 - previousT; // JLO - Is this right?  What units are T in?  usec or sec?
   previousT+=T;
-  //std::cout << "\nTAngleRel: " << turrAngle;  
-  bool dtb = false;
-  /*if (encAng > 360){
-      encAng -= 360;
+  double angle_error = turrHeadingEnc- turrHeadingInr;
+  if (angle_error > 180){
+    angle_error -=360;
+  } else if (angle_error<-180){
+    angle_error +=360;
   }
-  else if( encAng < -360){
-      encAng += 360;
+  // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
+  if (fabs(angle_error) >= 5){ 
+  error += angle_error;
+    std::cout << "\n turret angle error"<<angle_error;
   }
-  if (turrHeadingEnc > 360){
-      turrHeadingEnc -= 360;
-  }
-  else if( turrHeadingEnc < -360){
-      turrHeadingEnc += 360;
-  }
-  if (turrHeadingInr > 360){
-      turrHeadingInr -= 360;
-  }
-  else if( turrHeadingInr < -360){
-      turrHeadingInr += 360;
-  } */
-  double headingerror = turrHeadingEnc- turrHeadingInr;
-  /*if (headingerror > 360){
-      headingerror -= 360;
-  }
-  else if( headingerror < -360){
-      headingerror += 360;
-  } */
- /* if (fabs(headingerror)>5){
-      turretEncoder.set_position((-inertialTurret.get_rotation() + inertial.get_rotation())*100*259/12);
-      dtb = 1;
-      std::cout << "\ndiff: " << turrHeadingEnc + inertialTurret.get_rotation() << ", new: " << -turrHeadingEnc;
-  }
-  else{
-  }*/
   
   double angdiff = robotGoal.angleBetweenHorABS - turrHeadingEnc;
   if (angdiff > 180){
@@ -55,7 +33,6 @@ double turrControl(void){
   else if( angdiff < -180){
       angdiff += 360;
   }
-
   //feed forward code todo here, 
   //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
   //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
@@ -67,13 +44,12 @@ double turrControl(void){
 
   double PIDscalar = 1.5;
   double gyroScalar = 13;
-
-  PIDSpeedSpin =(1.3*angdiff + 0.001*prevPIDSpeedSpin*.01 + 0.1*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*12;
+  double chassisScalar = 10;
+  PIDSpeedSpin =(1.3*angdiff + 0.001*prevPIDSpeedSpin*.01 + 0.1*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar;
   prevPIDSpeedSpin = PIDSpeedSpin;
   //}else{
   //    diffInSpd = 0; // put that PID here
   //}
-  //std::cout << "\ndiffInSpd: " << PIDSpeedSpin;
   return PIDSpeedSpin;
 }
 
@@ -105,10 +81,10 @@ void moveTo(void){
     move.prevPIDSS = 0;     // PID turning speed at t = -1
     move.PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
     move.PIDSSFLAT = 0;     // variable used for keeping turning speed < 20
- // variable for for calculating first turning.
+    // variable for for calculating first turning.
     move.reset = false;
   }
-  double currentheading =(360 -inertial.get_rotation())/180 * M_PI;
+  double currentheading =robot.angle/180*M_PI;
   if (currentheading == PROS_ERR_F)
   {
     // JLO - handle error and exit, we can't continue
@@ -125,9 +101,9 @@ void moveTo(void){
   */
   double etx = move.moveToxpos - robot.xpos;//change of x
   double ety = move.moveToypos - robot.ypos;//change of y
-  //std::cout << "\nX: " << robot.xpos << ", Y: " << robot.ypos << ", heading: " << inertial.get_rotation()<< " tarx:"<< move.moveToxpos << "tary:"<<move.moveToypos;
   double dist = sqrt(pow(etx, 2) + pow(ety, 2));
   double et = dist * 10;
+  
   //std::cout << "\n Hi5";
   move.targetHeading = atan(ety/etx);
   if (etx<0){
@@ -136,7 +112,7 @@ void moveTo(void){
     move.targetHeading = M_PI/2*(fabs(ety)/ety);
   }
   if (move.moveToforwardToggle == -1){
-    move.ets +=M_PI;
+    move.targetHeading +=M_PI;
   }
   move.ets = move.targetHeading - currentheading;
   if (move.ets < -M_PI) {
@@ -145,6 +121,9 @@ void moveTo(void){
   if (move.ets > M_PI) {
   move.ets -= 2*M_PI;
   }
+
+  std::cout <<"\nxpos"<<robot.xpos<<" y:"<<robot.ypos<<" ang:"<<robot.angle;
+  std::cout <<"\na:"<<move.ets<<" tarx:"<<move.moveToxpos<<" tary:"<<move.moveToypos;
   move.ets = move.ets*180/M_PI;
   move.PIDSS = 3 * move.ets + 0.1 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
   if (fabs(move.ets) < 10) {
@@ -175,7 +154,7 @@ void moveTo(void){
     move.PIDSpeedR = -move.PIDFWFLAT - move.PIDSSFLAT;
     move.PIDSpeedL = -move.PIDFWFLAT + move.PIDSSFLAT;
   }
-  if (dist < 5) {
+  if (dist < move.tolerance) {
     move.reset = true;
     if (move.Stop_type == 1) {
         //motor stop (hold)
@@ -203,7 +182,7 @@ void moveTo(void){
   chassis.driveTrain.mechSpd = 0;
   }
   //output motor speeds
-
+  
   //std::cout << "\net: " << dist << ", ets: " << move.ets;
   //std::cout << "\npidfw: " << move.PIDFW << ", pidss: " << move.PIDSS;
 

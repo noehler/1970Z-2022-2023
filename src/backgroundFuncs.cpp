@@ -24,12 +24,7 @@ void startLoop(void)
 {
 
     while (1){
-        robotGoal.dx = homeGoal.xpos-robot.xpos;
-        robotGoal.dy = homeGoal.ypos-robot.ypos;
-        robotGoal.dz = homeGoal.zpos-robot.zpos;
-
         singSameOldSongTimeTurretTwister();
-
         delay(20);
         
     }

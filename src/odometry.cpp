@@ -34,9 +34,8 @@ double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
     return distTraveled;
 }
 
-double odoHeading = 0;
-double radRotation = -M_PI/2;
-
+double odoHeading = robot.chaIntAng*M_PI/180;
+double radRotation = 0;
 void odometry(void){
   double Arc1 =distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
   //Arc1 = getNum("Arc1: ");
@@ -55,19 +54,24 @@ void odometry(void){
   previousT+=T;
   double P1 = (Arc1 - Arc2);
   double Delta_y, Delta_x;
-  double radRotation = -((inertial.get_rotation() * M_PI) / 180); 
-  //radRotation = getNum("Angle: ");
-
+  double radRotation = mod(2*M_PI,(-inertial.get_heading()+robot.chaIntAng)*M_PI/180); 
   if (radRotation == PROS_ERR_F)
   {
     // JLO - handle error and exit, we can't continue
+    std::cout<<"chassis inertia malfunction";
     return;
   }
 
+  double angle_error = odoHeading - radRotation;
+  if (angle_error > M_PI){
+    angle_error -=2*M_PI;
+  } else if (angle_error<-M_PI){
+    angle_error +=2*M_PI;
+  }
   // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-  if (fabs(odoHeading - radRotation) >= 0.1){
+  if (fabs(angle_error) >= 0.1){
     odoHeading = radRotation;
-    std::cout << "\n angleDiff too big";
+    std::cout << "\n chassis heading error"<<angle_error;
   }
   //odoHeading = getNum("Heading: ");
 
@@ -89,12 +93,12 @@ void odometry(void){
     // Radius_back could be changed to cos(odoHeading + Delta_heading-M_PI/2) - cos(odoHeading - M_PI/2);
     // if are using encoder-based angle tracking ( recommanded for less noice)
 
-    double cos_side = -sin(radRotation) + sin(radRotation-Delta_heading);
-    double cos_back = -cos(radRotation) + cos(radRotation-Delta_heading);
-    double sin_side = -cos(radRotation) + cos(radRotation-Delta_heading);
-    double sin_back = -sin(radRotation) + sin(radRotation-Delta_heading);   
+    double cos_side = sin(odoHeading+Delta_heading) - sin(odoHeading);
+    double cos_back = -cos(odoHeading+Delta_heading) + cos(odoHeading);
+    double sin_side = -cos(odoHeading+Delta_heading) + cos(odoHeading);
+    double sin_back = -sin(odoHeading+Delta_heading) + sin(radRotation);   
 
-    Delta_x = -Radius_side * cos_side - Radius_back * cos_back;
+    Delta_x = Radius_side * cos_side - Radius_back * cos_back;
     Delta_y = Radius_side * sin_side - Radius_back * sin_back;
 
     //outPutting vals
@@ -109,16 +113,23 @@ void odometry(void){
   } 
   else { // if there are no change of heading while moving, triangular approximation
     //std::cout << "\nNo diff in a1 and a2";
-    Delta_x = Arc1 * cos(odoHeading) + (Arc3 * cos(odoHeading+(M_PI/2)));
-    Delta_y = Arc1 * sin(odoHeading) + (Arc3 * sin(odoHeading+(M_PI/2)));
+    Delta_x = Arc1 * cos(odoHeading) - (Arc3 * cos(odoHeading+(M_PI/2)));
+    Delta_y = Arc1 * sin(odoHeading) - (Arc3 * sin(odoHeading+(M_PI/2)));
   }
   //std::cout << "\n DX: " << Delta_x << ", DY: " << Delta_y;
   odoHeading += Delta_heading;
+  odoHeading = mod(2*M_PI,odoHeading);
+  robot.angle = odoHeading*180/M_PI;
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
   robot.xVelocity = Delta_x/T; // I need Change of time(time elapsed of each loop)
   robot.yVelocity = Delta_y/T; //same as above
   robot.wVelocity = Delta_heading/T;
+  robotGoal.dx = homeGoal.xpos-robot.xpos;
+  robotGoal.dy = homeGoal.ypos-robot.ypos;
+  robotGoal.dz = homeGoal.zpos-robot.zpos;
+  //std::cout <<"\nx"<<robot.xpos<<" y:"<<robot.ypos<<" ang:"<<robot.angle;
+
   //outputting values
   /*logVals("xPos" , robot.xpos);
   logVals("yPos" , robot.ypos);

@@ -313,13 +313,5 @@ void logVals(std::string name,double value){
   }
 }
 
-void setAngle(objectType object, int degree){
-  if (object == base){
-    inertial.set_rotation(360-degree);
-  }
-  else{
-    inertialTurret.set_rotation(360-degree);
-    turretEncoder.set_position(-degree *100*259/12);
-  }
-}
+
 

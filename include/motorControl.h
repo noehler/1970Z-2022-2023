@@ -36,7 +36,7 @@ class chassis_t {
 };
 class moveToInfo_t{
   public:
-    double moveToxpos=0, moveToypos=0, targetHeading, ets=0, speed_limit=100, errtheta=5;
+    double moveToxpos, moveToypos, targetHeading, ets, speed_limit=100, errtheta=5;
     double dist = 0;          // change of position
     double distR = 0;         // chagne of right postion
     double distL = 0;         // change of left position
@@ -50,6 +50,7 @@ class moveToInfo_t{
     double PIDSSFLAT = 0;   
     int moveToforwardToggle = 1, Stop_type = 2;
     bool reset = true;
+    double tolerance=5;
 };
 
 extern moveToInfo_t move;

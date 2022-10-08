@@ -34,7 +34,6 @@ void singSameOldSongTimeTurretTwister(void){
   double e = pow(robotGoal.dx, 2) + pow(robotGoal.dy, 2) - pow(robotGoal.dz, 2);
   double D = 1000000000000;
   double T = 0.1;
-
   bool close_enough = false;
   while (close_enough != true){
     if (D > 10000){
@@ -61,11 +60,10 @@ void singSameOldSongTimeTurretTwister(void){
   //std::cout<< "\nAngle: " << Tar_ang;
   double P3 = cos(Tar_ang) * 0.707106781187 * T;
   double V_disk = P2 / P3;
-
+  double turOfCenterOffset = 0; // offcenter offset, not tested yet
   //outputting calculated values
-  robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest;
+  robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
   goalSpeed = V_disk;
-  //std::cout << "\nAngle:" << robotGoal.angleBetweenHorABS;
 }
 
 void liftConrol(void){

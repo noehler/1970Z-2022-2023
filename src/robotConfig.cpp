@@ -24,7 +24,7 @@ Optical opticalSensor(17);
 
 ADIDigitalOut shootPiston({{22,'B'}});
 ADIDigitalOut elevatePiston({{9,'G'}});
-ADIDigitalOut boomShackalacka({{22,'H'}});
+ADIDigitalOut boomShackalacka({{22,'C'}});
 
 ADIAnalogIn upLoaded({22,'F'});
 ADIAnalogIn deckLoaded({9,'H'});

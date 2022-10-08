@@ -68,6 +68,7 @@ void disabled(void);
 void competition_initialize(void);
 void autonomous();
 void opcontrol(void);
+extern double mod(double,double);
 #ifdef __cplusplus
 }
 #endif
