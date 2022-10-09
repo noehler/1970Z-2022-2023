@@ -13,6 +13,7 @@ double mod(double base, double var){
   return var;
 }
 void initialize() {
+	boomShackalacka.set_value(false);
 	inertial.reset();
 	inertialTurret.reset();
 	guiInit();
@@ -39,26 +40,34 @@ void initialize() {
 	master.clear();
 	delay(50);
 	robot.xVelocity=0;
-		robot.yVelocity = 0;
-		robot.wVelocity = 0;
-		robot.velocity = 0;
-        robot.chaIntAng = 270;
-        robot.TurintAng = 90;
+	robot.yVelocity = 0;
+	robot.wVelocity = 0;
+	robot.velocity = 0;
+	robot.chaIntAng = 270;
+	robot.TurintAng = 90;
 
-        robot.xpos = 30;
-        robot.ypos = 13;
-		robot.zpos = 12.2;
+	/*robot.xpos = 29.4;
+	robot.ypos = 14;
+	robot.zpos = 12.2;*/
 
-        homeGoal.xpos = 20;
-        homeGoal.ypos = 124;
-		homeGoal.zpos = 25;
+	robot.xpos = 144-robot.width/2;
+	robot.ypos = 72;
+	robot.zpos = 12.2;
+
+	homeGoal.xpos = 20;
+	homeGoal.ypos = 124;
+	homeGoal.zpos = 25;
 	master.print(1,1,"Calibration Success.");
     Task turrC(motorControl);
     Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);
 }
 
-void disabled() {}
+void disabled() {
+	while(1){
+		controller2();
+	}
+}
 
 void competition_initialize() {}
 void autonomous(){
@@ -77,10 +86,12 @@ void opcontrol() {
 		
 		//std::cout << "\nturenc:"<<double(turretEncoder.get_position())/2158.3333<<"chHeading:"<<-inertial.get_heading();
 		liftConrol();
+		controller2();
 		
 		devCheck();
 
-		delay(20);
+		//have a 150 msec delay because of updating controller screen
+		//delay(20);
 
 	}
 }

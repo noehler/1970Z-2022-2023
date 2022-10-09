@@ -30,9 +30,9 @@ extern Motor diff2;
 extern ADIDigitalOut shootPiston;
 extern ADIDigitalOut elevatePiston;
 
-extern ADIUltrasonic leftUltra;
-extern ADIUltrasonic rightUltra;
-extern ADIUltrasonic revUltra;
+//extern ADIUltrasonic leftUltra;
+//extern ADIUltrasonic rightUltra;
+//extern ADIUltrasonic revUltra;
 
 extern ADIEncoder leftEncoderFB;
 extern ADIEncoder rightEncoderFB;

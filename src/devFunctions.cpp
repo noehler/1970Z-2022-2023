@@ -313,5 +313,32 @@ void logVals(std::string name,double value){
   }
 }
 
+FILE *usd_file_write;
+char* filename;
+void outPosSDCARD(void){
+  static int i = 0;
+  if (i == 0){
+    sprintf(filename, "/usd/test.txt");
+    for (int i = 1; ; i++)
+    {
+      sprintf(filename, "/usd/log_%d.txt", i);
+      usd_file_write = fopen(filename, "r");
+      if (usd_file_write != NULL)
+      {
+        // file exists
+      }
+      else
+      {
+        // file does not exist
+        break;
+      }
+      fclose(usd_file_write);
+      usd_file_write = NULL;
+    }
+    i++;
+  }
 
+  usd_file_write = fopen(filename, "a");
+  fprintf(usd_file_write,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
 
+}

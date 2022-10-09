@@ -30,9 +30,9 @@ ADIAnalogIn upLoaded({22,'F'});
 ADIAnalogIn deckLoaded({9,'H'});
 ADIAnalogIn holeLoaded({22,'E'});
 
-ADIUltrasonic leftUltra({{22,'E', 'F'}});
-ADIUltrasonic rightUltra({{22,'G','H'}});
-ADIUltrasonic revUltra({{22,'C','D'}});
+//ADIUltrasonic leftUltra({{22,'E', 'F'}});
+//ADIUltrasonic rightUltra({{22,'G','H'}});
+//ADIUltrasonic revUltra({{22,'C','D'}});
 
 ADIEncoder leftEncoderFB({{9,'C','D'}, true});
 ADIEncoder rightEncoderFB({{9,'E', 'F'},true });

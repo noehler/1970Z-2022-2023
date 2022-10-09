@@ -41,63 +41,63 @@ static lv_res_t btn_click_action(lv_obj_t * btn)
 double targetAngleOffest = 0;
 
 void controller2(void){
-    while (1){
-        static double offsetxbot = 0;
-        static double offsetybot = 0;
-        static double offsetxgoal = 0;
-        static double offsetygoal = 0;
+    static double offsetxbot = 0;
+    static double offsetybot = 0;
+    static double offsetxgoal = 0;
+    static double offsetygoal = 0;
 
-        double addxbot = 0;
-        double addybot = 0;
+    double addxbot = 0;
+    double addybot = 0;
 
-        if (sidecar.get_digital(DIGITAL_UP)){
-            addybot+=1;
-        }
-        if (sidecar.get_digital(DIGITAL_DOWN)){
-            addybot-=1;
-        }
-        if (sidecar.get_digital(DIGITAL_RIGHT)){
-            addxbot+=1;
-        }
-        if (sidecar.get_digital(DIGITAL_LEFT)){
-            addxbot-=1;
-        }
-
-        if (sidecar.get_digital(DIGITAL_A) && sidecar.get_digital(DIGITAL_B)
-        && sidecar.get_digital(DIGITAL_X) && sidecar.get_digital(DIGITAL_Y)){
-            boomShackalacka.set_value(true);
-        }
-
-        targetAngleOffest += sidecar.get_analog(ANALOG_LEFT_X);
-        if (sidecar.get_digital(DIGITAL_A)){
-            targetAngleOffest = 0;
-        }
-
-        offsetxbot+=addxbot;
-        offsetybot+=addybot;
-
-        robot.xpos +=addxbot;
-        robot.ypos +=addybot;
-
-        bool multchanged = false;
-        if (sidecar.get_digital(DIGITAL_R1)){
-            flySpdMult +=.01;
-            multchanged = true;
-        }
-        else if (sidecar.get_digital(DIGITAL_R2)){
-            flySpdMult -=.01;
-            multchanged = true;
-        }
-
-        delay(50);
-        sidecar.clear();
-        delay(50);
-        sidecar.print(0,1,"(%.2f|%.2f)", robot.xpos, robot.ypos);
-        delay(50);
-        sidecar.print(2,1,"FlyMult: %.2f", flySpdMult);
-        delay(50);
+    if (sidecar.get_digital(DIGITAL_UP)){
+        addybot+=1;
     }
+    if (sidecar.get_digital(DIGITAL_DOWN)){
+        addybot-=1;
+    }
+    if (sidecar.get_digital(DIGITAL_RIGHT)){
+        addxbot+=1;
+    }
+    if (sidecar.get_digital(DIGITAL_LEFT)){
+        addxbot-=1;
+    }
+
+    if (sidecar.get_digital(DIGITAL_A) && sidecar.get_digital(DIGITAL_B)
+    && sidecar.get_digital(DIGITAL_X) && sidecar.get_digital(DIGITAL_Y)){
+        boomShackalacka.set_value(true);
+        std::cout << "\n false";
+    }
+
+    targetAngleOffest += float(sidecar.get_analog(ANALOG_LEFT_X))/64;
+    robot.xpos += float(sidecar.get_analog(ANALOG_RIGHT_X))/64;
+    robot.ypos += float(sidecar.get_analog(ANALOG_RIGHT_Y))/64;
     
+    if (sidecar.get_digital(DIGITAL_A)){
+        targetAngleOffest = 0;
+    }
+
+    offsetxbot+=addxbot;
+    offsetybot+=addybot;
+
+    robot.xpos +=addxbot;
+    robot.ypos +=addybot;
+
+    bool multchanged = false;
+    if (sidecar.get_digital(DIGITAL_R1)){
+        flySpdMult +=.01;
+        multchanged = true;
+    }
+    else if (sidecar.get_digital(DIGITAL_R2)){
+        flySpdMult -=.01;
+        multchanged = true;
+    }
+
+    delay(50);
+    sidecar.clear();
+    delay(50);
+    sidecar.print(0,1,"(%.0f|%.0f), FM: %.2f, Toff: %.2f", robot.xpos, robot.ypos, flySpdMult, targetAngleOffest);
+    delay(50);
+    sidecar.print(1,1,"Toff: %.2f", targetAngleOffest);
     
 }
 

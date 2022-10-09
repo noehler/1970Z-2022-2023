@@ -3,13 +3,14 @@
 #include "robotConfig.h"
 #include "main.h"
 chassis_t chassis;
+
 double turrControl(void){
   static double PIDSpeedSpin = 0;
   static double prevPIDSpeedSpin = 0;
   static double error =0;
   double encAng = double(turretEncoder.get_position())/2158.3333- error;//convert to angle btw turret and robot chassie
   double turrHeadingEnc = mod(360,robot.TurintAng-robot.chaIntAng+encAng+robot.angle);//
-  double turrHeadingInr = mod(360,-inertialTurret.get_heading()+robot.TurintAng);//
+  double turrHeadingInr = mod(360,-inertialTurret.get_heading()+robot.TurintAng);
   static double T = 0;
   static double previousT=0;
   T = float(millis())/1000 - previousT; // JLO - Is this right?  What units are T in?  usec or sec?
@@ -21,18 +22,19 @@ double turrControl(void){
     angle_error +=360;
   }
   // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-  if (fabs(angle_error) >= 5){ 
+  if (fabs(angle_error) >= 2){ 
   error += angle_error;
     std::cout << "\n turret angle error"<<angle_error;
   }
   
-  double angdiff = robotGoal.angleBetweenHorABS - turrHeadingEnc;
+  double angdiff = robotGoal.angleBetweenHorABS - turrHeadingEnc + targetAngleOffest;
   if (angdiff > 180){
       angdiff -= 360;
   }
   else if( angdiff < -180){
       angdiff += 360;
   }
+  //std::cout << "\n" << angdiff;
   //feed forward code todo here, 
   //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
   //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
@@ -42,11 +44,15 @@ double turrControl(void){
   //slowing down turret when nothing is loaded or on deck so intake can run faster
   //if (deckLoaded.get_value() > 1900){
 
-  double PIDscalar = 1.5;
-  double gyroScalar = 13;
-  double chassisScalar = 10;
-  PIDSpeedSpin =(1.3*angdiff + 0.001*prevPIDSpeedSpin*.01 + 0.1*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar;
+  double PIDscalar = 1.7;
+  double gyroScalar = 6;
+  double chassisScalar = 7;
+  PIDSpeedSpin =(1.7*angdiff + 2*prevPIDSpeedSpin*.01 + 6*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar;
+  /*if (deckLoaded.get_value() > 1000){
+    PIDSpeedSpin = 0;
+  }*/
   prevPIDSpeedSpin = PIDSpeedSpin;
+  
   //}else{
   //    diffInSpd = 0; // put that PID here
   //}
@@ -122,8 +128,8 @@ void moveTo(void){
   move.ets -= 2*M_PI;
   }
 
-  std::cout <<"\nxpos"<<robot.xpos<<" y:"<<robot.ypos<<" ang:"<<robot.angle;
-  std::cout <<"\na:"<<move.ets<<" tarx:"<<move.moveToxpos<<" tary:"<<move.moveToypos;
+  //std::cout <<"\nxpos"<<robot.xpos<<" y:"<<robot.ypos<<" ang:"<<robot.angle;
+  //std::cout <<"\na:"<<move.ets<<" tarx:"<<move.moveToxpos<<" tary:"<<move.moveToypos;
   move.ets = move.ets*180/M_PI;
   move.PIDSS = 3 * move.ets + 0.1 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
   if (fabs(move.ets) < 10) {
@@ -189,7 +195,7 @@ void moveTo(void){
   move.prevPIDSS = move.PIDSS;
   move.prevPIDFW = move.PIDFW;
 
-  std::cout << "\n(" << robot.xpos << "," << robot.ypos << ")";
+  //std::cout << "\n(" << robot.xpos << "," << robot.ypos << ")";
 
   logVals("heading" , currentheading);
   logVals("pidSS" , move.PIDSS);
@@ -226,6 +232,7 @@ void spinRoller(void){
 
 void motorControl(void){
   while(1){
+    std::cout << "\n(t*cos(" << -inertial.get_heading()/180*M_PI <<")+" << robot.xpos <<",t*sin(" << -inertial.get_heading()/180*M_PI << ")+" << -inertial.get_heading()/180*M_PI << ")";
     //getting speeds that diff needs to run at
     double diffInSpd = turrControl();
     int baseSPD = intakeControl(diffInSpd);
@@ -240,10 +247,12 @@ void motorControl(void){
     diff2 = -diffInSpd + baseSPD;
     double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/10;
     double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
-    FlyWVolt = (3 * diffFlyWheelW + 2.3 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
+    FlyWVolt = (2 * diffFlyWheelW + 4 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
     if (FlyWVolt > 127){
       FlyWVolt = 127;
     }
+
+    //std::cout << "\ndiskV"<<diffFlyWheelW;
     prevFlyWVolt = FlyWVolt;
     flyWheel1.move(FlyWVolt); 
     flyWheel2.move(FlyWVolt);//this input is ranged from 0 to 127, either scaled or not voltage
