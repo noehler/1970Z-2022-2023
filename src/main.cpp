@@ -13,11 +13,18 @@ double mod(double base, double var){
   return var;
 }
 void initialize() {
-	boomShackalacka.set_value(false);
+  startRecord();
+  while (1){
+      robot.xpos = float(millis())/1000-sin(float(millis())/1000);
+      robot.ypos = sin(float(millis())/1000);
+      //outPosSDCARD();
+      delay(20);
+  }
+  boomShackalacka.set_value(false);
 	inertial.reset();
 	inertialTurret.reset();
 	guiInit();
-		
+
 	int startTime = millis();
 	while (inertial.is_calibrating()  || inertialTurret.is_calibrating()){
 		std::cout << "\nCalibrating!";
@@ -83,11 +90,16 @@ void opcontrol() {
 
 		//mechanum(magic) speed
 		chassis.driveTrain.mechSpd = -master.get_analog(ANALOG_LEFT_X);
-		
+
 		//std::cout << "\nturenc:"<<double(turretEncoder.get_position())/2158.3333<<"chHeading:"<<-inertial.get_heading();
 		liftConrol();
-		controller2();
-		
+    if (sidecar.is_connected()){
+		    controller2();
+    }
+    if (usd::is_installed()){
+      outPosSDCARD();
+    }
+
 		devCheck();
 
 		//have a 150 msec delay because of updating controller screen

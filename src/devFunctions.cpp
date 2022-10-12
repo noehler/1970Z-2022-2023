@@ -184,30 +184,30 @@ void devMode(void){
   int startTime = millis();
   delay(50);
   master.clear();
-  
+
 
   lv_obj_t * myLabel[20];
   for (int i = 0; i <20; i++){
     myLabel[i] = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
     lv_label_set_text(myLabel[i], "No value Assigned yet"); //sets label text
     if(i <=10){
-      lv_obj_align(myLabel[i], NULL, LV_ALIGN_IN_LEFT_MID, 10, i*20-100); 
+      lv_obj_align(myLabel[i], NULL, LV_ALIGN_IN_LEFT_MID, 10, i*20-100);
     }
     else{
       lv_obj_align(myLabel[i], NULL, LV_ALIGN_IN_LEFT_MID, 280, (i-10)*20-100);
     }
-    
+
     //std::cout << "\n" << i << "\n";
     delay(20);
   }
-  
+
   /*lv_obj_t * rpm = lv_label_create(lv_scr_act(), NULL);
   lv_label_set_text(rpm, "No value Assigned yet");
   lv_obj_align(rpm, NULL, LV_ALIGN_IN_LEFT_MID, 280, 50);
 
   diff1.set_brake_mode(E_MOTOR_BRAKE_COAST);
   diff2.set_brake_mode(E_MOTOR_BRAKE_COAST);
-  
+
   int rpmSize = 300;
   double rpmCounter[rpmSize];
 
@@ -232,16 +232,16 @@ void devMode(void){
     for (int j = 1; j <rpmSize; j++){
       rpmCounter[j] = rpmCounter[j-1];
     }
-    
+
     rpmCounter[0] =rpmTemp;
-    
+
     static int c = 0;
     if (c > 50){
       for (int j = 0;j < rpmSize; j++){
         rpmAVG += rpmCounter[j];
       }
       rpmAVG = rpmAVG/rpmSize;
-      
+
       c = 0;
     }
     else{
@@ -251,7 +251,7 @@ void devMode(void){
     /*char buffer[200];
     sprintf(buffer, "PCT : %d, RPM: %.02f", flySpeed, rpmAVG);
     lv_label_set_text(rpm, buffer);*/
-    
+
     delay(20);
     for (int i=0; i < 20; i++){
       char buffer[50];
@@ -274,7 +274,7 @@ void devMode(void){
 
 void devCheck(void){
   static int startTime = millis();
-  
+
   if (master.get_digital(DIGITAL_A) && master.get_digital(DIGITAL_B)
 		 && master.get_digital(DIGITAL_X) && master.get_digital(DIGITAL_Y) && millis() - startTime > 500){
 			delay(50);
@@ -313,32 +313,52 @@ void logVals(std::string name,double value){
   }
 }
 
+
 FILE *usd_file_write;
-char* filename;
-void outPosSDCARD(void){
-  static int i = 0;
-  if (i == 0){
-    sprintf(filename, "/usd/test.txt");
-    for (int i = 1; ; i++)
+char filename[20];
+#include <fstream>
+
+void startRecord(void){
+
+  std::cout << "\n starting";
+  delay(250);
+  for (int i = 1; ; i++)
+  {
+    sprintf(filename, "/usd/log_%d.txt", i);
+    std::cout << "\n sprinted";
+    delay(250);
+    //usd_file_write = fopen(filename, "r");
+    //std::cout << (usd_file_write != NULL);
+    std::ifstream ifile;
+    ifile.open(filename);
+    std::cout << "\n read, comparing";
+    delay(250);
+    if (ifile)
     {
-      sprintf(filename, "/usd/log_%d.txt", i);
-      usd_file_write = fopen(filename, "r");
-      if (usd_file_write != NULL)
-      {
-        // file exists
-      }
-      else
-      {
-        // file does not exist
-        break;
-      }
-      fclose(usd_file_write);
-      usd_file_write = NULL;
+      std::cout << "\n is" << filename;
+      // file exists
     }
-    i++;
+    else
+    {
+      std::cout << "\n is not" << filename;
+      // file does not exist
+      break;
+    }
+    delay(250);
+    fclose(usd_file_write);
   }
 
-  usd_file_write = fopen(filename, "a");
-  fprintf(usd_file_write,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
+  fputs("test", usd_file_write);
+  fclose(usd_file_write);
 
+
+}
+
+void outPosSDCARD(void){
+  usd_file_write = fopen(filename, "a");
+  char buff[50];
+  sprintf(buff,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
+  //sprintf(buff, "\n(%.2f, %.2f)", float(millis())/1000, sin(float(millis())/1000));
+  fputs(buff, usd_file_write);
+  fclose(usd_file_write);
 }

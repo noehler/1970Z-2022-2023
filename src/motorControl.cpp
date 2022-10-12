@@ -22,11 +22,11 @@ double turrControl(void){
     angle_error +=360;
   }
   // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-  if (fabs(angle_error) >= 2){ 
+  if (fabs(angle_error) >= 2){
   error += angle_error;
-    std::cout << "\n turret angle error"<<angle_error;
+    //std::cout << "\n turret angle error"<<angle_error;
   }
-  
+
   double angdiff = robotGoal.angleBetweenHorABS - turrHeadingEnc + targetAngleOffest;
   if (angdiff > 180){
       angdiff -= 360;
@@ -35,7 +35,7 @@ double turrControl(void){
       angdiff += 360;
   }
   //std::cout << "\n" << angdiff;
-  //feed forward code todo here, 
+  //feed forward code todo here,
   //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
   //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
   //turret target speed = -chassie rotation rate (because turret need to go to opposite of chassie rotation) + turret target speed
@@ -52,7 +52,7 @@ double turrControl(void){
     PIDSpeedSpin = 0;
   }*/
   prevPIDSpeedSpin = PIDSpeedSpin;
-  
+
   //}else{
   //    diffInSpd = 0; // put that PID here
   //}
@@ -69,7 +69,7 @@ double intakeControl(double diffInSpd){
   }
   else{
     baseSPD = 0;
-  } 
+  }
   return baseSPD;
 }
 
@@ -109,7 +109,7 @@ void moveTo(void){
   double ety = move.moveToypos - robot.ypos;//change of y
   double dist = sqrt(pow(etx, 2) + pow(ety, 2));
   double et = dist * 10;
-  
+
   //std::cout << "\n Hi5";
   move.targetHeading = atan(ety/etx);
   if (etx<0){
@@ -188,7 +188,7 @@ void moveTo(void){
   chassis.driveTrain.mechSpd = 0;
   }
   //output motor speeds
-  
+
   //std::cout << "\net: " << dist << ", ets: " << move.ets;
   //std::cout << "\npidfw: " << move.PIDFW << ", pidss: " << move.PIDSS;
 
@@ -226,13 +226,13 @@ void spinRoller(void){
     else{
       chassis.intakeRunning = 0;
     }
-    
+
   }
 }
 
 void motorControl(void){
   while(1){
-    std::cout << "\n(t*cos(" << -inertial.get_heading()/180*M_PI <<")+" << robot.xpos <<",t*sin(" << -inertial.get_heading()/180*M_PI << ")+" << -inertial.get_heading()/180*M_PI << ")";
+    //std::cout << "\n(t*cos(" << -inertial.get_heading()/180*M_PI <<")+" << robot.xpos <<",t*sin(" << -inertial.get_heading()/180*M_PI << ")+" << -inertial.get_heading()/180*M_PI << ")";
     //getting speeds that diff needs to run at
     double diffInSpd = turrControl();
     int baseSPD = intakeControl(diffInSpd);
@@ -254,11 +254,11 @@ void motorControl(void){
 
     //std::cout << "\ndiskV"<<diffFlyWheelW;
     prevFlyWVolt = FlyWVolt;
-    flyWheel1.move(FlyWVolt); 
+    flyWheel1.move(FlyWVolt);
     flyWheel2.move(FlyWVolt);//this input is ranged from 0 to 127, either scaled or not voltage
 
     if (chassis.driveTrain.leftSpd != 0 || chassis.driveTrain.rightSpd != 0 ||chassis.driveTrain.mechSpd != 0){
-      lfD.move(chassis.driveTrain.leftSpd + chassis.driveTrain.mechSpd); 
+      lfD.move(chassis.driveTrain.leftSpd + chassis.driveTrain.mechSpd);
       lbD.move(chassis.driveTrain.leftSpd - chassis.driveTrain.mechSpd);
       rfD.move(chassis.driveTrain.rightSpd - chassis.driveTrain.mechSpd);
       rbD.move(chassis.driveTrain.rightSpd + chassis.driveTrain.mechSpd);
@@ -270,7 +270,7 @@ void motorControl(void){
       rbD.brake();
     }
     //std::cout << "\n motorControl entered";
-    
+
     spinRoller();
 
     delay(20);
@@ -279,5 +279,5 @@ void motorControl(void){
     }
     delay(20);
   }
-  
+
 }
