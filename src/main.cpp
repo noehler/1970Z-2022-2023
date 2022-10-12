@@ -13,13 +13,13 @@ double mod(double base, double var){
   return var;
 }
 void initialize() {
-  startRecord();
+  /*startRecord();
   while (1){
       robot.xpos = float(millis())/1000-sin(float(millis())/1000);
       robot.ypos = sin(float(millis())/1000);
       //outPosSDCARD();
       delay(20);
-  }
+  }*/
   boomShackalacka.set_value(false);
 	inertial.reset();
 	inertialTurret.reset();

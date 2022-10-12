@@ -355,6 +355,11 @@ void startRecord(void){
 }
 
 void outPosSDCARD(void){
+  static bool start = true;
+  if (start == true){
+    startRecord();
+    start = false;
+  }
   usd_file_write = fopen(filename, "a");
   char buff[50];
   sprintf(buff,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
