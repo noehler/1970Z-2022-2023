@@ -135,7 +135,7 @@ void odometry(void){
   logVals("yPos" , robot.ypos);
   logVals("xVel" , robot.xVelocity);
   logVals("yVel" , robot.yVelocity);
-  if (fabs(Delta_y) > 10){
+  if (fabs(Delta_y) > 10 && usd::is_installed()){
     outValsSDCard();
   }
   logVals("reset");
