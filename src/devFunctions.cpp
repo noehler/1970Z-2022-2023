@@ -316,42 +316,26 @@ void logVals(std::string name,double value){
 
 FILE *usd_file_write;
 char filename[20];
+int fileNum;
 #include <fstream>
 
 void startRecord(void){
-
-  std::cout << "\n starting";
-  delay(250);
   for (int i = 1; ; i++)
   {
-    sprintf(filename, "/usd/log_%d.txt", i);
-    std::cout << "\n sprinted";
-    delay(250);
-    //usd_file_write = fopen(filename, "r");
-    //std::cout << (usd_file_write != NULL);
+    sprintf(filename, "/usd/pos_%d.txt", i);
     std::ifstream ifile;
     ifile.open(filename);
-    std::cout << "\n read, comparing";
-    delay(250);
     if (ifile)
     {
-      std::cout << "\n is" << filename;
       // file exists
     }
     else
     {
-      std::cout << "\n is not" << filename;
       // file does not exist
+      fileNum = i;
       break;
     }
-    delay(250);
-    fclose(usd_file_write);
   }
-
-  fputs("test", usd_file_write);
-  fclose(usd_file_write);
-
-
 }
 
 void outPosSDCARD(void){
@@ -360,10 +344,21 @@ void outPosSDCARD(void){
     startRecord();
     start = false;
   }
+  //std::cout << "\n identified available file:" << filename<< "\n";
   usd_file_write = fopen(filename, "a");
   char buff[50];
   sprintf(buff,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
   //sprintf(buff, "\n(%.2f, %.2f)", float(millis())/1000, sin(float(millis())/1000));
   fputs(buff, usd_file_write);
+  fclose(usd_file_write);
+}
+
+void outValsSDCard(void){
+  char buffer[20];
+  sprintf(buffer, "/usd/vals_%d", fileNum);
+  usd_file_write = fopen(buffer, "a");
+  for (int i = 0; i < 20; i++){
+    fprintf(usd_file_write,"%s: %f", outNames[i], outVals[i]);
+  }
   fclose(usd_file_write);
 }

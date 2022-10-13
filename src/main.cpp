@@ -13,13 +13,6 @@ double mod(double base, double var){
   return var;
 }
 void initialize() {
-  /*startRecord();
-  while (1){
-      robot.xpos = float(millis())/1000-sin(float(millis())/1000);
-      robot.ypos = sin(float(millis())/1000);
-      //outPosSDCARD();
-      delay(20);
-  }*/
   boomShackalacka.set_value(false);
 	inertial.reset();
 	inertialTurret.reset();
@@ -53,10 +46,6 @@ void initialize() {
 	robot.chaIntAng = 270;
 	robot.TurintAng = 90;
 
-	/*robot.xpos = 29.4;
-	robot.ypos = 14;
-	robot.zpos = 12.2;*/
-
 	robot.xpos = 144-robot.width/2;
 	robot.ypos = 72;
 	robot.zpos = 12.2;
@@ -65,8 +54,8 @@ void initialize() {
 	homeGoal.ypos = 124;
 	homeGoal.zpos = 25;
 	master.print(1,1,"Calibration Success.");
-    Task turrC(motorControl);
-    Task varUP(updateInfoLoop);
+  Task turrC(motorControl);
+  Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);
 }
 

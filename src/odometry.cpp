@@ -24,7 +24,7 @@ double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
     }
 
     double degreesTraveled = encoderLoc->get_value();
-    
+
     if (resetEncoder == true){
         encoderLoc->reset();
     }
@@ -45,7 +45,7 @@ void odometry(void){
   //Arc3 = getNum("Arc3: ");
 
   int i = 0;
-  
+
   double a = 8; //distance between two tracking wheels
   double b = -2.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
   static float T = 0;
@@ -54,7 +54,7 @@ void odometry(void){
   previousT+=T;
   double P1 = (Arc1 - Arc2);
   double Delta_y, Delta_x;
-  double radRotation = mod(2*M_PI,(-inertial.get_heading()+robot.chaIntAng)*M_PI/180); 
+  double radRotation = mod(2*M_PI,(-inertial.get_heading()+robot.chaIntAng)*M_PI/180);
   if (radRotation == PROS_ERR_F)
   {
     // JLO - handle error and exit, we can't continue
@@ -78,13 +78,13 @@ void odometry(void){
   double Delta_heading = P1 / a; // change of heading
 
   //checkingVals
-  /*logVals("Arc1", Arc1);
+  logVals("Arc1", Arc1);
   logVals("Arc2" , Arc2);
   logVals("Arc3" , Arc3);
   logVals("P1" , P1);
   logVals("Angle" , radRotation);
   logVals("Time" , T);
-  logVals("Delta Heading" , Delta_heading);*/
+  logVals("Delta Heading" , Delta_heading);
 
   if ( P1 != 0) { // if there are change of heading while moving, arc approximation
     double Radius_side = (Arc1 + Arc2)*a/(2*P1); // radius to either side of the robot
@@ -96,21 +96,21 @@ void odometry(void){
     double cos_side = sin(odoHeading+Delta_heading) - sin(odoHeading);
     double cos_back = -cos(odoHeading+Delta_heading) + cos(odoHeading);
     double sin_side = -cos(odoHeading+Delta_heading) + cos(odoHeading);
-    double sin_back = -sin(odoHeading+Delta_heading) + sin(radRotation);   
+    double sin_back = -sin(odoHeading+Delta_heading) + sin(odoHeading);
 
     Delta_x = Radius_side * cos_side - Radius_back * cos_back;
     Delta_y = Radius_side * sin_side - Radius_back * sin_back;
 
     //outPutting vals
-    /*logVals("Side Radius" , Radius_side);
+    logVals("Side Radius" , Radius_side);
     logVals("Back Radius" , Radius_back);
     logVals("cos side" , cos_side);
     logVals("cos back" , cos_back);
     logVals("sin side" , sin_side);
     logVals("sin back" , sin_back);
     logVals("deltaX" , Delta_x);
-    logVals("deltaY" , Delta_y);*/
-  } 
+    logVals("deltaY" , Delta_y);
+  }
   else { // if there are no change of heading while moving, triangular approximation
     //std::cout << "\nNo diff in a1 and a2";
     Delta_x = Arc1 * cos(odoHeading) - (Arc3 * cos(odoHeading+(M_PI/2)));
@@ -131,9 +131,12 @@ void odometry(void){
   //std::cout <<"\nx"<<robot.xpos<<" y:"<<robot.ypos<<" ang:"<<robot.angle;
 
   //outputting values
-  /*logVals("xPos" , robot.xpos);
+  logVals("xPos" , robot.xpos);
   logVals("yPos" , robot.ypos);
   logVals("xVel" , robot.xVelocity);
   logVals("yVel" , robot.yVelocity);
-  logVals("reset");*/
+  if (fabs(Delta_y) > 10){
+    outValsSDCard();
+  }
+  logVals("reset");
 }

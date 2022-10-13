@@ -17,7 +17,7 @@ void updateInfoLoop(void){
     while (1){
         odometry();
         delay(20);
-    }  
+    }
 }
 
 void startLoop(void)
@@ -26,7 +26,7 @@ void startLoop(void)
     while (1){
         singSameOldSongTimeTurretTwister();
         delay(20);
-        
+
     }
-    
+
 }
