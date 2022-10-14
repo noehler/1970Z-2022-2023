@@ -39,6 +39,7 @@ void initialize() {
 	delay(50);
 	master.clear();
 	delay(50);
+	master.print(1,1,"Calibration Success.");
 	robot.xVelocity=0;
 	robot.yVelocity = 0;
 	robot.wVelocity = 0;
@@ -53,7 +54,6 @@ void initialize() {
 	homeGoal.xpos = 20;
 	homeGoal.ypos = 124;
 	homeGoal.zpos = 25;
-	master.print(1,1,"Calibration Success.");
   Task turrC(motorControl);
   Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);

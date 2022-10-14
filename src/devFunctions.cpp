@@ -339,18 +339,23 @@ void startRecord(void){
 }
 
 void outPosSDCARD(void){
+  static int prevPosX = robot.xpos;
+  static int prevPosY = robot.ypos;
   static bool start = true;
   if (start == true){
     startRecord();
     start = false;
   }
-  //std::cout << "\n identified available file:" << filename<< "\n";
-  usd_file_write = fopen(filename, "a");
-  char buff[50];
-  sprintf(buff,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
-  //sprintf(buff, "\n(%.2f, %.2f)", float(millis())/1000, sin(float(millis())/1000));
-  fputs(buff, usd_file_write);
-  fclose(usd_file_write);
+  if (fabs(robot.ypos - prevPosY) > .1 || fabs(robot.xpos - prevPosX) > .1){
+    usd_file_write = fopen(filename, "a");
+    char buffer[50];
+    sprintf(buffer,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
+    fputs(buffer, usd_file_write);
+    fclose(usd_file_write);
+
+    prevPosX = robot.xpos;
+    prevPosY = robot.ypos;
+  }
 }
 
 void outValsSDCard(void){
