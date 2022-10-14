@@ -352,7 +352,6 @@ void outPosSDCARD(void){
     sprintf(buffer,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
     fputs(buffer, usd_file_write);
     fclose(usd_file_write);
-
     prevPosX = robot.xpos;
     prevPosY = robot.ypos;
   }
@@ -366,4 +365,124 @@ void outValsSDCard(void){
     fprintf(usd_file_write,"%s: %f", outNames[i], outVals[i]);
   }
   fclose(usd_file_write);
+}
+
+double PIDTunner(double input, double tolerance, double sensor1tar,double *sensor1,double sensor1weight,double sensor2tar,double *sensor2, double sensor2weight){
+  static double P = 1;
+  static double I = 1;
+  static double D = 1;
+  static double OutPut = 0;
+  static double scoreTB = 100000000000000;
+  static double prevOutPut = 0;
+  static int direction = 1;
+  OutPut =(P*input + I*prevOutPut*.01 + D*(OutPut - prevOutPut)/.01);
+  prevOutPut = OutPut;
+  //vary, depends on sensor type > linear(Drivetrain fwd&rev), looping(turret rotation, drivertrain heading)
+  double curscore = fabs(sensor1tar-*sensor1)*sensor1weight+fabs(sensor2tar-*sensor2)*sensor2weight; //general 
+  if (curscore-20<scoreTB){//overshooting detection, exit case
+    //decent logic: step back
+    direction = direction*-1;
+  } else if (fabs(input) < tolerance ){//target reached, update score, progress case
+    if (curscore < scoreTB){
+      scoreTB=curscore;
+      //decent logic: progree in same direction
+    }
+  }
+  
+  return OutPut;
+}
+void PIDTunnerfromChangeUp (){
+  /*function to find best PID constant, modeling movement of robot as function
+  of input of PID and Stop condition and output of time consumption and
+  drifting. By keep testing performence of the function by letting robot move
+  forward 48 inches, find the best intput.
+
+  consist of four part:
+  PID funciton with variable PID and Stop condition
+  panalty function sum up weight of time consumption and weight of something
+  else i.e drifting, amount overshot, amount tipping etc...
+  step down function
+  data logging function to resume progress after changee battery.
+
+  */
+  // intial value
+  double PIDSS = 0;
+  double prevPIDSS = 0;
+  double PIDSSFLAT = 0;
+  double penalty_value = 0;
+  double ets;
+  double base_line_value = 100000;
+  int pointer = 0;
+  int stepdirection = 1;
+  bool finished = false;
+  bool arrived = false;
+  bool revd = false;
+  double steps[10] = {0.21,  0.16,  0.11,  0.071, 0.051, 0.031, 0.021, 0.016, 0.011, 0.0071};
+  double PIDSSS[3] = {0.7, 0.34, 0.84};
+  int StepSizes[3] = {1, 1, 1};
+  // main loop
+  while (finished == false) {
+    if (Brain.Battery.capacity() <= 40) { //check battery
+      Brain.Screen.printAt(10, 40, "battery shortage"); //return warning
+      return;
+    }
+    // initalization
+
+
+    penalty_value = 0;
+    // controller loop (motor control thread)
+    while (arrived == false) {
+      penalty_value += ets;// integral of error with respec to time, minimal the better
+      // modifyed pid controller with variable constants
+      PIDSS = PIDSSS[0] * ets + PIDSSS[1] * PIDSS * ets * .01 + PIDSSS[2] * (PIDSS - prevPIDSS) / (ets * .1); 
+      PIDSSFLAT = PIDSS;
+      if (PIDSSFLAT >= 100) {
+        PIDSSFLAT = 100;
+      }
+      if (PIDSSFLAT <= -100) {
+        PIDSSFLAT = -100;
+      }
+      //asign value to motor
+
+
+      //
+      prevPIDSS = PIDSS;
+      if () {//exit condition
+        // normal exit condition
+        arrived = true;
+        //motor controller reset to inital value
+        //declear normal exit
+        //record current pid value
+      }
+      if ((penalty_value - 20) > base_line_value) {
+        // exit condition two, overshooting detaction
+        arrived = true;
+        //forced exit, update penalty value 
+        penalty_value = penalty_value + ets * 40;
+        //motor controlelr reset to inital value, declear abnormal exit
+      }
+    }
+    double delta_score = base_line_value - penalty_value;
+    // descent logic
+    if (delta_score > 0) {
+      pointer += 1;
+      base_line_value = penalty_value;
+      stepdirection = 1;
+    } else if (revd) {
+      StepSizes[pointer] += 2;
+      revd = false;
+    } else {
+      StepSizes[pointer] -= 1;
+      revd = true;
+    }
+    if (StepSizes[pointer] > 12) {
+      StepSizes[pointer] = 12;
+    }
+    if (StepSizes[pointer] <= 0) {
+      StepSizes[pointer] = 0;
+    }
+    stepdirection = stepdirection * -1;
+    PIDSSS[pointer] =
+        PIDSSS[pointer] + stepdirection * steps[StepSizes[pointer]];
+  }
 }
