@@ -391,8 +391,10 @@ double PIDTunner(double input, double tolerance, double sensor1tar,double *senso
 
   return OutPut;
 }
+/*
 void PIDTunnerfromChangeUp (){
-  /*function to find best PID constant, modeling movement of robot as function
+  //
+  function to find best PID constant, modeling movement of robot as function
   of input of PID and Stop condition and output of time consumption and
   drifting. By keep testing performence of the function by letting robot move
   forward 48 inches, find the best intput.
@@ -404,13 +406,12 @@ void PIDTunnerfromChangeUp (){
   step down function
   data logging function to resume progress after changee battery.
 
-  */
-  // intial value
+    // initalization
+  double ets;
   double PIDSS = 0;
   double prevPIDSS = 0;
   double PIDSSFLAT = 0;
   double penalty_value = 0;
-  double ets;
   double base_line_value = 100000;
   int pointer = 0;
   int stepdirection = 1;
@@ -418,7 +419,7 @@ void PIDTunnerfromChangeUp (){
   bool arrived = false;
   bool revd = false;
   double steps[10] = {0.21,  0.16,  0.11,  0.071, 0.051, 0.031, 0.021, 0.016, 0.011, 0.0071};
-  double PIDSSS[3] = {0.7, 0.34, 0.84};
+  double PIDSSS[3] = {0.7, 0.34, 0.84}; //current best guess
   int StepSizes[3] = {1, 1, 1};
   // main loop
   while (finished == false) {
@@ -426,7 +427,6 @@ void PIDTunnerfromChangeUp (){
       alert("battery fail");
       return;
     }
-    // initalization
 
 
     penalty_value = 0;
@@ -447,7 +447,7 @@ void PIDTunnerfromChangeUp (){
 
       //
       prevPIDSS = PIDSS;
-      if () {//exit condition
+      if () {//exit condition usually error of postion within tolerance
         // normal exit condition
         arrived = true;
         //motor controller reset to inital value
@@ -501,3 +501,4 @@ void PIDTunnerfromChangeUp (){
         PIDSSS[pointer] + stepdirection * steps[StepSizes[pointer]];
   }
 }
+*/

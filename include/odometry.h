@@ -6,7 +6,8 @@
 class position_t {
   public:
     double xpos, ypos, zpos, width = 11.5, length = 6;
-    double angle;
+    double xposodom,yposodom,xposvision,yposvision;
+    double angle,turAng;
     double chaIntAng,TurintAng;
     double velocity, xVelocity, yVelocity,wVelocity;
 };
@@ -26,6 +27,7 @@ extern position_t homeGoal;
 #include "string.h"
 
 extern void odometry(void);
-extern double radRotation;
+extern void turAngupdate(void);
+extern void visionOdom(void);
 
 #endif

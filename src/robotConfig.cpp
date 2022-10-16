@@ -1,5 +1,7 @@
 #include "main.h"
 #include "pros/adi.hpp"
+#include "pros/vision.h"
+#include "pros/vision.hpp"
 
 using namespace pros;
 
@@ -37,3 +39,6 @@ ADIAnalogIn holeLoaded({22,'E'});
 ADIEncoder leftEncoderFB({{9,'C','D'}, true});
 ADIEncoder rightEncoderFB({{9,'E', 'F'},true });
 ADIEncoder encoderLR({{9,'A','B'}});
+
+Vision turVisionL ( 20, E_VISION_ZERO_CENTER );
+Vision turVisionR ( 19, E_VISION_ZERO_CENTER );
