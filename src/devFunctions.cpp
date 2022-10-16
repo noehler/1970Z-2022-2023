@@ -3,6 +3,7 @@
 #include "pros/rtos.h"
 #include "robotConfig.h"
 #include <cstring>
+#include <fstream>
 
 double outVals[20];
 char outNames[20][50];
@@ -314,12 +315,10 @@ void logVals(std::string name,double value){
 }
 
 
-FILE *usd_file_write;
 char filename[20];
 int fileNum;
-#include <fstream>
 
-void startRecord(void){
+int startRecord(void){
   for (int i = 1; ; i++)
   {
     sprintf(filename, "/usd/pos_%d.txt", i);
@@ -333,23 +332,24 @@ void startRecord(void){
     {
       // file does not exist
       fileNum = i;
-      break;
+      return i;
     }
   }
 }
 
+bool startedTracking = true;
 void outPosSDCARD(void){
-  static int prevPosX = robot.xpos;
-  static int prevPosY = robot.ypos;
-  static bool start = true;
-  if (start == true){
-    startRecord();
-    start = false;
+  static double prevPosX = robot.xpos;
+  static double prevPosY = robot.ypos;
+  FILE *usd_file_write;
+  if (startedTracking == true){
+    fileNum = startRecord();
+    startedTracking = false;
   }
-  if (fabs(robot.ypos - prevPosY) > .1 || fabs(robot.xpos - prevPosX) > .1){
+  if (fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1){
     usd_file_write = fopen(filename, "a");
     char buffer[50];
-    sprintf(buffer,"\n(%.2f, %.2f)", robot.xpos, robot.ypos);
+    sprintf(buffer,"\n%.2f,%.2f,%.3f", robot.xpos, robot.ypos, float(millis())/1000);
     fputs(buffer, usd_file_write);
     fclose(usd_file_write);
     prevPosX = robot.xpos;
@@ -360,7 +360,7 @@ void outPosSDCARD(void){
 void outValsSDCard(void){
   char buffer[20];
   sprintf(buffer, "/usd/vals_%d", fileNum);
-  usd_file_write = fopen(buffer, "a");
+  FILE *usd_file_write = fopen(buffer, "a");
   for (int i = 0; i < 20; i++){
     fprintf(usd_file_write,"%s: %f", outNames[i], outVals[i]);
   }
@@ -378,7 +378,7 @@ double PIDTunner(double input, double tolerance, double sensor1tar,double *senso
   OutPut =(P*input + I*prevOutPut*.01 + D*(OutPut - prevOutPut)/.01);
   prevOutPut = OutPut;
   //vary, depends on sensor type > linear(Drivetrain fwd&rev), looping(turret rotation, drivertrain heading)
-  double curscore = fabs(sensor1tar-*sensor1)*sensor1weight+fabs(sensor2tar-*sensor2)*sensor2weight; //general 
+  double curscore = fabs(sensor1tar-*sensor1)*sensor1weight+fabs(sensor2tar-*sensor2)*sensor2weight; //general
   if (curscore-20<scoreTB){//overshooting detection, exit case
     //decent logic: step back
     direction = direction*-1;
@@ -388,7 +388,7 @@ double PIDTunner(double input, double tolerance, double sensor1tar,double *senso
       //decent logic: progree in same direction
     }
   }
-  
+
   return OutPut;
 }
 void PIDTunnerfromChangeUp (){
@@ -422,8 +422,8 @@ void PIDTunnerfromChangeUp (){
   int StepSizes[3] = {1, 1, 1};
   // main loop
   while (finished == false) {
-    if (Brain.Battery.capacity() <= 40) { //check battery
-      Brain.Screen.printAt(10, 40, "battery shortage"); //return warning
+    if (pros::battery::get_capacity() <= 40) { //check battery
+      alert("battery fail");
       return;
     }
     // initalization
@@ -434,7 +434,7 @@ void PIDTunnerfromChangeUp (){
     while (arrived == false) {
       penalty_value += ets;// integral of error with respec to time, minimal the better
       // modifyed pid controller with variable constants
-      PIDSS = PIDSSS[0] * ets + PIDSSS[1] * PIDSS * ets * .01 + PIDSSS[2] * (PIDSS - prevPIDSS) / (ets * .1); 
+      PIDSS = PIDSSS[0] * ets + PIDSSS[1] * PIDSS * ets * .01 + PIDSSS[2] * (PIDSS - prevPIDSS) / (ets * .1);
       PIDSSFLAT = PIDSS;
       if (PIDSSFLAT >= 100) {
         PIDSSFLAT = 100;
@@ -451,17 +451,32 @@ void PIDTunnerfromChangeUp (){
         // normal exit condition
         arrived = true;
         //motor controller reset to inital value
+        move.reset = true;
         //declear normal exit
         //record current pid value
+        if (startedTracking == true){
+          fileNum = startRecord();
+          startedTracking = false;
+        }
+        char nameBuff[20];
+        sprintf(nameBuff, "/usd/PID_%d", fileNum);
+        FILE* usd_file_write = fopen("", "w");
+        char contBuffer[50];
+        sprintf(contBuffer,"%.5f %.5f %.5f\n", PIDSSS[0], PIDSSS[1], PIDSSS[2]);
+        fputs(contBuffer, usd_file_write);
+        fclose(usd_file_write);
+
       }
       if ((penalty_value - 20) > base_line_value) {
         // exit condition two, overshooting detaction
         arrived = true;
-        //forced exit, update penalty value 
+        //forced exit, update penalty value
         penalty_value = penalty_value + ets * 40;
         //motor controlelr reset to inital value, declear abnormal exit
+        move.reset = true;
       }
     }
+
     double delta_score = base_line_value - penalty_value;
     // descent logic
     if (delta_score > 0) {

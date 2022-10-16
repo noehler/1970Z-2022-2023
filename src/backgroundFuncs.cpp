@@ -11,19 +11,23 @@
 
 bool runLoop = true;
 
-
+int odoCount = 0;
+double sT;
 void updateInfoLoop(void){
-    //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
-    while (1){
-        odometry();
-        delay(20);
-    }
+  sT = millis();
+  //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
+  while (1){
+      odometry();
+      odoCount++;
+      delay(10);
+  }
 }
 
 void startLoop(void)
 {
 
     while (1){
+        std::cout << "\nfps: " << odoCount /float((millis()-sT)/1000);
         singSameOldSongTimeTurretTwister();
         delay(20);
 
