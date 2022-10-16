@@ -16,6 +16,23 @@ void updateInfoLoop(void){
     //while (pros::competition::get_status() && COMPETITION_CONNECTED == true && COMPETITION_DISABLED == false){
     while (1){
         odometry();
+        turAngupdate();
+        visionOdom();
+        if (fabs ( robot.xposodom - robot.xposvision )< 5){
+            robot.xpos = robot.xposodom;
+        } else {
+            robot.xpos = robot.xposvision;
+            robot.xposodom = robot.xposvision;
+        }
+        if (fabs ( robot.yposodom - robot.yposvision )< 5){
+            robot.xpos = robot.yposodom;
+        } else {
+            robot.xpos = robot.yposvision;
+            robot.yposodom = robot.yposvision;
+        }
+        robotGoal.dx = homeGoal.xpos-robot.xpos;
+        robotGoal.dy = homeGoal.ypos-robot.ypos;
+        robotGoal.dz = homeGoal.zpos-robot.zpos;
         delay(20);
     }
 }

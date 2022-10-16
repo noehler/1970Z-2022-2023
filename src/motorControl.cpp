@@ -7,27 +7,11 @@ chassis_t chassis;
 double turrControl(void){
   static double PIDSpeedSpin = 0;
   static double prevPIDSpeedSpin = 0;
-  static double error =0;
-  double encAng = double(turretEncoder.get_position())/2158.3333- error;//convert to angle btw turret and robot chassie
-  double turrHeadingEnc = mod(360,robot.TurintAng-robot.chaIntAng+encAng+robot.angle);//
-  double turrHeadingInr = mod(360,-inertialTurret.get_heading()+robot.TurintAng);
   static double T = 0;
   static double previousT=0;
   T = float(millis())/1000 - previousT; // JLO - Is this right?  What units are T in?  usec or sec?
   previousT+=T;
-  double angle_error = turrHeadingEnc- turrHeadingInr;
-  if (angle_error > 180){
-    angle_error -=360;
-  } else if (angle_error<-180){
-    angle_error +=360;
-  }
-  // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-  if (fabs(angle_error) >= 2){
-  error += angle_error;
-    //std::cout << "\n turret angle error"<<angle_error;
-  }
-
-  double angdiff = robotGoal.angleBetweenHorABS - turrHeadingEnc + targetAngleOffest;
+  double angdiff = robotGoal.angleBetweenHorABS - robot.turAng;
   if (angdiff > 180){
       angdiff -= 360;
   }
