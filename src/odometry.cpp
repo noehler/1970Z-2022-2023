@@ -127,7 +127,6 @@ void turAngupdate(){
 }
 
 void visionOdom(){  
-  
   //double camera obejct localization
   //need to know object height, distance between camera's optical axis
   //also convert to global coordinate according to some offsets
@@ -144,7 +143,6 @@ void visionOdom(){
   double r = magnitude((offsetLocalx+localX),(offsetLocaly+localY));
   double tarDirection = atan((offsetLocaly+localY)/(offsetLocalx+localX));
   //convsersion to global coordinate
-
   //converting local displacement to global scope
   double Xc = r*cos(tarDirection + robot.turAng);
   double Yc = r*sin(tarDirection + robot.turAng);
@@ -152,4 +150,27 @@ void visionOdom(){
   robot.xposvision = homeGoal.xpos - Xc;
   robot.yposvision = homeGoal.ypos - Yc;
 } 
-
+void singleEyeVision(){
+  double theta = 1;//object center horizontal angle with respect to optical axis, positive right
+  double phi = 1;//object center vertical angle with respec to optical axis, positive up
+  double h = 14.2;//camera sensor height
+  double targetH = 20;
+  double phiOffset = 33.7;//camera installed tilte, deg
+  //solve for ditance to target
+  double localDistToTar = (targetH-h)/sin(phi+phiOffset);
+  //solve for local displacements to target
+  double localX = localDistToTar * cos(phi+phiOffset) * cos(theta);
+  double localY = localDistToTar * cos(phi+phiOffset) * sin(theta);
+  //merging with local offsets
+  double offsetLocalx = 3;
+  double offsetLocaly = 0;
+  double r = magnitude((offsetLocalx+localX),(offsetLocaly+localY));
+  double tarDirection = atan((offsetLocaly+localY)/(offsetLocalx+localX));
+  //convsersion to global coordinate
+  //converting local displacement to global scope
+  double Xc = r*cos(tarDirection + robot.turAng);
+  double Yc = r*sin(tarDirection + robot.turAng);
+  //calculating robot position
+  robot.xposvision = homeGoal.xpos - Xc;
+  robot.yposvision = homeGoal.ypos - Yc;
+}
