@@ -65,7 +65,6 @@ void singSameOldSongTimeTurretTwister(void){
       Tar_ang = Tar_ang +2*M_PI;
     }
   }
-  robot.turvelocity = (P2*robot.yVelocity - P1*robot.xVelocity)/(pow(P1,2)+pow(P2,2));
 
   //std::cout<< "\nAngle: " << Tar_ang;
   double P3 = cos(Tar_ang) * 0.707106781187 * T;
@@ -74,6 +73,7 @@ void singSameOldSongTimeTurretTwister(void){
   //outputting calculated values
   robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
   goalSpeed = V_disk;
+  robot.turvelocity = (pow(P1,2)/T - pow(P2,2)/T )/(pow(P1,2)+pow(P2,2));
 }
 
 void liftConrol(void){
