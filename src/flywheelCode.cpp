@@ -50,12 +50,22 @@ void singSameOldSongTimeTurretTwister(void){
   
   double P1 = robotGoal.dy - robot.yVelocity * T;
   double P2 = robotGoal.dx - robot.xVelocity * T;
-  double Tar_ang = atan(P1 / P2);
-  if (P2 < 0){
-    Tar_ang = Tar_ang + M_PI;
+  double Tar_ang = 0;
+  if (P2 == 0){
+    if (P1 > 0){
+      Tar_ang = M_PI/2;
+    } else {
+      Tar_ang = -M_PI/2;
+    }
   } else {
-    Tar_ang = Tar_ang +2*M_PI;
+    Tar_ang = atan(P1 / P2);
+    if (P2 < 0){
+      Tar_ang = Tar_ang + M_PI;
+    } else {
+      Tar_ang = Tar_ang +2*M_PI;
+    }
   }
+  robot.turvelocity = (P2*robot.yVelocity - P1*robot.xVelocity)/(pow(P1,2)+pow(P2,2));
 
   //std::cout<< "\nAngle: " << Tar_ang;
   double P3 = cos(Tar_ang) * 0.707106781187 * T;
@@ -87,5 +97,4 @@ void liftConrol(void){
   else{
     chassis.intakeRunning = 0;
   }
-  
 }

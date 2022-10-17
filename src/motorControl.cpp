@@ -31,7 +31,8 @@ double turrControl(void){
   double PIDscalar = 1.7;
   double gyroScalar = 6;
   double chassisScalar = 7;
-  PIDSpeedSpin =(1.7*angdiff + 2*prevPIDSpeedSpin*.01 + 6*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar;
+  double turPredicScalar = 1;
+  PIDSpeedSpin =(1.7*angdiff + 2*prevPIDSpeedSpin*.01 + 6*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity;
   /*if (deckLoaded.get_value() > 1000){
     PIDSpeedSpin = 0;
   }*/

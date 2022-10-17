@@ -9,7 +9,7 @@ class position_t {
     double xposodom,yposodom,xposvision,yposvision;
     double angle,turAng;
     double chaIntAng,TurintAng;
-    double velocity, xVelocity, yVelocity,wVelocity;
+    double velocity, xVelocity, yVelocity, wVelocity, turvelocity;
 };
 
 class robotGoalRelatives {
