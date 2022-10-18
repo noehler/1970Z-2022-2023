@@ -13,11 +13,12 @@ double mod(double base, double var){
   return var;
 }
 void initialize() {
-  while (1){
+  /*while (1){
     vision_object_s_t codeTemp = turVisionL.get_by_sig(0, 1);
+    std::cout << codeTemp.signature << "\n";
     std::cout << "(" << codeTemp.x_middle_coord << ", " << codeTemp.y_middle_coord << ")\n";
     delay(20);
-  }
+  }*/
   boomShackalacka.set_value(false);
 	inertial.reset();
 	inertialTurret.reset();
@@ -52,9 +53,9 @@ void initialize() {
 	robot.chaIntAng = 270;
 	robot.TurintAng = 90;
 
-	robot.xpos = 144-robot.width/2;
-	robot.ypos = 72;
-	robot.zpos = 12.2;
+	robot.xpos = 0;
+	robot.ypos = 0;
+	robot.zpos = 0;
 
 	homeGoal.xpos = 20;
 	homeGoal.ypos = 124;

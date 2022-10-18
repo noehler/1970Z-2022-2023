@@ -228,8 +228,8 @@ void motorControl(void){
     //in the description it said to have low acc, but in vex game nothing but net, sigbots used this controller for their flywheels
     //considering the simplisity and the amount of tolerance we have, this would be a good solution for now.
 
-    diff1 = diffInSpd + baseSPD;
-    diff2 = -diffInSpd + baseSPD;
+    //diff1 = diffInSpd + baseSPD;
+    //diff2 = -diffInSpd + baseSPD;
     double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/10;
     double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
     FlyWVolt = (2 * diffFlyWheelW + 4 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;

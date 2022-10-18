@@ -97,8 +97,8 @@ void odometry(void){ // encoder odom, primary odom,
   T = float(millis())/1000 - previousT;
   previousT+=T;
   robot.wVelocity = Delta_heading/T;
-  robot.xVelocity = Delta_x/T; 
-  robot.yVelocity = Delta_y/T; 
+  robot.xVelocity = Delta_x/T;
+  robot.yVelocity = Delta_y/T;
   robot.xposodom += Delta_x;
   robot.yposodom += Delta_y;
   if (fabs(Delta_y) > 10 && usd::is_installed()){
@@ -111,7 +111,7 @@ void turAngupdate(){
   double encAng = double(turretEncoder.get_position())/2158.3333- error;//convert to angle btw turret and robot chassie
   double turrHeadingEnc = mod(360,robot.TurintAng-robot.chaIntAng+encAng+robot.angle);//
   double turrHeadingInr = mod(360,-inertialTurret.get_heading()+robot.TurintAng);
-  
+
   double angle_error = turrHeadingEnc- turrHeadingInr;
   if (angle_error > 180){
     angle_error -=360;
@@ -126,13 +126,23 @@ void turAngupdate(){
   robot.turAng = turrHeadingEnc + targetAngleOffest;
 }
 
-void visionOdom(){  
+#define EXAMPLE_SIG 1
+
+void visionOdom(){
+
+  turVisionL.set_signature(EXAMPLE_SIG, &REDGOAL);
+  turVisionL.set_signature(EXAMPLE_SIG, &BLUEGOAL);
+  turVisionR.set_signature(EXAMPLE_SIG, &REDGOAL);
+  turVisionR.set_signature(EXAMPLE_SIG, &BLUEGOAL);
+  vision_object_s_t LOBJ = turVisionL.get_by_sig(0, 1);
+  vision_object_s_t ROBJ = turVisionR.get_by_sig(0, 1);
   //double camera obejct localization
   //need to know object height, distance between camera's optical axis
   //also convert to global coordinate according to some offsets
   //conversion from x position to angular positions
-  double angL = 1;//targetxL*0.189873418; //targetxL horizontal position of target center from left camera
-  double angR = 1;//targetxR*0.189873418; //targetxR horizontal position of target center from right camera
+  double angL = (LOBJ.x_middle_coord-316/2)*0.189873418; //targetxL horizontal position of target center from left camera
+  double angR = (ROBJ.x_middle_coord-316/2)*0.1898073418; //targetxR horizontal position of target center from right camerad
+  std::cout << "L: " << angL << ", R:" << angR << ", Val:" << LOBJ.signature << "\n";
   double A = 7.5625; //idstance from left camera optical axis to right camera optical axis
   //calculations of target postion in local coordinate
   double localY = (tan(angL)*A)/(tan(angL)+tan(angR)) - A/2;
@@ -149,7 +159,7 @@ void visionOdom(){
   //calculating robot position
   robot.xposvision = homeGoal.xpos - Xc;
   robot.yposvision = homeGoal.ypos - Yc;
-} 
+}
 void singleEyeVision(){
   double theta = 1;//object center horizontal angle with respect to optical axis, positive right
   double phi = 1;//object center vertical angle with respec to optical axis, positive up

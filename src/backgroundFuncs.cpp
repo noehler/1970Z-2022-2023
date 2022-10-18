@@ -19,7 +19,7 @@ void updateInfoLoop(void){
         odometry();
         turAngupdate();
         visionOdom();
-        if (fabs ( robot.xposodom - robot.xposvision )< 5){
+        /*if (fabs ( robot.xposodom - robot.xposvision )< 5){
             robot.xpos = robot.xposodom;
         } else {
             robot.xpos = robot.xposvision;
@@ -30,11 +30,11 @@ void updateInfoLoop(void){
         } else {
             robot.xpos = robot.yposvision;
             robot.yposodom = robot.yposvision;
-        }
+        }*/
         robotGoal.dx = homeGoal.xpos-robot.xpos;
         robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = homeGoal.zpos-robot.zpos;
-        delay(20);
+        delay(100);
     }
 }
 
@@ -42,7 +42,7 @@ void startLoop(void)
 {
 
     while (1){
-        std::cout << "\nfps: " << odoCount /float((millis()-sT)/1000);
+        //std::cout << "\nfps: " << odoCount /float((millis()-sT)/1000);
         singSameOldSongTimeTurretTwister();
         delay(20);
 
