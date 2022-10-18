@@ -49,4 +49,9 @@ extern Imu inertial;
 
 extern Optical opticalSensor;
 
+extern Vision turVisionL;
+extern Vision turVisionR;
+extern vision_signature_s_t REDGOAL;
+extern vision_signature_s_t BLUEGOAL;
+
 #endif

@@ -14,7 +14,7 @@ double mod(double base, double var){
 }
 void initialize() {
   while (1){
-    vision_object_s_t codeTemp = turVisionL.get_by_code(0, REDGOAL);
+    vision_object_s_t codeTemp = turVisionL.get_by_sig(0, 1);
     std::cout << "(" << codeTemp.x_middle_coord << ", " << codeTemp.y_middle_coord << ")\n";
     delay(20);
   }
