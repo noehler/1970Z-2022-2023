@@ -40,5 +40,7 @@ ADIEncoder leftEncoderFB({{9,'C','D'}, true});
 ADIEncoder rightEncoderFB({{9,'E', 'F'},true });
 ADIEncoder encoderLR({{9,'A','B'}});
 
-Vision turVisionL ( 20, E_VISION_ZERO_CENTER );
-Vision turVisionR ( 19, E_VISION_ZERO_CENTER );
+vision::signature REDGOAL (1, 1483, 5187, 3335, -1139, 283, -428, 1.400, 0);
+vision::signature BLUEGOAL (2, -1671, 1, -834, 2025, 4413, 3220, 2.000, 0);
+vision turVisionL ( 20, E_VISION_ZERO_CENTER, 125, REDGOAL, BLUEGOAL);
+Vision turVisionR ( 19, E_VISION_ZERO_CENTER, 125, REDGOAL, BLUEGOAL);

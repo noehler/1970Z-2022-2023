@@ -73,7 +73,7 @@ void singSameOldSongTimeTurretTwister(void){
   //outputting calculated values
   robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
   goalSpeed = V_disk;
-  robot.turvelocity = (pow(P1,2)/T - pow(P2,2)/T )/(pow(P1,2)+pow(P2,2));
+  robot.turvelocity = (pow(P1,2) - pow(P2,2))/T*(pow(P1,2)+pow(P2,2));
 }
 
 void liftConrol(void){
