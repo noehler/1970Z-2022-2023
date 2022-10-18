@@ -14,8 +14,9 @@ double mod(double base, double var){
 }
 void initialize() {
   while (1){
-    vision_object_code_t codeTemp = turVisionL.get_by_code(0, REDGOAL);
-    std::cout << "(" << codeTemp.x_middle_coord << ", " << codeTemp.y_middle_coord << ")\n"
+    vision_object_s_t codeTemp = turVisionL.get_by_code(0, REDGOAL);
+    std::cout << "(" << codeTemp.x_middle_coord << ", " << codeTemp.y_middle_coord << ")\n";
+    delay(20);
   }
   boomShackalacka.set_value(false);
 	inertial.reset();
