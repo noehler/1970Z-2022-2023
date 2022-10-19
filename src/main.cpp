@@ -12,13 +12,8 @@ double mod(double base, double var){
   }
   return var;
 }
-void initialize() {
-  /*while (1){
-    vision_object_s_t codeTemp = turVisionL.get_by_sig(0, 1);
-    std::cout << codeTemp.signature << "\n";
-    std::cout << "(" << codeTemp.x_middle_coord << ", " << codeTemp.y_middle_coord << ")\n";
-    delay(20);
-  }*/
+void initialize(){
+  opticalSensor.set_led_pwm(100);
   boomShackalacka.set_value(false);
 	inertial.reset();
 	inertialTurret.reset();
@@ -53,12 +48,12 @@ void initialize() {
 	robot.chaIntAng = 270;
 	robot.TurintAng = 90;
 
-	robot.xpos = 0;
-	robot.ypos = 0;
-	robot.zpos = 0;
+	robot.xpos = 30;
+	robot.ypos = 13;
+	robot.zpos = 13;
 
-	homeGoal.xpos = 20;
-	homeGoal.ypos = 124;
+	homeGoal.xpos = 18;
+	homeGoal.ypos = 126;
 	homeGoal.zpos = 25;
   Task turrC(motorControl);
   Task varUP(updateInfoLoop);
@@ -73,6 +68,7 @@ void disabled() {
 
 void competition_initialize() {}
 void autonomous(){
+  chassis.teamColor = COLOR_RED;
 	autonomousReal();
 }
 

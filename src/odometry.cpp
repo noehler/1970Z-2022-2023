@@ -99,8 +99,9 @@ void odometry(void){ // encoder odom, primary odom,
   robot.wVelocity = Delta_heading/T;
   robot.xVelocity = Delta_x/T;
   robot.yVelocity = Delta_y/T;
-  robot.xposodom += Delta_x;
-  robot.yposodom += Delta_y;
+  //when visOdom is working, change xpos to xposodom && same with ypos
+  robot.xpos += Delta_x;
+  robot.ypos += Delta_y;
   if (fabs(Delta_y) > 10 && usd::is_installed()){
     outValsSDCard();
   }

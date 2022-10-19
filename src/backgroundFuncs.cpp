@@ -18,7 +18,7 @@ void updateInfoLoop(void){
     while (1){
         odometry();
         turAngupdate();
-        visionOdom();
+        //visionOdom();
         /*if (fabs ( robot.xposodom - robot.xposvision )< 5){
             robot.xpos = robot.xposodom;
         } else {

@@ -31,7 +31,7 @@ double turrControl(void){
   double PIDscalar = 1.7;
   double gyroScalar = 6;
   double chassisScalar = 7;
-  double turPredicScalar = 1;
+  double turPredicScalar = 0;
   PIDSpeedSpin =(1.7*angdiff + 2*prevPIDSpeedSpin*.01 + 6*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity;
   /*if (deckLoaded.get_value() > 1000){
     PIDSpeedSpin = 0;
@@ -116,7 +116,12 @@ void moveTo(void){
   //std::cout <<"\nxpos"<<robot.xpos<<" y:"<<robot.ypos<<" ang:"<<robot.angle;
   //std::cout <<"\na:"<<move.ets<<" tarx:"<<move.moveToxpos<<" tary:"<<move.moveToypos;
   move.ets = move.ets*180/M_PI;
-  move.PIDSS = 3 * move.ets + 0.1 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
+  if (move.moveToforwardToggle == 1){
+    move.PIDSS = 3 * move.ets + 0.1 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
+  }
+  else{
+    move.PIDSS = 3 * move.ets + 3 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
+  }
   if (fabs(move.ets) < 10) {
     move.PIDFW = move.moveToforwardToggle * (3 * et + 0.1 * move.prevPIDFW * .01 + 0.1 * (move.PIDFW - move.prevPIDFW) / .01);
   } else {
@@ -191,19 +196,17 @@ void moveTo(void){
 }
 
 void spinRoller(void){
-  //opticalSensor.set_led_pwm(50);
-  double redVal = opticalSensor.get_rgb().red;
-  double blueVal = opticalSensor.get_rgb().blue;
-  //std::cout << "\n r:" << opticalSensor.get_rgb().red << ",  g:" << opticalSensor.get_rgb().green << ",  b:" << opticalSensor.get_rgb().blue;
   if (chassis.isSpinner == true){
+    double redVal = opticalSensor.get_rgb().red;
+    double blueVal = opticalSensor.get_rgb().blue;
     //0 is blue
     //1 is red
     bool colorDown;
-    if (redVal - blueVal > 50){
-      colorDown = 1;
-    }
-    else if (redVal - blueVal < 20){
+    if (redVal > blueVal){
       colorDown = 0;
+    }
+    else{
+      colorDown = 1;
     }
     if (chassis.teamColor == colorDown){
       chassis.intakeRunning = 2;
@@ -228,8 +231,8 @@ void motorControl(void){
     //in the description it said to have low acc, but in vex game nothing but net, sigbots used this controller for their flywheels
     //considering the simplisity and the amount of tolerance we have, this would be a good solution for now.
 
-    //diff1 = diffInSpd + baseSPD;
-    //diff2 = -diffInSpd + baseSPD;
+    diff1 = diffInSpd + baseSPD;
+    diff2 = -diffInSpd + baseSPD;
     double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/10;
     double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
     FlyWVolt = (2 * diffFlyWheelW + 4 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
