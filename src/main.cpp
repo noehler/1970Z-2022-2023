@@ -50,29 +50,44 @@ void initialize(){
 
 	robot.xpos = 30;
 	robot.ypos = 13;
-	robot.zpos = 13;
+	robot.zpos = 12.3;
 
 	homeGoal.xpos = 18;
 	homeGoal.ypos = 126;
-	homeGoal.zpos = 25;
-  Task turrC(motorControl);
-  Task varUP(updateInfoLoop);
+	homeGoal.zpos = 50;
+  	Task turrC(motorControl);
+  	Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);
+	Task C2(controller2);
 }
 
 void disabled() {
-	while(1){
-		controller2();
-	}
+	
+	/*while(1){
+		if (sidecar.get_digital_new_press(DIGITAL_L1)){
+
+		}
+	}*/
 }
 
 void competition_initialize() {}
+
 void autonomous(){
-  chassis.teamColor = COLOR_RED;
+	robot.xpos = 50;
+	robot.ypos = 50;
+	move.moveToforwardToggle = 1;
+
+	move.moveToxpos = robot.xpos;
+	move.moveToypos = robot.ypos - 48;
+	while (1){
+		delay(20);
+	}
+  	chassis.teamColor = COLOR_RED;
 	autonomousReal();
 }
 
 void opcontrol() {
+	
 	// i want to go to world...
 	while(1){/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
@@ -84,12 +99,10 @@ void opcontrol() {
 
 		//std::cout << "\nturenc:"<<double(turretEncoder.get_position())/2158.3333<<"chHeading:"<<-inertial.get_heading();
 		liftConrol();
-    if (sidecar.is_connected()){
-		    controller2();
-    }
-    if (usd::is_installed()){
-      outPosSDCARD();
-    }
+	
+		if (usd::is_installed()){
+			outPosSDCARD();
+		}
 
 		devCheck();
 

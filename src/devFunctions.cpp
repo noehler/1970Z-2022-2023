@@ -346,10 +346,10 @@ void outPosSDCARD(void){
     fileNum = startRecord();
     startedTracking = false;
   }
-  if (fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1){
+  if (/*fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1*/1){
     usd_file_write = fopen(filename, "a");
     char buffer[50];
-    sprintf(buffer,"\n%.2f,%.2f,%.3f", robot.xpos, robot.ypos, float(millis())/1000);
+    sprintf(buffer,"\n%.2f,%.2f,%.3f,%.3f", robot.xpos, robot.ypos, float(millis())/1000, sqrt(robot.xVelocity*robot.xVelocity + robot.yVelocity*robot.yVelocity));
     fputs(buffer, usd_file_write);
     fclose(usd_file_write);
     prevPosX = robot.xpos;

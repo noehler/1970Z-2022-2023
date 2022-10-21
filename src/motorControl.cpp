@@ -117,13 +117,18 @@ void moveTo(void){
   //std::cout <<"\na:"<<move.ets<<" tarx:"<<move.moveToxpos<<" tary:"<<move.moveToypos;
   move.ets = move.ets*180/M_PI;
   if (move.moveToforwardToggle == 1){
-    move.PIDSS = 3 * move.ets + 0.1 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
+    move.PIDSS = 3 * move.ets + 0.1 * move.prevPIDSS * .01 + 0.3 * (move.PIDSS - move.prevPIDSS) / .01;
   }
   else{
     move.PIDSS = 3 * move.ets + 3 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
   }
   if (fabs(move.ets) < 10) {
-    move.PIDFW = move.moveToforwardToggle * (3 * et + 0.1 * move.prevPIDFW * .01 + 0.1 * (move.PIDFW - move.prevPIDFW) / .01);
+    if (move.moveToforwardToggle == 1){
+      move.PIDFW = move.moveToforwardToggle * (3 * et + .0001 * move.prevPIDFW + 1 * (move.PIDFW - move.prevPIDFW));
+    }
+    else{
+      move.PIDFW = move.moveToforwardToggle * (3 * et + 0.1 * move.prevPIDFW * .01 + 0.1 * (move.PIDFW - move.prevPIDFW) / .01);
+    }
   } else {
     move.PIDFW = 0;
   }
@@ -231,8 +236,8 @@ void motorControl(void){
     //in the description it said to have low acc, but in vex game nothing but net, sigbots used this controller for their flywheels
     //considering the simplisity and the amount of tolerance we have, this would be a good solution for now.
 
-    diff1 = diffInSpd + baseSPD;
-    diff2 = -diffInSpd + baseSPD;
+    //diff1 = diffInSpd + baseSPD;
+    //diff2 = -diffInSpd + baseSPD;
     double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/10;
     double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
     FlyWVolt = (2 * diffFlyWheelW + 4 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
@@ -245,7 +250,7 @@ void motorControl(void){
     flyWheel1.move(FlyWVolt);
     flyWheel2.move(FlyWVolt);//this input is ranged from 0 to 127, either scaled or not voltage
 
-    if (chassis.driveTrain.leftSpd != 0 || chassis.driveTrain.rightSpd != 0 ||chassis.driveTrain.mechSpd != 0){
+    if ((chassis.driveTrain.leftSpd != 0 || chassis.driveTrain.rightSpd != 0 ||chassis.driveTrain.mechSpd != 0) && chassis.driveTrain.running){
       lfD.move(chassis.driveTrain.leftSpd + chassis.driveTrain.mechSpd);
       lbD.move(chassis.driveTrain.leftSpd - chassis.driveTrain.mechSpd);
       rfD.move(chassis.driveTrain.rightSpd - chassis.driveTrain.mechSpd);
@@ -261,9 +266,11 @@ void motorControl(void){
 
     spinRoller();
 
-    delay(20);
     if (competition::is_autonomous()){
       moveTo();
+      if (usd::is_installed()){
+        outPosSDCARD();
+      }
     }
     delay(20);
   }

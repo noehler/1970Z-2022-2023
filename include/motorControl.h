@@ -6,6 +6,7 @@
 class drivespeeds_t {
   public:
     double leftSpd, rightSpd, mechSpd;
+    bool running = true;
 };
 
 class piston_t {
