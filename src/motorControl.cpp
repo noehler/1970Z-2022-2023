@@ -32,11 +32,17 @@ double turrControl(void){
   double gyroScalar = 6;
   double chassisScalar = 7;
   double turPredicScalar = 0;
-  PIDSpeedSpin =(1.7*angdiff + 2*prevPIDSpeedSpin*.01 + 6*(PIDSpeedSpin - prevPIDSpeedSpin)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity;
+  static double IPID = 0;
+  static double previousangdiff = 0;
+  IPID += angdiff;
+  PIDSpeedSpin =(1.7*angdiff + 2*IPID*.01 + 6*(angdiff - previousangdiff)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity;
+  previousangdiff = angdiff;
+  if (fabs(angdiff)<1){
+    IPID = 0;
+  }
   /*if (deckLoaded.get_value() > 1000){
     PIDSpeedSpin = 0;
   }*/
-  prevPIDSpeedSpin = PIDSpeedSpin;
 
   //}else{
   //    diffInSpd = 0; // put that PID here
@@ -60,7 +66,16 @@ double intakeControl(double diffInSpd){
 
 moveToInfo_t move;
 void moveTo(void){
+  
+  static double IPIDSS = 0;
+  static double previousets = 0;
+  static double IPIDfw = 0;
+  static double previouset = 0;
   if (move.reset) {
+    IPIDSS = 0;
+    previousets = 0;
+    IPIDfw = 0;
+    previouset = 0;
     move.dist = 0;          // change of position
     move.distR = 0;         // chagne of right postion
     move.distL = 0;         // change of left position
@@ -115,24 +130,28 @@ void moveTo(void){
 
   //std::cout <<"\nxpos"<<robot.xpos<<" y:"<<robot.ypos<<" ang:"<<robot.angle;
   //std::cout <<"\na:"<<move.ets<<" tarx:"<<move.moveToxpos<<" tary:"<<move.moveToypos;
+  
   move.ets = move.ets*180/M_PI;
+  IPIDSS += move.ets;
+  IPIDfw += et;
   if (move.moveToforwardToggle == 1){
-    move.PIDSS = 3 * move.ets + 0.1 * move.prevPIDSS * .01 + 0.3 * (move.PIDSS - move.prevPIDSS) / .01;
+    move.PIDSS = 3 * move.ets + 0.1 * IPIDSS * .01 + 0.3 * (move.ets - previousets) / .01;
   }
   else{
-    move.PIDSS = 3 * move.ets + 3 * move.prevPIDSS * .01 + 0.1 * (move.PIDSS - move.prevPIDSS) / .01;
+    move.PIDSS = 3 * move.ets + 3 * IPIDSS * .01 + 0.1 * (move.ets - previousets) / .01;
   }
   if (fabs(move.ets) < 10) {
     if (move.moveToforwardToggle == 1){
-      move.PIDFW = move.moveToforwardToggle * (3 * et + .0001 * move.prevPIDFW + 1 * (move.PIDFW - move.prevPIDFW));
+      move.PIDFW = move.moveToforwardToggle * (3 * et + .0001 * IPIDfw + 1 * (et - previouset));
     }
     else{
-      move.PIDFW = move.moveToforwardToggle * (3 * et + 0.1 * move.prevPIDFW * .01 + 0.1 * (move.PIDFW - move.prevPIDFW) / .01);
+      move.PIDFW = move.moveToforwardToggle * (3 * et + 0.1 * IPIDfw * .01 + 0.1 * (et - previouset) / .01);
     }
   } else {
     move.PIDFW = 0;
   }
-
+  previousets = move.ets;
+  previouset = et;
   move.PIDSSFLAT = move.PIDSS;
   move.PIDFWFLAT = move.PIDFW;
   if (move.PIDFWFLAT >= move.speed_limit) {
@@ -187,8 +206,7 @@ void moveTo(void){
   //std::cout << "\net: " << dist << ", ets: " << move.ets;
   //std::cout << "\npidfw: " << move.PIDFW << ", pidss: " << move.PIDSS;
 
-  move.prevPIDSS = move.PIDSS;
-  move.prevPIDFW = move.PIDFW;
+  
 
   //std::cout << "\n(" << robot.xpos << "," << robot.ypos << ")";
 
