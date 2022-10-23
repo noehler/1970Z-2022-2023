@@ -26,6 +26,7 @@ double angularVelocityCalc(void){
 float g = 386.08858267717;
 double a = -pow(g,2)*.25;
 
+bool overrideSSOSTTT = false;
 //means iterative time based turret rotation calculator
 void singSameOldSongTimeTurretTwister(void){
   //define quartic equation terms  
@@ -71,9 +72,14 @@ void singSameOldSongTimeTurretTwister(void){
   double V_disk = P2 / P3;
   double turOfCenterOffset = 0; // offcenter offset, not tested yet
   //outputting calculated values
-  robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
+  if (!overrideSSOSTTT){
+    robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
+  }
+  else{
+    robotGoal.angleBetweenHorABS = robot.chaIntAng;
+  }
   goalSpeed = V_disk;
-  robot.turvelocity = (pow(P1,2) - pow(P2,2))/T*(pow(P1,2)+pow(P2,2));
+  robot.turvelocity = (robot.xVelocity*P1-robot.yVelocity*P2)/(pow(P1,2)+pow(P2,2));
 }
 
 void liftConrol(void){
@@ -83,6 +89,7 @@ void liftConrol(void){
   static bool shootPist = true;
 
   shootPist = master.get_digital(DIGITAL_L1)+ sidecar.get_digital(DIGITAL_L2);
+  recoilPrevent = master.get_digital(DIGITAL_L1)+ sidecar.get_digital(DIGITAL_L2);
   elevatePist = master.get_digital(DIGITAL_L2)+ sidecar.get_digital(DIGITAL_L1);
   
   shootPiston.set_value(shootPist);

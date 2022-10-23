@@ -346,10 +346,10 @@ void outPosSDCARD(void){
     fileNum = startRecord();
     startedTracking = false;
   }
-  if (/*fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1*/1){
+  if (fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1){
     usd_file_write = fopen(filename, "a");
     char buffer[50];
-    sprintf(buffer,"\n%.2f,%.2f,%.3f,%.3f", robot.xpos, robot.ypos, float(millis())/1000, sqrt(robot.xVelocity*robot.xVelocity + robot.yVelocity*robot.yVelocity));
+    sprintf(buffer,"\n%.2f,%.2f,%.3f, %.3f", robot.xpos, robot.ypos, float(millis())/1000, diffFlyWheelW);
     fputs(buffer, usd_file_write);
     fclose(usd_file_write);
     prevPosX = robot.xpos;
@@ -358,12 +358,38 @@ void outPosSDCARD(void){
 }
 
 void outValsSDCard(void){
+  static bool headerMade = false;
+  
   char buffer[20];
-  sprintf(buffer, "/usd/vals_%d", fileNum);
+  sprintf(buffer, "/usd/vals_%d.txt", fileNum);
   FILE *usd_file_write = fopen(buffer, "a");
-  for (int i = 0; i < 20; i++){
-    fprintf(usd_file_write,"%s: %f", outNames[i], outVals[i]);
+  if (!headerMade){
+    for (int i = 0; i < 20; i++){
+      if (outVals[i] != 420.69){
+        fprintf(usd_file_write,"%s", outNames[i]);
+      }
+      if (outVals[i+1] != 420.69){
+        fprintf(usd_file_write,",");
+      }
+      else{
+        break;
+      }
+    }
+      fprintf(usd_file_write,"\n");
+      headerMade = true;
   }
+  for (int i = 0; i < 20; i++){
+    if (outVals[i] != 420.69){
+      fprintf(usd_file_write,"%f", outVals[i]);
+    }
+    if (outVals[i+1] != 420.69){
+      fprintf(usd_file_write,",");
+    }
+    else{
+      break;
+    }
+  }
+  fprintf(usd_file_write,"\n");
   fclose(usd_file_write);
 }
 

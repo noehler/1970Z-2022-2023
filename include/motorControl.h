@@ -1,6 +1,7 @@
 #ifndef __MOTORCONTROL_H__
 #define __MOTORCONTROL_H__
 
+#include "pros/colors.h"
 #include "pros/motors.h"
 
 class drivespeeds_t {
@@ -27,7 +28,7 @@ class chassis_t {
     bool isSpinner = false;
 
     //0 is blue, 1 is red
-    bool teamColor = 0;
+    int teamColor = 1;
 
     //tV values and what they mean
     //0 is stopped
@@ -55,7 +56,7 @@ class moveToInfo_t{
 };
 
 extern moveToInfo_t move;
-
+extern double diffFlyWheelW;
 extern chassis_t chassis;
 
 extern void motorControl(void);

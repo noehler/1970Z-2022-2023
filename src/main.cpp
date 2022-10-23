@@ -13,8 +13,8 @@ double mod(double base, double var){
   return var;
 }
 void initialize(){
-  opticalSensor.set_led_pwm(100);
-  boomShackalacka.set_value(false);
+  	opticalSensor.set_led_pwm(100);
+  	boomShackalacka.set_value(false);
 	inertial.reset();
 	inertialTurret.reset();
 	guiInit();
@@ -48,13 +48,16 @@ void initialize(){
 	robot.chaIntAng = 270;
 	robot.TurintAng = 90;
 
-	robot.xpos = 30;
-	robot.ypos = 13;
+	robot.xpos = 29.5;
+	robot.ypos = 18.5;
 	robot.zpos = 12.3;
 
 	homeGoal.xpos = 18;
 	homeGoal.ypos = 126;
-	homeGoal.zpos = 50;
+	homeGoal.zpos = 27;
+	for (int i = 0; i<20;i++){
+		outVals[i] = 420.69;
+	}
   	Task turrC(motorControl);
   	Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);
@@ -65,7 +68,14 @@ void disabled() {
 	
 	/*while(1){
 		if (sidecar.get_digital_new_press(DIGITAL_L1)){
-
+			chassis.teamColor = !chassis.teamColor;
+		}
+		if (sidecar.get_digital_new_press(DIGITAL_L2)){
+			if (startPos == near){
+				startPos = far;
+			}else{
+				startPos = near;
+			}
 		}
 	}*/
 }
@@ -73,16 +83,8 @@ void disabled() {
 void competition_initialize() {}
 
 void autonomous(){
-	robot.xpos = 50;
-	robot.ypos = 50;
-	move.moveToforwardToggle = 1;
-
-	move.moveToxpos = robot.xpos;
-	move.moveToypos = robot.ypos - 48;
-	while (1){
-		delay(20);
-	}
-  	chassis.teamColor = COLOR_RED;
+	chassis.teamColor = 0;
+	startPos = far;
 	autonomousReal();
 }
 
@@ -102,12 +104,13 @@ void opcontrol() {
 	
 		if (usd::is_installed()){
 			outPosSDCARD();
+        	outValsSDCard();
 		}
 
 		devCheck();
 
 		//have a 150 msec delay because of updating controller screen
-		//delay(20);
+		delay(20);
 
 	}
 }

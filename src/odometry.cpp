@@ -141,8 +141,8 @@ void visionOdom(){
   //need to know object height, distance between camera's optical axis
   //also convert to global coordinate according to some offsets
   //conversion from x position to angular positions
-  double angL = (LOBJ.x_middle_coord-316/2)*0.189873418; //targetxL horizontal position of target center from left camera
-  double angR = (ROBJ.x_middle_coord-316/2)*0.1898073418; //targetxR horizontal position of target center from right camerad
+  double angL = (LOBJ.x_middle_coord-316.0/2)*0.189873418; //targetxL horizontal position of target center from left camera
+  double angR = (ROBJ.x_middle_coord-316.0/2)*0.1898073418; //targetxR horizontal position of target center from right camerad
   std::cout << "L: " << angL << ", R:" << angR << ", Val:" << LOBJ.signature << "\n";
   double A = 7.5625; //idstance from left camera optical axis to right camera optical axis
   //calculations of target postion in local coordinate

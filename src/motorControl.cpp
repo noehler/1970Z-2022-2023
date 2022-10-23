@@ -4,11 +4,16 @@
 #include "main.h"
 chassis_t chassis;
 
+bool underRoller = 0;
 double turrControl(void){
-  static double PIDSpeedSpin = 0;
-  static double prevPIDSpeedSpin = 0;
+  static double PIDPosition = 0;
+  static double PIDVelocity = 0;
   static double T = 0;
-  static double previousT=0;
+  static double previousT=0;  
+  static double PIDscalar = 1.5;
+  static double gyroScalar = 21.5833333;
+  static double chassisScalar = 21.5833333;
+  static double turPredicScalar = 21.5833333;
   T = float(millis())/1000 - previousT; // JLO - Is this right?  What units are T in?  usec or sec?
   previousT+=T;
   double angdiff = robotGoal.angleBetweenHorABS - robot.turAng;
@@ -28,26 +33,54 @@ double turrControl(void){
   //slowing down turret when nothing is loaded or on deck so intake can run faster
   //if (deckLoaded.get_value() > 1900){
 
-  double PIDscalar = 1.7;
-  double gyroScalar = 6;
-  double chassisScalar = 7;
-  double turPredicScalar = 0;
-  static double IPID = 0;
-  static double previousangdiff = 0;
-  IPID += angdiff;
-  PIDSpeedSpin =(1.7*angdiff + 2*IPID*.01 + 6*(angdiff - previousangdiff)/.01)*PIDscalar + gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity;
-  previousangdiff = angdiff;
-  if (fabs(angdiff)<1){
-    IPID = 0;
-  }
-  /*if (deckLoaded.get_value() > 1000){
-    PIDSpeedSpin = 0;
-  }*/
 
-  //}else{
-  //    diffInSpd = 0; // put that PID here
-  //}
-  return PIDSpeedSpin;
+  static double IPIDvel = 0;
+  static double previousveldiff = 0;
+  static double IPIDang = 0;
+  static double previousangdiff = 0;
+  //double PIDinPut = 10*(gyroScalar*T/2*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity)*T + 0*angdiff;
+  if (!competition::is_disabled()){
+    IPIDang += angdiff;
+    PIDPosition =(2*angdiff + .5*IPIDang*.01 + 1.4*(angdiff - previousangdiff));
+    previousangdiff = angdiff;
+    double veldiff = gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity+PIDPosition*PIDscalar + 0.025*recoilPrevent*goalSpeed;
+    IPIDvel += veldiff;
+    PIDVelocity =(0.415*veldiff + 0.135*IPIDvel*.01 + 2.6*(veldiff - previousveldiff));
+    previousveldiff = veldiff;
+    if (fabs(angdiff)<1&&PIDPosition==0){
+      IPIDang = 0;
+    }
+    if (fabs(veldiff)<0.1){
+      IPIDvel = 0;
+    }
+    /*if (deckLoaded.get_value() > 1000){
+      PIDSpeedSpin = 0;
+    }*/
+
+    //}else{
+    //    diffInSpd = 0; // put that PID here
+    //}
+    logVals("VEL" , PIDVelocity);
+    logVals("time", millis());
+    logVals("VD", veldiff);
+    logVals("PP", PIDPosition);
+    logVals("AD", double(angdiff));
+    logVals();
+  }
+  else{
+    PIDVelocity = 0;
+  }
+  
+  
+  if (opticalSensor.get_proximity() > 200){
+    PIDVelocity = 0;
+    underRoller = true;
+  }
+  else{
+    underRoller = false;
+  }
+
+  return PIDVelocity;
 }
 
 double intakeControl(double diffInSpd){
@@ -60,6 +93,10 @@ double intakeControl(double diffInSpd){
   }
   else{
     baseSPD = 0;
+  }
+
+  if (underRoller){
+    baseSPD -= (chassis.driveTrain.leftSpd + chassis.driveTrain.rightSpd)/2;
   }
   return baseSPD;
 }
@@ -135,17 +172,17 @@ void moveTo(void){
   IPIDSS += move.ets;
   IPIDfw += et;
   if (move.moveToforwardToggle == 1){
-    move.PIDSS = 3 * move.ets + 0.1 * IPIDSS * .01 + 0.3 * (move.ets - previousets) / .01;
+    move.PIDSS = 3 * move.ets + 0.1 * IPIDSS * .01 + 0.3 * (move.ets - previousets);
   }
   else{
-    move.PIDSS = 3 * move.ets + 3 * IPIDSS * .01 + 0.1 * (move.ets - previousets) / .01;
+    move.PIDSS = 3 * move.ets + 0.1 * IPIDSS * .01 + 0.3 * (move.ets - previousets);
   }
   if (fabs(move.ets) < 10) {
     if (move.moveToforwardToggle == 1){
-      move.PIDFW = move.moveToforwardToggle * (3 * et + .0001 * IPIDfw + 1 * (et - previouset));
+      move.PIDFW = move.moveToforwardToggle * (1 * et + 0.0 * IPIDfw + 3 * (et - previouset));
     }
     else{
-      move.PIDFW = move.moveToforwardToggle * (3 * et + 0.1 * IPIDfw * .01 + 0.1 * (et - previouset) / .01);
+      move.PIDFW = move.moveToforwardToggle * (1 * et + 0.0 * IPIDfw + 3 * (et - previouset));
     }
   } else {
     move.PIDFW = 0;
@@ -209,13 +246,6 @@ void moveTo(void){
   
 
   //std::cout << "\n(" << robot.xpos << "," << robot.ypos << ")";
-
-  logVals("heading" , currentheading);
-  logVals("pidSS" , move.PIDSS);
-  logVals("pidFW" , move.PIDFW);
-  logVals("xPos" , robot.xpos);
-  logVals("yPos" , robot.ypos);
-  logVals();
 }
 
 void spinRoller(void){
@@ -225,7 +255,7 @@ void spinRoller(void){
     //0 is blue
     //1 is red
     bool colorDown;
-    if (redVal > blueVal){
+    if (redVal < blueVal){
       colorDown = 0;
     }
     else{
@@ -241,6 +271,7 @@ void spinRoller(void){
   }
 }
 
+double diffFlyWheelW;
 void motorControl(void){
   while(1){
     //std::cout << "\n(t*cos(" << -inertial.get_heading()/180*M_PI <<")+" << robot.xpos <<",t*sin(" << -inertial.get_heading()/180*M_PI << ")+" << -inertial.get_heading()/180*M_PI << ")";
@@ -254,8 +285,8 @@ void motorControl(void){
     //in the description it said to have low acc, but in vex game nothing but net, sigbots used this controller for their flywheels
     //considering the simplisity and the amount of tolerance we have, this would be a good solution for now.
 
-    //diff1 = diffInSpd + baseSPD;
-    //diff2 = -diffInSpd + baseSPD;
+    diff1 = diffInSpd + baseSPD;
+    diff2 = -diffInSpd + baseSPD;
     double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/10;
     double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
     FlyWVolt = (2 * diffFlyWheelW + 4 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
@@ -288,6 +319,7 @@ void motorControl(void){
       moveTo();
       if (usd::is_installed()){
         outPosSDCARD();
+        outValsSDCard();
       }
     }
     delay(20);

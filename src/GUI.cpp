@@ -70,12 +70,26 @@ void controller2(void){
             std::cout << "\n false";
         }
 
+        if (sidecar.get_digital(DIGITAL_B)){
+            homeGoal.zpos -= 1; 
+        }
+        if (sidecar.get_digital(DIGITAL_X)){
+            homeGoal.zpos += 1; 
+        }
+        if (sidecar.get_digital(DIGITAL_Y)){
+            homeGoal.zpos = 30; 
+        }
+
         targetAngleOffest += float(sidecar.get_analog(ANALOG_LEFT_X))/64;
         robot.xpos += float(sidecar.get_analog(ANALOG_RIGHT_X))/64;
         robot.ypos += float(sidecar.get_analog(ANALOG_RIGHT_Y))/64;
         
         if (sidecar.get_digital(DIGITAL_A)){
             targetAngleOffest = 0;
+        }
+
+        if (sidecar.get_digital_new_press(DIGITAL_A)){
+            overrideSSOSTTT = !overrideSSOSTTT;
         }
 
         offsetxbot+=addxbot;
@@ -97,13 +111,13 @@ void controller2(void){
         delay(50);
         sidecar.clear();
         delay(50);
-        sidecar.print(0,1,"(%.0f|%.0f), FM: %.2f, Toff: %.2f", robot.xpos, robot.ypos, flySpdMult, targetAngleOffest);
+        sidecar.print(0,1,"(%.0f|%.0f), FM: %.2f, To: %.1f", robot.xpos, robot.ypos, flySpdMult, targetAngleOffest);
         delay(50);
-        sidecar.print(1,1,"Toff: %.2f", targetAngleOffest);
-        if (competition::is_disabled()){   
+        sidecar.print(1,1,"goalZ: %.2f", homeGoal.zpos);
+        /*if (competition::is_disabled()){   
             delay(50);
             sidecar.print(1,1,"AM: %f", autonMode);
-        }
+        }*/
     }
 }
 /*

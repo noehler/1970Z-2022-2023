@@ -6,6 +6,8 @@ enum startPos_t{near, far};
 extern autonMode_t autonMode;
 extern startPos_t startPos;
 
+extern void raiseAScore(void);
 extern void autonomousReal();
+extern bool recoilPrevent;
 
 #endif
