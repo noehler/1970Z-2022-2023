@@ -102,9 +102,6 @@ void odometry(void){ // encoder odom, primary odom,
   //when visOdom is working, change xpos to xposodom && same with ypos
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
-  if (fabs(Delta_y) > 10 && usd::is_installed()){
-    outValsSDCard();
-  }
 }
 
 void turAngupdate(){

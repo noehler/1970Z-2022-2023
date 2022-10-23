@@ -321,7 +321,7 @@ int fileNum;
 int startRecord(void){
   for (int i = 1; ; i++)
   {
-    sprintf(filename, "/usd/pos_%d.txt", i);
+    sprintf(filename, "/usd/pos_%d.csv", i);
     std::ifstream ifile;
     ifile.open(filename);
     if (ifile)
@@ -361,7 +361,7 @@ void outValsSDCard(void){
   static bool headerMade = false;
   
   char buffer[20];
-  sprintf(buffer, "/usd/vals_%d.txt", fileNum);
+  sprintf(buffer, "/usd/vals_%d.csv", fileNum);
   FILE *usd_file_write = fopen(buffer, "a");
   if (!headerMade){
     for (int i = 0; i < 20; i++){
