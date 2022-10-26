@@ -39,8 +39,8 @@ void autonomousReal() {
             move.moveToypos = 10;
 
             move.speed_limit = 40;
-            move.reset = false;
-            while(move.reset == false && c::millis()-startTime < 3000){
+            move.resetMoveTo = false;
+            while(move.resetMoveTo == false && c::millis()-startTime < 3000){
                 delay(20);
             }
             chassis.isSpinner = true;
@@ -73,11 +73,11 @@ void autonomousReal() {
             move.speed_limit = 100;
 
             startTime = c::millis();
-            move.reset = false;
-            while(move.reset == false && c::millis()-startTime < 3000){
+            move.resetMoveTo = false;
+            while(move.resetMoveTo == false && c::millis()-startTime < 3000){
                 delay(20);
             }
-            move.reset = true;
+            move.resetMoveTo = true;
             shootPiston.set_value(true);
             delay(750);
             shootPiston.set_value(false);
@@ -92,24 +92,13 @@ void autonomousReal() {
             move.speed_limit = 50;
 
             startTime = c::millis();
-            move.reset = false;
-            while (move.reset == false && c::millis()-startTime < 3000){
+            move.resetMoveTo = false;
+            while (move.resetMoveTo == false && c::millis()-startTime < 3000){
                 delay(20);
             }
-            move.reset = true;
+            move.resetMoveTo = true;
             delay(20);
             chassis.isSpinner = false;
-            /*
-            move.moveToforwardToggle = -1;
-            move.moveToxpos = 125;
-            move.moveToypos = 100;
-            move.speed_limit = 100;
-
-            startTime = c::millis();
-            move.reset = false;
-            while (move.reset == false && c::millis()-startTime < 3000){
-
-            }*/
         }
     }
 }

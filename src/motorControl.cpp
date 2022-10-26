@@ -14,7 +14,7 @@ double turrControl(void){
   static double gyroScalar = 21.5833333;
   static double chassisScalar = 21.5833333;
   static double turPredicScalar = 21.5833333;
-  T = float(millis())/1000 - previousT; // JLO - Is this right?  What units are T in?  usec or sec?
+  T = float(millis())/1000 - previousT;
   previousT+=T;
   double angdiff = robotGoal.angleBetweenHorABS - robot.turAng;
   if (angdiff > 180){
@@ -60,12 +60,12 @@ double turrControl(void){
     //}else{
     //    diffInSpd = 0; // put that PID here
     //}
-    logVals("VEL" , PIDVelocity);
+    /*logVals("VEL" , PIDVelocity);
     logVals("time", millis());
     logVals("VD", veldiff);
     logVals("PP", PIDPosition);
     logVals("AD", double(angdiff));
-    logVals();
+    logVals();*/
   }
   else{
     PIDVelocity = 0;
@@ -101,31 +101,50 @@ double intakeControl(double diffInSpd){
   return baseSPD;
 }
 
-moveToInfo_t move;
+class moveToInfoInternal_t{
+  public:
+    double moveToxpos, moveToypos, targetHeading, ets, speed_limit=100, errtheta=5;
+    double dist = 0;          // change of position
+    double distR = 0;         // chagne of right postion
+    double distL = 0;         // change of left position
+    double PIDSS = 0;         // PID turning speed
+    double PIDFW = 0;         // PID moveforward speed
+    double PIDSpeedL = 0;     // PID leftside speed
+    double PIDSpeedR = 0;     // PID rightside speed
+    double prevPIDFW = 0;     // PID moveforward speed at t = -1
+    double prevPIDSS = 0;     // PID turning speed at t = -1
+    double PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
+    double PIDSSFLAT = 0;   
+    int moveToforwardToggle = 1, Stop_type = 2;
+    double tolerance=5;
+};
+
+moveToInfoExternal_t move;
 void moveTo(void){
+  static moveToInfoInternal_t moveI;
   
   static double IPIDSS = 0;
   static double previousets = 0;
   static double IPIDfw = 0;
   static double previouset = 0;
-  if (move.reset) {
+  if (move.resetMoveTo) {
     IPIDSS = 0;
     previousets = 0;
     IPIDfw = 0;
     previouset = 0;
-    move.dist = 0;          // change of position
-    move.distR = 0;         // chagne of right postion
-    move.distL = 0;         // change of left position
-    move.PIDSS = 0;         // PID turning speed
-    move.PIDFW = 0;         // PID moveforward speed
-    move.PIDSpeedL = 0;     // PID leftside speed
-    move.PIDSpeedR = 0;     // PID rightside speed
-    move.prevPIDFW = 0;     // PID moveforward speed at t = -1
-    move.prevPIDSS = 0;     // PID turning speed at t = -1
-    move.PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
-    move.PIDSSFLAT = 0;     // variable used for keeping turning speed < 20
+    moveI.dist = 0;          // change of position
+    moveI.distR = 0;         // chagne of right postion
+    moveI.distL = 0;         // change of left position
+    moveI.PIDSS = 0;         // PID turning speed
+    moveI.PIDFW = 0;         // PID moveforward speed
+    moveI.PIDSpeedL = 0;     // PID leftside speed
+    moveI.PIDSpeedR = 0;     // PID rightside speed
+    moveI.prevPIDFW = 0;     // PID moveforward speed at t = -1
+    moveI.prevPIDSS = 0;     // PID turning speed at t = -1
+    moveI.PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
+    moveI.PIDSSFLAT = 0;     // variable used for keeping turning speed < 20
     // variable for for calculating first turning.
-    move.reset = false;
+    move.resetMoveTo = false;
   }
   double currentheading =robot.angle/180*M_PI;
   if (currentheading == PROS_ERR_F)
@@ -157,62 +176,62 @@ void moveTo(void){
   if (move.moveToforwardToggle == -1){
     move.targetHeading +=M_PI;
   }
-  move.ets = move.targetHeading - currentheading;
-  if (move.ets < -M_PI) {
-  move.ets += 2*M_PI;
+  moveI.ets = move.targetHeading - currentheading;
+  if (moveI.ets < -M_PI) {
+  moveI.ets += 2*M_PI;
   }
-  if (move.ets > M_PI) {
-  move.ets -= 2*M_PI;
+  if (moveI.ets > M_PI) {
+  moveI.ets -= 2*M_PI;
   }
 
   //std::cout <<"\nxpos"<<robot.xpos<<" y:"<<robot.ypos<<" ang:"<<robot.angle;
   //std::cout <<"\na:"<<move.ets<<" tarx:"<<move.moveToxpos<<" tary:"<<move.moveToypos;
   
-  move.ets = move.ets*180/M_PI;
-  IPIDSS += move.ets;
+  moveI.ets = moveI.ets*180/M_PI;
+  IPIDSS += moveI.ets;
   IPIDfw += et;
   if (move.moveToforwardToggle == 1){
-    move.PIDSS = 3 * move.ets + 0.1 * IPIDSS * .01 + 0.3 * (move.ets - previousets);
+    moveI.PIDSS = 3 * moveI.ets + 0.1 * IPIDSS * .01 + 0.3 * (moveI.ets - previousets);
   }
   else{
-    move.PIDSS = 3 * move.ets + 0.1 * IPIDSS * .01 + 0.3 * (move.ets - previousets);
+    moveI.PIDSS = 3 * moveI.ets + 0.1 * IPIDSS * .01 + 0.3 * (moveI.ets - previousets);
   }
-  if (fabs(move.ets) < 10) {
+  if (fabs(moveI.ets) < 10) {
     if (move.moveToforwardToggle == 1){
-      move.PIDFW = move.moveToforwardToggle * (1 * et + 0.0 * IPIDfw + 3 * (et - previouset));
+      moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
     }
     else{
-      move.PIDFW = move.moveToforwardToggle * (1 * et + 0.0 * IPIDfw + 3 * (et - previouset));
+      moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
     }
   } else {
-    move.PIDFW = 0;
+    moveI.PIDFW = 0;
   }
-  previousets = move.ets;
+  previousets = moveI.ets;
   previouset = et;
-  move.PIDSSFLAT = move.PIDSS;
-  move.PIDFWFLAT = move.PIDFW;
-  if (move.PIDFWFLAT >= move.speed_limit) {
-    move.PIDFWFLAT = move.speed_limit;
+  moveI.PIDSSFLAT = moveI.PIDSS;
+  moveI.PIDFWFLAT = moveI.PIDFW;
+  if (moveI.PIDFWFLAT >= move.speed_limit) {
+    moveI.PIDFWFLAT = move.speed_limit;
   }
-  if (move.PIDFWFLAT <= -move.speed_limit) {
-    move.PIDFWFLAT = -move.speed_limit;
+  if (moveI.PIDFWFLAT <= -move.speed_limit) {
+    moveI.PIDFWFLAT = -move.speed_limit;
   }
-  if (move.PIDSSFLAT >= 2 * move.speed_limit) {
-    move.PIDSSFLAT = 2 * move.speed_limit;
+  if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
+    moveI.PIDSSFLAT = 2 * move.speed_limit;
   }
-  if (move.PIDSSFLAT <= -2 * move.speed_limit) {
-    move.PIDSSFLAT = -2 * move.speed_limit;
+  if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
+    moveI.PIDSSFLAT = -2 * move.speed_limit;
   }
   if (move.moveToforwardToggle) {
-    move.PIDSpeedR = -move.PIDFWFLAT - move.PIDSSFLAT;
-    move.PIDSpeedL = -move.PIDFWFLAT + move.PIDSSFLAT;
+    moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
+    moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
 
   } else {
-    move.PIDSpeedR = -move.PIDFWFLAT - move.PIDSSFLAT;
-    move.PIDSpeedL = -move.PIDFWFLAT + move.PIDSSFLAT;
+    moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
+    moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
   }
   if (dist < move.tolerance) {
-    move.reset = true;
+    move.resetMoveTo = true;
     if (move.Stop_type == 1) {
         //motor stop (hold)
         chassis.driveTrain.leftSpd = 0;
@@ -234,8 +253,8 @@ void moveTo(void){
 
     }
   } else {
-  chassis.driveTrain.leftSpd = move.PIDSpeedL;
-  chassis.driveTrain.rightSpd = move.PIDSpeedR;
+  chassis.driveTrain.leftSpd = moveI.PIDSpeedL;
+  chassis.driveTrain.rightSpd = moveI.PIDSpeedR;
   chassis.driveTrain.mechSpd = 0;
   }
   //output motor speeds

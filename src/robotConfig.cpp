@@ -40,7 +40,6 @@ ADIEncoder leftEncoderFB({{9,'C','D'}, true});
 ADIEncoder rightEncoderFB({{9,'E', 'F'},true });
 ADIEncoder encoderLR({{9,'A','B'}});
 
-
 Vision turVisionL ( 15);
 Vision turVisionR ( 19);
 vision_signature_s_t REDGOAL = Vision::signature_from_utility(1, 1483, 5187, 3335, -1139, 283, -428, 1.400, 0);

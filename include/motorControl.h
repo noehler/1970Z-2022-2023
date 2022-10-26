@@ -36,26 +36,16 @@ class chassis_t {
     //2 is fwd
     int intakeRunning;
 };
-class moveToInfo_t{
+
+class moveToInfoExternal_t{
   public:
-    double moveToxpos, moveToypos, targetHeading, ets, speed_limit=100, errtheta=5;
-    double dist = 0;          // change of position
-    double distR = 0;         // chagne of right postion
-    double distL = 0;         // change of left position
-    double PIDSS = 0;         // PID turning speed
-    double PIDFW = 0;         // PID moveforward speed
-    double PIDSpeedL = 0;     // PID leftside speed
-    double PIDSpeedR = 0;     // PID rightside speed
-    double prevPIDFW = 0;     // PID moveforward speed at t = -1
-    double prevPIDSS = 0;     // PID turning speed at t = -1
-    double PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
-    double PIDSSFLAT = 0;   
+    double moveToxpos, moveToypos, targetHeading, speed_limit=100, errtheta=5;
     int moveToforwardToggle = 1, Stop_type = 2;
-    bool reset = true;
     double tolerance=5;
+    bool resetMoveTo;
 };
 
-extern moveToInfo_t move;
+extern moveToInfoExternal_t move;
 extern double diffFlyWheelW;
 extern chassis_t chassis;
 
