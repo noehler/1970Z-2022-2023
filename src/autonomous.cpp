@@ -20,8 +20,6 @@ void raiseAScore(void){
 }
 
 void autonomousReal() {
-
-    chassis.driveTrain.running = true;
     int startTime = c::millis();
 	if (autonMode == flipShoot){
         if (startPos == near){

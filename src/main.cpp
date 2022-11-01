@@ -47,9 +47,9 @@ void initialize(){
 	PID.driveFR.i = 0;
 	PID.driveFR.d = 3;
 
-	PID.turret.p = 1;
-	PID.turret.i = .5;
-	PID.turret.d = 1.4;
+	PID.turret.p = .8889;
+	PID.turret.i = .236;
+	PID.turret.d = 1.2818;
 
 	robot.xVelocity=0;
 	robot.yVelocity = 0;
@@ -68,10 +68,10 @@ void initialize(){
 	for (int i = 0; i<20;i++){
 		outVals[i] = 420.69;
 	}
-  	//Task turrC(motorControl);
+  	Task turrC(motorControl);
   	Task varUP(updateInfoLoop);
-	//Task sLoop(startLoop);
-	//Task C2(controller2);
+	Task sLoop(startLoop);
+	Task C2(controller2);
 }
 
 void disabled() {
@@ -99,9 +99,10 @@ void autonomous(){
 }
 
 void opcontrol() {
+	/*chassis.driveTrain.running = false;
 	robot.chaIntAng = 0;
 	robot.TurintAng = 0;
-	PIDTunnerTurret();
+	PIDTunnerTurret();*/
 	
 	// i want to go to world...
 	while(1){/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -25,6 +25,7 @@ void logVals(std::string name = "reset",double value = 0);
 extern void setAngle(objectType, int);
 extern void outPosSDCARD(void);
 extern void outValsSDCard(void);
+extern void PIDTunnerDrive (void);
 extern void PIDTunnerTurret (void);
 class PID_t{
     public:

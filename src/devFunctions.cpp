@@ -1,5 +1,6 @@
 #include "main.h"
 #include "odometry.h"
+#include "pros/misc.hpp"
 #include "pros/rtos.h"
 #include "robotConfig.h"
 #include <cstring>
@@ -463,21 +464,21 @@ void PIDTunnerDrive (){
   bool arrived = false;
   bool revd = false;
   double steps[10] = {0.21,  0.16,  0.11,  0.071, 0.051, 0.031, 0.021, 0.016, 0.011, 0.0071};
-  double PIDSSS[3] = {1, 0, 3}; //current best guess
-  int StepSizes[3] = {1, 1, 1};
+  double PIDSSS[6] = {1, 0, 3, 3, .1, .3}; //current best guess
+  int StepSizes[6] = {1, 1, 1, 1, 1, 1};
   bool evenLoop = false;
   // main loop
   while (finished == false) {
-    if (pros::battery::get_capacity() <= 40) { //check battery
+    /*if (pros::battery::get_capacity() <= 40) { //check battery
       warn();
       return;
-    }
+    }*/
     if (evenLoop){
       move.moveToxpos = 0;
       move.moveToypos = 0;
     }else{
-      move.moveToxpos = 48;
-      move.moveToypos = 0;
+      move.moveToxpos = 0;
+      move.moveToypos = 48;
     }
     evenLoop = !evenLoop;
 
@@ -507,6 +508,9 @@ void PIDTunnerDrive (){
       PID.driveFR.p = PIDSSS[0];
       PID.driveFR.i = PIDSSS[1];
       PID.driveFR.d = PIDSSS[2];
+      PID.driveSS.p = PIDSSS[3];
+      PID.driveSS.i = PIDSSS[4];
+      PID.driveSS.d = PIDSSS[5];
       double currentheading =robot.angle/180*M_PI;
       double etx = move.moveToxpos - robot.xpos;//change of x
       double ety = move.moveToypos - robot.ypos;//change of y
@@ -538,12 +542,7 @@ void PIDTunnerDrive (){
       moveI.ets = moveI.ets*180/M_PI;
       IPIDSS += moveI.ets;
       IPIDfw += et;
-      if (move.moveToforwardToggle == 1){
-        moveI.PIDSS = 3 * moveI.ets + 0.1 * IPIDSS * .01 + 0.3 * (moveI.ets - previousets);
-      }
-      else{
-        moveI.PIDSS = 3 * moveI.ets + 0.1 * IPIDSS * .01 + 0.3 * (moveI.ets - previousets);
-      }
+      moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS * .01 + PID.driveSS.d * (moveI.ets - previousets);
       if (fabs(moveI.ets) < 10) {
         if (move.moveToforwardToggle == 1){
           moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
@@ -598,17 +597,20 @@ void PIDTunnerDrive (){
           fileNum = startRecord();
           startedTracking = false;
         }
-        char nameBuff[25];
-        sprintf(nameBuff, "/usd/PIDDrive_%d.csv", fileNum);
-        FILE* usd_file_write = fopen(nameBuff, "a");
-        char contBuffer[50];
-        sprintf(contBuffer,"%.5f,%.5f,%.5f\n", PID.driveFR.p, PID.driveFR.i, PID.driveFR.d);
-        fputs(contBuffer, usd_file_write);
-        fclose(usd_file_write);
+        if (usd::is_installed()){
+          char nameBuff[25];
+          sprintf(nameBuff, "/usd/PIDDrive_%d.csv", fileNum);
+          FILE* usd_file_write = fopen(nameBuff, "a");
+          char contBuffer[50];
+          sprintf(contBuffer,"%.5f,%.5f,%.5f,%.5f,%.5f,%.5f\n", PID.driveFR.p, PID.driveFR.i, PID.driveFR.d, PID.driveSS.p, PID.driveSS.i, PID.driveSS.d);
+          fputs(contBuffer, usd_file_write);
+          fclose(usd_file_write);
+        }
+        
       } else {
-      chassis.driveTrain.leftSpd = moveI.PIDSpeedL;
-      chassis.driveTrain.rightSpd = moveI.PIDSpeedR;
-      chassis.driveTrain.mechSpd = 0;
+        chassis.driveTrain.leftSpd = moveI.PIDSpeedL;
+        chassis.driveTrain.rightSpd = moveI.PIDSpeedR;
+        chassis.driveTrain.mechSpd = 0;
       }
 
       if ((penalty_value - 20) > base_line_value) {
@@ -618,6 +620,7 @@ void PIDTunnerDrive (){
         penalty_value = penalty_value + et * 40;
         //motor controlelr reset to inital value, declear abnormal exit
         move.resetMoveTo = true;
+        revd = true;
       }
     }
 
@@ -639,6 +642,9 @@ void PIDTunnerDrive (){
     }
     if (StepSizes[PorIorDor] <= 0) {
       StepSizes[PorIorDor] = 0;
+    }
+    if (PorIorDor == 6) {
+      PorIorDor = 0;
     }
     stepdirection = stepdirection * -1;
     PIDSSS[PorIorDor] =
@@ -735,12 +741,12 @@ void PIDTunnerTurret (){
       static double angularvels[3] = {0,0,0};
       angularvels[2] = angularvels[1];
       angularvels[1] = angularvels[0];
-      angularvels[0] = inertialTurret.get_gyro_rate().z;
+      angularvels[0] = fabs(inertialTurret.get_gyro_rate().z);
       penalty_value += angdiff + (angularvels[0] + angularvels[1] + angularvels[2])/3;
       
       diff1.move(PIDVelocity);
       diff2.move(-PIDVelocity);
-      if (fabs(angdiff) < 3 && abs(turretEncoder.get_velocity()) < 10) {//good exit
+      if (fabs(angdiff) < 3 && abs(turretEncoder.get_velocity()) < 30) {//good exit
         // normal exit condition
         arrived = true;
         //motor controller reset to inital value
@@ -751,13 +757,16 @@ void PIDTunnerTurret (){
           fileNum = startRecord();
           startedTracking = false;
         }
-        char nameBuff[25];
-        sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
-        FILE* usd_file_write = fopen(nameBuff, "a");
-        char contBuffer[50];
-        sprintf(contBuffer,"%.5f,%.5f,%.5f\n", PID.turret.p, PID.turret.i, PID.turret.d);
-        fputs(contBuffer, usd_file_write);
-        fclose(usd_file_write);
+        if (usd::is_installed()){
+          char nameBuff[25];
+          sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
+          FILE* usd_file_write = fopen(nameBuff, "a");
+          char contBuffer[50];
+          sprintf(contBuffer,"%.5f,%.5f,%.5f\n", PID.turret.p, PID.turret.i, PID.turret.d);
+          fputs(contBuffer, usd_file_write);
+          fclose(usd_file_write);
+        }
+        
       }
 
       if ((penalty_value - 20) > base_line_value) {
