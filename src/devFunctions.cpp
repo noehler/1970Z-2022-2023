@@ -810,6 +810,8 @@ void PIDTunnerTurret (){
 }
 
 void PIDTunnerFly (){
+  flyWheel1.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+  flyWheel2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
   static moveToInfoInternal_t moveI;
   //
   /*function to find best PID constant, modeling movement of robot as function
@@ -829,86 +831,125 @@ void PIDTunnerFly (){
   static double previousets = 0;
   static double previouset = 0;
   double penalty_value = 0;
-  double base_line_value = 10000000;
+  double base_line_value = 100000000;
   int PorIorDor = 0;
   int stepdirection = 1;
   bool finished = false;
   bool arrived = false;
   bool revd = false;
-  double steps[10] = {0.21,  0.16,  0.11,  0.071, 0.051, 0.031, 0.021, 0.016, 0.011, 0.0071};
-  double PIDSSS[3] = {2, .005, .001}; //current best guess
-  int StepSizes[3] = {1, 1, 1};
+  double steps[10] = {0.021,  0.016,  0.011,  0.0071, 0.0051, 0.0031, 0.0021, 0.0016, 0.0011, 0.00071};
+  double PIDSSS[4] = {.1, 0.01, .1, .0}; //current best guess
+  int StepSizes[4] = {1, 1, 1, 1};
   bool evenLoop = false;
   // main loop
   srand(c::millis());
   while (finished == false) {
+    static int loopNum = 0;
+    static int failNum = 0;
+    loopNum++;
     if (pros::battery::get_capacity() <= 40) { //check battery
+      std::cout << "battBad\n";
       warn();
       return;
     }
+    else{
+      //std::cout << "battGood\n";
+    }
     double goalSpd = 330 * (double(rand() % 500 + 1)/500);
+    goalSpd = 300;
     delay(50);
     master.clear();
     delay(50);
-    master.print(0,1,"goalSpeed: %.2f", goalSpd);
+    master.print(0,1,"pass: %d, fail: %d", loopNum, failNum);
+    delay(50);
+    master.print(1,0,"steps: %.3f, %.3f,", PIDSSS[0]*100, PIDSSS[1]*100);
+    delay(50);
+    master.print(2,0,"%.3f, %.3f", PIDSSS[2]*100, PIDSSS[3]*100);
     arrived = false;
+    
 
     penalty_value = 0;
 
     PID.flyWheel.p = PIDSSS[0];
     PID.flyWheel.i = PIDSSS[1];
     PID.flyWheel.d = PIDSSS[2];
+    PID.flyWheel.p2 = PIDSSS[3];
     // controller loop (motor control thread)
     double IPIDang = 0;
     double previousangdiff = 0;
     delay(250);
     while (arrived == false) {
+      static int testStay = -420;
       double flyWVolt;
       double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
       double diffFlyWheelW = goalSpd-flyWheelW;
 
       IPIDang += diffFlyWheelW;
-      flyWVolt =(PID.flyWheel.p*diffFlyWheelW + IPIDang*PID.flyWheel.i + PID.flyWheel.d*(diffFlyWheelW - previousangdiff));
+      double prop = PID.flyWheel.p*diffFlyWheelW;
+      double integ = IPIDang*PID.flyWheel.i;
+      double deriv = PID.flyWheel.d*(diffFlyWheelW - previousangdiff);
+      double prop2 = PID.flyWheel.p2 * goalSpd;
+      flyWVolt = 12000.0/127*(prop + integ + deriv + prop2);
+      
       previousangdiff = diffFlyWheelW;
-
-      flyWheel1 =flyWVolt; 
-      flyWheel2 =flyWVolt; 
+      if (flyWVolt > 12000){
+        flyWVolt = 12000;
+      }
+      if (flyWVolt < -12000){
+        flyWVolt = -12000;
+      }
+      std::cout << millis() << "," <<  flyWheelW << "," << flyWVolt/12000*127 << "," << prop  << "," << integ  << "," << deriv  << "," << prop2 << "\n";
+		  flyWheel1.move_voltage(flyWVolt); 
+		  flyWheel2.move_voltage(flyWVolt); 
       if (fabs(diffFlyWheelW)<1&&flyWVolt==0){
         IPIDang = 0;
       }
 
-      penalty_value += IPIDang;
+      penalty_value += IPIDang + 600*(diffFlyWheelW - previousangdiff);
       static double accel[3] = {0,0,0};
       accel[2] = accel[1];
       accel[1] = accel[0];
       accel[0] = flyWheelW - accel[1];
       double avgAccel = (accel[0] + accel[1] + accel[2])/3;
 
-      if (fabs(diffFlyWheelW) < 20 && fabs(avgAccel) < 50) {//good exit
-        // normal exit condition
-        arrived = true;
-        //motor controller reset to inital value
-        //declear normal exit
-        //record current pid value
-        if (startedTracking == true){
-          fileNum = startRecord();
-          startedTracking = false;
+      if (fabs(diffFlyWheelW) < 20 && fabs(deriv) < 20) {//good exit
+        if (testStay == -420){
+          testStay = millis();
         }
-        if (usd::is_installed()){
-          char nameBuff[25];
-          sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
-          FILE* usd_file_write = fopen(nameBuff, "a");
-          char contBuffer[50];
-          sprintf(contBuffer,"%.5f,%.5f,%.5f\n", PID.flyWheel.p, PID.flyWheel.i, PID.flyWheel.d);
-          fputs(contBuffer, usd_file_write);
-          fclose(usd_file_write);
+        else if (millis() - testStay < 500){
+          
+        }
+        else{
+          // normal exit condition
+          arrived = true;
+          //motor controller reset to inital value
+          //declear normal exit
+          //record current pid value
+          if (startedTracking == true){
+            fileNum = startRecord();
+            startedTracking = false;
+          }
+          if (usd::is_installed()){
+            char nameBuff[25];
+            sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
+            FILE* usd_file_write = fopen(nameBuff, "a");
+            char contBuffer[50];
+            sprintf(contBuffer,"%.5f,%.5f,%.5f,%.5f\n", PID.flyWheel.p, PID.flyWheel.i, PID.flyWheel.d, PID.flyWheel.p2);
+            fputs(contBuffer, usd_file_write);
+            fclose(usd_file_write);
+          
+          }
         }
         
       }
+      else{
+        testStay = -420;
+      }
 
-      if ((penalty_value - 20) > base_line_value) {
+      if ((penalty_value - 20) > base_line_value || flyWheelW > goalSpd*1.2) {
         // exit condition two, overshooting detaction
         arrived = true;
+        failNum++;
         //forced exit, update penalty value
         penalty_value = penalty_value;
         //motor controlelr reset to inital value, declear abnormal exit
@@ -916,13 +957,12 @@ void PIDTunnerFly (){
         delay(50);
         master.clear();
         delay(50);
-        master.print(0,1,"Fuckity Fuck Fuck Fuck");
+        master.print(0,1,"Oh no");
         delay(500);
       }
       
-      delay(50);
-      master.print(1,1,"W: %.2f, A: %.2f", diffFlyWheelW, avgAccel);
-      //delay(500);
+      delay(20);
+      //master.print(1,1,"W: %.2f, A: %.2f", diffFlyWheelW, avgAccel);
     }
 
     double delta_score = base_line_value - penalty_value;
@@ -944,12 +984,16 @@ void PIDTunnerFly (){
     if (StepSizes[PorIorDor] <= 0) {
       StepSizes[PorIorDor] = 0;
     }
-    if (PorIorDor == 3) {
+    if (PorIorDor == 4) {
       PorIorDor = 0;
     }
     stepdirection = stepdirection * -1;
     PIDSSS[PorIorDor] =
         PIDSSS[PorIorDor] + stepdirection * steps[StepSizes[PorIorDor]];
+    
+    flyWheel1.brake();
+    flyWheel2.brake();
+    delay(2000);
 
   }
 }

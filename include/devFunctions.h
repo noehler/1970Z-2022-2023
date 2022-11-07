@@ -31,7 +31,7 @@ extern void PIDTunnerFly(void);
 extern void calibrateTurretDistances();
 class PID_t{
     public:
-        double p, i, d;
+        double p, i, d, p2;
 };
 class tunedSystems_t{
     public:
