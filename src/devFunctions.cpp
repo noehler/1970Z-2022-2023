@@ -832,13 +832,16 @@ void PIDTunnerFly (){
   static double previouset = 0;
   double penalty_value = 0;
   double base_line_value = 100000000;
-  int PorIorDor = 0;
-  int stepdirection = 1;
+  int PorIorD = 0;
+  int stepdirection[3] = {1,1,1};
   bool finished = false;
   bool arrived = false;
-  bool revd = false;
+  bool failout = false;
+  bool failoutPrev[3] = {0,0,0};
   double steps[10] = {0.021,  0.016,  0.011,  0.0071, 0.0051, 0.0031, 0.0021, 0.0016, 0.0011, 0.00071};
   double PIDSSS[4] = {.1, 0.01, .1, .0}; //current best guess
+  double prevPIDSSS[4][5] = {PIDSSS[4], PIDSSS[4], PIDSSS[4], PIDSSS[4], PIDSSS[4]};
+  bool prevFails[4] = {0, 0, 0, 0}
   int StepSizes[4] = {1, 1, 1, 1};
   bool evenLoop = false;
   // main loop
@@ -950,10 +953,8 @@ void PIDTunnerFly (){
         // exit condition two, overshooting detaction
         arrived = true;
         failNum++;
-        //forced exit, update penalty value
-        penalty_value = penalty_value;
         //motor controlelr reset to inital value, declear abnormal exit
-        revd = true;
+        failout = true;
         delay(50);
         master.clear();
         delay(50);
@@ -964,32 +965,37 @@ void PIDTunnerFly (){
       delay(20);
       //master.print(1,1,"W: %.2f, A: %.2f", diffFlyWheelW, avgAccel);
     }
-
-    double delta_score = base_line_value - penalty_value;
     // descent logic
-    if (delta_score > 0) {
-      PorIorDor += 1;
-      base_line_value = penalty_value;
-      stepdirection = 1;
-    } else if (revd) {
-      StepSizes[PorIorDor] += 2;
-      revd = false;
-    } else {
-      StepSizes[PorIorDor] -= 1;
-      revd = true;
+    if (!failout){
+      if (stepdirection[PorIorD] < 0){
+        stepdirection[PorIorD] = -1;
+      }
+      if (stepdirection[PorIorD] > 0){
+        stepdirection[PorIorD] = 1;
+      }
+
+      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD];
+      for (int i = 4; i > 0; i++){
+        prevPIDSSS[PorIorD][i] = prevPIDSSS[PorIorD][i-1];
+      }
+      prevPIDSSS[PorIorD][0] = PIDSSS[PorIorD];
+      PIDSSS[PorIorD] *= 1+diff;
+      
     }
-    if (StepSizes[PorIorDor] > 9) {
-      StepSizes[PorIorDor] = 9;
+    else{
+      PIDSSS[PorIorD] = prevPIDSSS[PorIorD][0];
+      stepdirection[PorIorD]*=.5;
+      if (!prevFails[PorIorDor]){
+        stepdirection[PorIorD] = -stepdirection[PorIorD];
+      }
+      PorIorD +=1;
     }
-    if (StepSizes[PorIorDor] <= 0) {
-      StepSizes[PorIorDor] = 0;
-    }
+
+    prevFails[PorIorDor] = failout;
+
     if (PorIorDor == 4) {
       PorIorDor = 0;
     }
-    stepdirection = stepdirection * -1;
-    PIDSSS[PorIorDor] =
-        PIDSSS[PorIorDor] + stepdirection * steps[StepSizes[PorIorDor]];
     
     flyWheel1.brake();
     flyWheel2.brake();
