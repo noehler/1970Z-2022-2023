@@ -42,6 +42,7 @@ static lv_res_t btn_click_action(lv_obj_t * btn)
 double targetAngleOffest = 0;
 
 void controller2(void){
+    bool manAngle = 0;
     while(1){
         static double offsetxbot = 0;
         static double offsetybot = 0;
@@ -51,17 +52,28 @@ void controller2(void){
         double addxbot = 0;
         double addybot = 0;
 
-        if (sidecar.get_digital(DIGITAL_UP)){
+        if (sidecar.get_digital(DIGITAL_UP) && sidecar.get_digital(DIGITAL_DOWN)
+        && sidecar.get_digital(DIGITAL_LEFT) && sidecar.get_digital(DIGITAL_RIGHT)){
+            manAngle = 1;
+        }
+        else if (sidecar.get_digital(DIGITAL_UP)){
             addybot+=1;
         }
-        if (sidecar.get_digital(DIGITAL_DOWN)){
+        else if (sidecar.get_digital(DIGITAL_DOWN)){
             addybot-=1;
         }
-        if (sidecar.get_digital(DIGITAL_RIGHT)){
+        else if (sidecar.get_digital(DIGITAL_RIGHT)){
             addxbot+=1;
         }
-        if (sidecar.get_digital(DIGITAL_LEFT)){
+        else if (sidecar.get_digital(DIGITAL_LEFT)){
             addxbot-=1;
+        }
+
+        if (manAngle && sqrt(pow(sidecar.get_analog(ANALOG_LEFT_Y),2) + pow(sidecar.get_analog(ANALOG_LEFT_X),2)) > 100){
+            robotGoal.angleBetweenHorABS = atan(double(sidecar.get_analog(ANALOG_LEFT_Y))/sidecar.get_analog(ANALOG_LEFT_X))*180/M_PI;
+        }
+        else{
+            robotGoal.angleBetweenHorABS = robot.angle + 180;
         }
 
         if (sidecar.get_digital(DIGITAL_A) && sidecar.get_digital(DIGITAL_B)

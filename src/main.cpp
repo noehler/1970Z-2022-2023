@@ -51,6 +51,11 @@ void initialize(){
 	PID.turret.i = .236;
 	PID.turret.d = 1.2818;
 
+	PID.flyWheel.p = .1974;
+    PID.flyWheel.i = 0.01;
+    PID.flyWheel.d = .1;
+    PID.flyWheel.p2 = .01;
+
 	robot.xVelocity=0;
 	robot.yVelocity = 0;
 	robot.wVelocity = 0;
@@ -58,20 +63,21 @@ void initialize(){
 	robot.chaIntAng = 270;
 	robot.TurintAng = 90;
 
-	robot.xpos = 29.5;
-	robot.ypos = 18.5;
+	robot.xpos = 29.4;
+	robot.ypos = 15.75;
 	robot.zpos = 12.3;
 
 	homeGoal.xpos = 18;
 	homeGoal.ypos = 126;
 	homeGoal.zpos = 27;
+	
 	for (int i = 0; i<20;i++){
 		outVals[i] = 420.69;
 	}
-  	//Task turrC(motorControl);
-  	//Task varUP(updateInfoLoop);
-	//Task sLoop(startLoop);
-	//Task C2(controller2);
+  	Task turrC(motorControl);
+  	Task varUP(updateInfoLoop);
+	Task sLoop(startLoop);
+	Task C2(controller2);
 }
 
 void disabled() {
@@ -94,14 +100,14 @@ void competition_initialize() {}
 
 void autonomous(){
 	chassis.teamColor = 0;
-	startPos = far;
+	startPos = near;
 	autonomousReal();
 }
 
 void opcontrol() {
 	//calibrateTurretDistances();
-	chassis.driveTrain.running = false;
-	PIDTunnerFly();
+	//chassis.driveTrain.running = false;
+	//PIDTunnerFly();
 	// i want to go to world...
 	while(1){/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
@@ -116,7 +122,7 @@ void opcontrol() {
 	
 		if (usd::is_installed()){
 			outPosSDCARD();
-        	outValsSDCard();
+        	//outValsSDCard();
 		}
 
 		devCheck();

@@ -833,16 +833,16 @@ void PIDTunnerFly (){
   double penalty_value = 0;
   double base_line_value = 100000000;
   int PorIorD = 0;
-  int stepdirection[3] = {1,1,1};
+  double stepdirection[4] = {1,1,1,1};
   bool finished = false;
   bool arrived = false;
   bool failout = false;
   bool failoutPrev[3] = {0,0,0};
   double steps[10] = {0.021,  0.016,  0.011,  0.0071, 0.0051, 0.0031, 0.0021, 0.0016, 0.0011, 0.00071};
-  double PIDSSS[4] = {.1, 0.01, .1, .0}; //current best guess
-  double prevPIDSSS[4][5] = {PIDSSS[4], PIDSSS[4], PIDSSS[4], PIDSSS[4], PIDSSS[4]};
-  bool prevFails[4] = {0, 0, 0, 0}
-  int StepSizes[4] = {1, 1, 1, 1};
+  double PIDSSS[4] = {.1974, 0.01, .1, .01}; //current best guess
+  double prevPIDSSS[5][4] = {{.11974, 0.01, .1, .01}, {.11974, 0.01, .1, .01}, {.11974, 0.01, .1, .01}, {.11974, 0.01, .1, .01}, {.11974, 0.01, .1, .01}};
+  bool prevFails[4] = {0, 0, 0, 0};
+  double StepSizes[4] = {1, 1, 1, 1};
   bool evenLoop = false;
   // main loop
   srand(c::millis());
@@ -851,7 +851,7 @@ void PIDTunnerFly (){
     static int failNum = 0;
     loopNum++;
     if (pros::battery::get_capacity() <= 40) { //check battery
-      std::cout << "battBad\n";
+      //std::cout << "battBad\n";
       warn();
       return;
     }
@@ -881,7 +881,7 @@ void PIDTunnerFly (){
     double IPIDang = 0;
     double previousangdiff = 0;
     delay(250);
-    while (arrived == false) {
+    while (arrived == false || 1) {
       static int testStay = -420;
       double flyWVolt;
       double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
@@ -908,7 +908,7 @@ void PIDTunnerFly (){
         IPIDang = 0;
       }
 
-      penalty_value += IPIDang + 600*(diffFlyWheelW - previousangdiff);
+      penalty_value += IPIDang/* + 600*(diffFlyWheelW - previousangdiff)*/;
       static double accel[3] = {0,0,0};
       accel[2] = accel[1];
       accel[1] = accel[0];
@@ -949,7 +949,8 @@ void PIDTunnerFly (){
         testStay = -420;
       }
 
-      if ((penalty_value - 20) > base_line_value || flyWheelW > goalSpd*1.2) {
+      ////////////////////////////////////std::cout << base_line_value << "," << penalty_value << "\n";
+      if ((penalty_value - 200) > base_line_value/* || flyWheelW > goalSpd*1.2*/) {
         // exit condition two, overshooting detaction
         arrived = true;
         failNum++;
@@ -962,11 +963,17 @@ void PIDTunnerFly (){
         delay(500);
       }
       
+      
       delay(20);
       //master.print(1,1,"W: %.2f, A: %.2f", diffFlyWheelW, avgAccel);
     }
+
+    flyWheel1.brake();
+    flyWheel2.brake();
+
     // descent logic
     if (!failout){
+      //////////////////////////////////////////std::cout << "gout\n";
       if (stepdirection[PorIorD] < 0){
         stepdirection[PorIorD] = -1;
       }
@@ -974,31 +981,44 @@ void PIDTunnerFly (){
         stepdirection[PorIorD] = 1;
       }
 
+      //std::cout << "set 1 or -1\n";
       double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD];
-      for (int i = 4; i > 0; i++){
-        prevPIDSSS[PorIorD][i] = prevPIDSSS[PorIorD][i-1];
+      base_line_value = penalty_value;
+      //std::cout << "calced diff\n";
+      for (int i = 4; i > 0; i-=1){
+        prevPIDSSS[i][PorIorD] = prevPIDSSS[i-1][PorIorD];
+        //std::cout << "set value loop\n";
       }
-      prevPIDSSS[PorIorD][0] = PIDSSS[PorIorD];
-      PIDSSS[PorIorD] *= 1+diff;
-      
+      prevPIDSSS[0][PorIorD] = PIDSSS[PorIorD];
+      //std::cout << "moved back 1\n";
+      PIDSSS[PorIorD] *= 1.0+diff;
+      //std::cout << "changed val\n";
     }
     else{
-      PIDSSS[PorIorD] = prevPIDSSS[PorIorD][0];
+      /////////////////////////////////////////////////std::cout << "fout\n";
+      PIDSSS[PorIorD] = prevPIDSSS[0][PorIorD];
+      //std::cout << "reset value\n";
       stepdirection[PorIorD]*=.5;
-      if (!prevFails[PorIorDor]){
+      //std::cout << "adjusted step multiplier\n";
+      if (!prevFails[PorIorD]){
         stepdirection[PorIorD] = -stepdirection[PorIorD];
       }
+      //std::cout << "checked to reverse dir\n";
       PorIorD +=1;
+      if (PorIorD == 4) {
+        PorIorD = 0;
+      }
+      PIDSSS[PorIorD] *=1.0 + (.09 * stepdirection[PorIorD]);
+      //std::cout << "changed PorIorDor\n";
     }
 
-    prevFails[PorIorDor] = failout;
+    prevFails[PorIorD] = failout;
 
-    if (PorIorDor == 4) {
-      PorIorDor = 0;
-    }
+    //std::cout << "adjusted failout\n";
     
-    flyWheel1.brake();
-    flyWheel2.brake();
+    
+    /////////////////////////////////////////////////////////////////////////////std::cout << PorIorD << "," << PIDSSS[PorIorD] - prevPIDSSS[1][PorIorD] << "," << stepdirection[PorIorD] << "\n";
+    //std::cout << "checked if PorIorD is too big\n";
     delay(2000);
 
   }

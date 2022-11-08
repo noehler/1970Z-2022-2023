@@ -290,6 +290,34 @@ void spinRoller(void){
   }
 }
 
+double flyPIDP(void){
+  
+  double flyWVolt;
+  double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
+  double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
+  static double prevFWdiffSPD = diffFlyWheelW;
+
+  static double IPIDang = 0;
+  IPIDang += diffFlyWheelW;
+  double prop = PID.flyWheel.p*diffFlyWheelW;
+  double integ = IPIDang*PID.flyWheel.i;
+  double deriv = PID.flyWheel.d*(diffFlyWheelW - prevFWdiffSPD);
+  double prop2 = PID.flyWheel.p2 * angularVelocityCalc();
+  prevFWdiffSPD = diffFlyWheelW;
+  flyWVolt = 12000.0/127*(prop + integ + deriv + prop2);
+  if (flyWVolt > 12000){
+    flyWVolt = 12000;
+  }
+  if (flyWVolt < -12000){
+    flyWVolt = -12000;
+  } 
+  if (fabs(diffFlyWheelW)<1&&flyWVolt==0){
+    IPIDang = 0;
+  }
+
+  return flyWVolt;
+}
+
 double diffFlyWheelW;
 void motorControl(void){
   while(1){
@@ -306,17 +334,11 @@ void motorControl(void){
 
     diff1 = diffInSpd + baseSPD;
     diff2 = -diffInSpd + baseSPD;
-    double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/10;
-    double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
-    FlyWVolt = (2 * diffFlyWheelW + 4 * prevFlyWVolt * .01 + 6 * (FlyWVolt - prevFlyWVolt) / .01)+flyWheelW*0.92;
-    if (FlyWVolt > 127){
-      FlyWVolt = 127;
-    }
+    
+    double flyWVolt = flyPIDP();
 
-    //std::cout << "\ndiskV"<<diffFlyWheelW;
-    prevFlyWVolt = FlyWVolt;
-    flyWheel1.move(FlyWVolt);
-    flyWheel2.move(FlyWVolt);//this input is ranged from 0 to 127, either scaled or not voltage
+    flyWheel1.move_voltage(flyWVolt); 
+    flyWheel2.move_voltage(flyWVolt); 
 
     if ((chassis.driveTrain.leftSpd != 0 || chassis.driveTrain.rightSpd != 0 ||chassis.driveTrain.mechSpd != 0) && chassis.driveTrain.running){
       lfD.move(chassis.driveTrain.leftSpd + chassis.driveTrain.mechSpd);
@@ -337,6 +359,7 @@ void motorControl(void){
     if (competition::is_autonomous()){
       moveTo();
       if (usd::is_installed()){
+        //std::cout << "(" << robot.xpos << "," << robot.ypos << ")\n";
         outPosSDCARD();
         outValsSDCard();
       }

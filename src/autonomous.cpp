@@ -38,6 +38,7 @@ void autonomousReal() {
 
             move.speed_limit = 40;
             move.resetMoveTo = false;
+            startTime = c::millis();
             while(move.resetMoveTo == false && c::millis()-startTime < 3000){
                 delay(20);
             }
@@ -55,6 +56,34 @@ void autonomousReal() {
             delay(500);
             raiseAScore();
             chassis.isSpinner = false;
+
+            move.moveToforwardToggle = -1;
+            move.moveToxpos = 29.4;
+            move.moveToypos = 18;
+            move.speed_limit = 40;
+            move.resetMoveTo = false;
+            startTime = c::millis();
+            while(move.resetMoveTo == false && c::millis()-startTime < 3000){
+                delay(20);
+            }
+            move.resetMoveTo = true;
+            delay(300);
+
+            chassis.intakeRunning = 1;
+            move.moveToforwardToggle = 1;
+            move.moveToxpos = 48;
+            move.moveToypos = 24;
+            move.speed_limit = 40;
+            move.resetMoveTo = false;
+            startTime = c::millis();
+            while(move.resetMoveTo == false && c::millis()-startTime < 3000){
+                delay(20);
+            }
+            move.resetMoveTo = true;
+            chassis.intakeRunning = 0;
+            delay(500);
+            raiseAScore();
+
 
         }
         else{
