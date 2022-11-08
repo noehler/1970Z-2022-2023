@@ -80,7 +80,7 @@ double turrControl(void){
     underRoller = false;
   }
 
-  return PIDVelocity;
+  return 0;
 }
 
 double intakeControl(double diffInSpd){
@@ -294,7 +294,7 @@ double flyPIDP(void){
   
   double flyWVolt;
   double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
-  double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
+  double diffFlyWheelW = goalSpeed-flyWheelW;
   static double prevFWdiffSPD = diffFlyWheelW;
 
   static double IPIDang = 0;
@@ -302,7 +302,7 @@ double flyPIDP(void){
   double prop = PID.flyWheel.p*diffFlyWheelW;
   double integ = IPIDang*PID.flyWheel.i;
   double deriv = PID.flyWheel.d*(diffFlyWheelW - prevFWdiffSPD);
-  double prop2 = PID.flyWheel.p2 * angularVelocityCalc();
+  double prop2 = PID.flyWheel.p2 * goalSpeed;
   prevFWdiffSPD = diffFlyWheelW;
   flyWVolt = 12000.0/127*(prop + integ + deriv + prop2);
   if (flyWVolt > 12000){

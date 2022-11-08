@@ -20,7 +20,7 @@ void initialize(){
 	guiInit();
 
 	int startTime = millis();
-	while (inertial.is_calibrating()  || inertialTurret.is_calibrating()){
+	/*while (inertial.is_calibrating()  || inertialTurret.is_calibrating()){
 		std::cout << "\nCalibrating!";
 		delay(40);
 		if (millis() - startTime > 3000){
@@ -34,7 +34,7 @@ void initialize(){
 				break;
 			}
 		}
-	}
+	}*/
 	inertial.set_heading(0);
 	inertialTurret.set_heading(0);
 	delay(50);
@@ -54,7 +54,7 @@ void initialize(){
 	PID.flyWheel.p = .1974;
     PID.flyWheel.i = 0.01;
     PID.flyWheel.d = .1;
-    PID.flyWheel.p2 = .01;
+    PID.flyWheel.p2 = .02;
 
 	robot.xVelocity=0;
 	robot.yVelocity = 0;
@@ -75,9 +75,9 @@ void initialize(){
 		outVals[i] = 420.69;
 	}
   	Task turrC(motorControl);
-  	Task varUP(updateInfoLoop);
-	Task sLoop(startLoop);
-	Task C2(controller2);
+  	//Task varUP(updateInfoLoop);
+	//Task sLoop(startLoop);
+	//Task C2(controller2);
 }
 
 void disabled() {
@@ -105,7 +105,8 @@ void autonomous(){
 }
 
 void opcontrol() {
-	//calibrateTurretDistances();
+	chassis.driveTrain.running = false;
+	calibrateTurretDistances();
 	//chassis.driveTrain.running = false;
 	//PIDTunnerFly();
 	// i want to go to world...

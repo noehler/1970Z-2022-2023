@@ -1057,6 +1057,7 @@ void calibrateTurretDistances(void){
   while (1){
 		static int pressed = 0;
 		static int spd = 0;
+    liftConrol();
 		if (master.get_digital(DIGITAL_UP)){
 			if (pressed > 10){
 				spd+=5;
@@ -1076,11 +1077,34 @@ void calibrateTurretDistances(void){
 		else{
 			pressed = 0;
 		}
-		flyWheel1 = spd;
-		flyWheel2 = spd;
+
+    double avgSpd = (flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
+
+		goalSpeed = spd;
 		delay(100);
 		master.clear();
 		delay(50);
-		master.print(0,0,"GS: %d, RPM: %f", spd, (flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2);
+		master.print(0,0,"GS: %d, RPM: %f", spd, avgSpd);
+    if (usd::is_installed()){
+      char nameBuff[25];
+      sprintf(nameBuff, "/usd/FLYTEST_%d.csv", fileNum);
+      FILE* usd_file_write = fopen(nameBuff, "a");
+      char contBuffer[50];
+      sprintf(contBuffer,"%d,%.5f\n", spd, avgSpd);
+      fputs(contBuffer, usd_file_write);
+      fclose(usd_file_write);
+    }
 	}
+}
+#define EXAMPLE_SIG 1
+
+void cameraTest(void){
+  
+  turVisionL.set_signature(EXAMPLE_SIG, &REDGOAL);
+  while(1){
+    vision_object_s_t LOBJ = turVisionL.get_by_sig(0, 1);
+    std::cout << "(" << LOBJ.x_middle_coord-316.0/2 << "," << LOBJ.y_middle_coord-212.0/2;
+    delay(20);
+  }
+
 }
