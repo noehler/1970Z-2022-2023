@@ -1,3 +1,4 @@
+#include "GUI.h"
 #include "devFunctions.h"
 #include "main.h"
 #include "odometry.h"
@@ -72,11 +73,8 @@ void singSameOldSongTimeTurretTwister(void){
   double V_disk = P2 / P3;
   double turOfCenterOffset = 0; // offcenter offset, not tested yet
   //outputting calculated values
-  if (!overrideSSOSTTT){
+  if (!manAngle){
     robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
-  }
-  else{
-    robotGoal.angleBetweenHorABS = robot.chaIntAng;
   }
   goalSpeed = V_disk;
   robot.turvelocity = (robot.xVelocity*P1-robot.yVelocity*P2)/(pow(P1,2)+pow(P2,2));

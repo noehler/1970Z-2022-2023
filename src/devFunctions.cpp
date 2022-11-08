@@ -673,13 +673,15 @@ void PIDTunnerTurret (){
   static double previouset = 0;
   double penalty_value = 0;
   double base_line_value = 100000;
-  int PorIorDor = 0;
-  int stepdirection = 1;
+  int PorIorD = 0;
+  int stepdirection[6] = {1,1,1,1,1,1};
   bool finished = false;
   bool arrived = false;
-  bool revd = false;
+  bool failout = false;
   double steps[10] = {0.21,  0.16,  0.11,  0.071, 0.051, 0.031, 0.021, 0.016, 0.011, 0.0071};
-  double PIDSSS[3] = {.8889, .236, 1.2818}; //current best guess
+  double PIDSSS[6] = {.8889, .236, 1.2818, 0.415, .00135, 2.6}; //current best guess
+  double prevPIDSSS[5][6] = {{.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}};
+  bool prevFails[6] = {0, 0, 0, 0, 0, 0};
   int StepSizes[3] = {5, 5, 5};
   bool evenLoop = false;
   // main loop
@@ -689,7 +691,14 @@ void PIDTunnerTurret (){
       warn();
       return;
     }
-    robotGoal.angleBetweenHorABS = 180 * (double(rand() % 500 + 1)/500 - .5);
+    if (evenLoop){
+      robotGoal.angleBetweenHorABS = 135;
+    }
+    else{
+      robotGoal.angleBetweenHorABS = 0;
+    }
+    evenLoop = !evenLoop;
+    
     delay(50);
     master.clear();
     delay(50);
@@ -701,6 +710,9 @@ void PIDTunnerTurret (){
     PID.turret.p = PIDSSS[0];
     PID.turret.i = PIDSSS[1];
     PID.turret.d = PIDSSS[2];
+    PID.turret.p2 = PIDSSS[3];
+    PID.turret.i2 = PIDSSS[4];
+    PID.turret.d2 = PIDSSS[5];
     // controller loop (motor control thread)
     delay(250);
     while (arrived == false) {
@@ -730,7 +742,7 @@ void PIDTunnerTurret (){
       previousangdiff = angdiff;
       double veldiff = gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity+PIDPosition*PIDscalar + 0.025*recoilPrevent*goalSpeed;
       IPIDvel += veldiff;
-      PIDVelocity =(0.415*veldiff + 0.135*IPIDvel*.01 + 2.6*(veldiff - previousveldiff));
+      PIDVelocity =(PID.turret.p2*veldiff + PID.turret.i2*IPIDvel + PID.turret.d2*(veldiff - previousveldiff));
       previousveldiff = veldiff;
       if (fabs(angdiff)<1&&PIDPosition==0){
         IPIDang = 0;
@@ -775,36 +787,53 @@ void PIDTunnerTurret (){
         //forced exit, update penalty value
         penalty_value = penalty_value + angdiff * 40;
         //motor controlelr reset to inital value, declear abnormal exit
-        revd = true;
+        failout = true;
       }
       delay(20);
     }
 
-    double delta_score = base_line_value - penalty_value;
     // descent logic
-    if (delta_score > 0) {
-      PorIorDor += 1;
+    if (!failout){
+      //////////////////////////////////////////std::cout << "gout\n";
+      if (stepdirection[PorIorD] < 0){
+        stepdirection[PorIorD] = -1;
+      }
+      if (stepdirection[PorIorD] > 0){
+        stepdirection[PorIorD] = 1;
+      }
+
+      //std::cout << "set 1 or -1\n";
+      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD];
       base_line_value = penalty_value;
-      stepdirection = 1;
-    } else if (revd) {
-      StepSizes[PorIorDor] += 2;
-      revd = false;
-    } else {
-      StepSizes[PorIorDor] -= 1;
-      revd = true;
+      //std::cout << "calced diff\n";
+      for (int i = 5; i > 0; i-=1){
+        prevPIDSSS[i][PorIorD] = prevPIDSSS[i-1][PorIorD];
+        //std::cout << "set value loop\n";
+      }
+      prevPIDSSS[0][PorIorD] = PIDSSS[PorIorD];
+      //std::cout << "moved back 1\n";
+      PIDSSS[PorIorD] *= 1.0+diff;
+      //std::cout << "changed val\n";
     }
-    if (StepSizes[PorIorDor] > 9) {
-      StepSizes[PorIorDor] = 9;
+    else{
+      /////////////////////////////////////////////////std::cout << "fout\n";
+      PIDSSS[PorIorD] = prevPIDSSS[0][PorIorD];
+      //std::cout << "reset value\n";
+      stepdirection[PorIorD]*=.5;
+      //std::cout << "adjusted step multiplier\n";
+      if (!prevFails[PorIorD]){
+        stepdirection[PorIorD] = -stepdirection[PorIorD];
+      }
+      //std::cout << "checked to reverse dir\n";
+      PorIorD +=1;
+      if (PorIorD == 6) {
+        PorIorD = 0;
+      }
+      PIDSSS[PorIorD] *=1.0 + (.09 * stepdirection[PorIorD]);
+      //std::cout << "changed PorIorDor\n";
     }
-    if (StepSizes[PorIorDor] <= 0) {
-      StepSizes[PorIorDor] = 0;
-    }
-    if (PorIorDor == 3) {
-      PorIorDor = 0;
-    }
-    stepdirection = stepdirection * -1;
-    PIDSSS[PorIorDor] =
-        PIDSSS[PorIorDor] + stepdirection * steps[StepSizes[PorIorDor]];
+
+    prevFails[PorIorD] = failout;
 
   }
 }

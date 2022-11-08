@@ -49,7 +49,7 @@ void initialize(){
 
 	PID.turret.p = .8889;
 	PID.turret.i = .236;
-	PID.turret.d = 1.2818;
+	PID.turret.d = 2;
 
 	PID.flyWheel.p = .1974;
     PID.flyWheel.i = 0.01;

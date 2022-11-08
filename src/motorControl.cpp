@@ -41,7 +41,7 @@ double turrControl(void){
   //double PIDinPut = 10*(gyroScalar*T/2*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity)*T + 0*angdiff;
   if (!competition::is_disabled()){
     IPIDang += angdiff;
-    PIDPosition =(2*angdiff + .5*IPIDang*.01 + 1.4*(angdiff - previousangdiff));
+    PIDPosition =(PID.turret.p*angdiff + PID.turret.i*IPIDang + PID.turret.d*(angdiff - previousangdiff));
     previousangdiff = angdiff;
     double veldiff = gyroScalar*T*(inertial.get_gyro_rate().z)-robot.wVelocity*chassisScalar + turPredicScalar*robot.turvelocity+PIDPosition*PIDscalar + 0.025*recoilPrevent*goalSpeed;
     IPIDvel += veldiff;

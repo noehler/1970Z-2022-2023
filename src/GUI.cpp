@@ -41,8 +41,8 @@ static lv_res_t btn_click_action(lv_obj_t * btn)
 
 double targetAngleOffest = 0;
 
+bool manAngle = 0;
 void controller2(void){
-    bool manAngle = 0;
     while(1){
         static double offsetxbot = 0;
         static double offsetybot = 0;
@@ -70,7 +70,10 @@ void controller2(void){
         }
 
         if (manAngle && sqrt(pow(sidecar.get_analog(ANALOG_LEFT_Y),2) + pow(sidecar.get_analog(ANALOG_LEFT_X),2)) > 100){
-            robotGoal.angleBetweenHorABS = atan(double(sidecar.get_analog(ANALOG_LEFT_Y))/sidecar.get_analog(ANALOG_LEFT_X))*180/M_PI;
+            robotGoal.angleBetweenHorABS = int(atan2(sidecar.get_analog(ANALOG_LEFT_Y), sidecar.get_analog(ANALOG_LEFT_X))*180/M_PI) % 360;
+            /*if (sidecar.get_analog(ANALOG_LEFT_Y) >0){
+                robotGoal.angleBetweenHorABS*=-1;
+            }*/
         }
         else{
             robotGoal.angleBetweenHorABS = robot.angle + 180;
@@ -125,7 +128,7 @@ void controller2(void){
         delay(50);
         sidecar.print(0,1,"(%.0f|%.0f), FM: %.2f, To: %.1f", robot.xpos, robot.ypos, flySpdMult, targetAngleOffest);
         delay(50);
-        sidecar.print(1,1,"goalZ: %.2f", homeGoal.zpos);
+        sidecar.print(1,1,"goalZ: %.2f", robotGoal.angleBetweenHorABS);
         /*if (competition::is_disabled()){   
             delay(50);
             sidecar.print(1,1,"AM: %f", autonMode);
