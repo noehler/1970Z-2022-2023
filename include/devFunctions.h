@@ -30,6 +30,7 @@ extern void PIDTunnerTurret(void);
 extern void PIDTunnerFly(void);
 extern void calibrateTurretDistances();
 extern void cameraTest(void);
+extern void PIDTunnerFlyHold(void);
 class PID_t{
     public:
         double p, i, d, p2, i2,d2;

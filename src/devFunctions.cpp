@@ -40,6 +40,129 @@ void readYRot(void){
   }
 }
 
+char filename[20];
+int fileNum;
+
+int startRecord(void){
+  for (int i = 1; ; i++)
+  {
+    sprintf(filename, "/usd/pos_%d.csv", i);
+    std::ifstream ifile;
+    ifile.open(filename);
+    if (ifile)
+    {
+      // file exists
+    }
+    else
+    {
+      // file does not exist
+      fileNum = i;
+      return i;
+    }
+  }
+}
+
+bool startedTracking = true;
+void outPosSDCARD(void){
+  static double prevPosX = robot.xpos;
+  static double prevPosY = robot.ypos;
+  FILE *usd_file_write;
+  if (startedTracking == true){
+    fileNum = startRecord();
+    startedTracking = false;
+  }
+  if (fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1){
+    usd_file_write = fopen(filename, "a");
+    char buffer[50];
+    sprintf(buffer,"\n%.2f,%.2f,%.3f, %.3f", robot.xpos, robot.ypos, float(millis())/1000, diffFlyWheelW);
+    fputs(buffer, usd_file_write);
+    fclose(usd_file_write);
+    prevPosX = robot.xpos;
+    prevPosY = robot.ypos;
+  }
+}
+
+void outValsSDCard(void){
+  static bool headerMade = false;
+  
+  char buffer[20];
+  sprintf(buffer, "/usd/vals_%d.csv", fileNum);
+  FILE *usd_file_write = fopen(buffer, "a");
+  if (!headerMade){
+    for (int i = 0; i < 20; i++){
+      if (outVals[i] != 420.69){
+        fprintf(usd_file_write,"%s", outNames[i]);
+      }
+      if (outVals[i+1] != 420.69){
+        fprintf(usd_file_write,",");
+      }
+      else{
+        break;
+      }
+    }
+      fprintf(usd_file_write,"\n");
+      headerMade = true;
+  }
+  for (int i = 0; i < 20; i++){
+    if (outVals[i] != 420.69){
+      fprintf(usd_file_write,"%f", outVals[i]);
+    }
+    if (outVals[i+1] != 420.69){
+      fprintf(usd_file_write,",");
+    }
+    else{
+      break;
+    }
+  }
+  fprintf(usd_file_write,"\n");
+  fclose(usd_file_write);
+}
+
+
+void calibrateTurretDistances(void){
+  while (1){
+		static int pressed = 0;
+		static int spd = 0;
+    liftConrol();
+		if (master.get_digital(DIGITAL_UP)){
+			if (pressed > 10){
+				spd+=5;
+			}else{
+				spd+=1;
+			}
+			pressed+=1;
+		}
+		else if (master.get_digital(DIGITAL_DOWN)){
+			if (pressed < -10){
+				spd-=5;
+			}else{
+				spd-=1;
+			}
+			pressed-=1;
+		}
+		else{
+			pressed = 0;
+		}
+
+    double avgSpd = (flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
+
+		goalSpeed = spd;
+		delay(100);
+		master.clear();
+		delay(50);
+		master.print(0,0,"GS: %d, RPM: %f", spd, avgSpd);
+    if (usd::is_installed()){
+      char nameBuff[25];
+      sprintf(nameBuff, "/usd/FLYTEST_%d.csv", fileNum);
+      FILE* usd_file_write = fopen(nameBuff, "a");
+      char contBuffer[50];
+      sprintf(contBuffer,"%d,%.5f\n", spd, avgSpd);
+      fputs(contBuffer, usd_file_write);
+      fclose(usd_file_write);
+    }
+	}
+}
+
 void graphFunction(void){
   int xRes = 480;
   int yRes = 272;
@@ -285,6 +408,10 @@ void devCheck(void){
 			master.print(1, 1, "Entering dev mode");
 			//runLoop = false;
       std::cout << "\nDevmode\n";
+
+	    chassis.driveTrain.running = false;
+	    calibrateTurretDistances();
+
 			devMode();
 			delay(50);
 			master.clear_line(1);
@@ -313,85 +440,6 @@ void logVals(std::string name,double value){
     sprintf(outNames[i], "%s", name.c_str());
     i++;
   }
-}
-
-
-char filename[20];
-int fileNum;
-
-int startRecord(void){
-  for (int i = 1; ; i++)
-  {
-    sprintf(filename, "/usd/pos_%d.csv", i);
-    std::ifstream ifile;
-    ifile.open(filename);
-    if (ifile)
-    {
-      // file exists
-    }
-    else
-    {
-      // file does not exist
-      fileNum = i;
-      return i;
-    }
-  }
-}
-
-bool startedTracking = true;
-void outPosSDCARD(void){
-  static double prevPosX = robot.xpos;
-  static double prevPosY = robot.ypos;
-  FILE *usd_file_write;
-  if (startedTracking == true){
-    fileNum = startRecord();
-    startedTracking = false;
-  }
-  if (fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1){
-    usd_file_write = fopen(filename, "a");
-    char buffer[50];
-    sprintf(buffer,"\n%.2f,%.2f,%.3f, %.3f", robot.xpos, robot.ypos, float(millis())/1000, diffFlyWheelW);
-    fputs(buffer, usd_file_write);
-    fclose(usd_file_write);
-    prevPosX = robot.xpos;
-    prevPosY = robot.ypos;
-  }
-}
-
-void outValsSDCard(void){
-  static bool headerMade = false;
-  
-  char buffer[20];
-  sprintf(buffer, "/usd/vals_%d.csv", fileNum);
-  FILE *usd_file_write = fopen(buffer, "a");
-  if (!headerMade){
-    for (int i = 0; i < 20; i++){
-      if (outVals[i] != 420.69){
-        fprintf(usd_file_write,"%s", outNames[i]);
-      }
-      if (outVals[i+1] != 420.69){
-        fprintf(usd_file_write,",");
-      }
-      else{
-        break;
-      }
-    }
-      fprintf(usd_file_write,"\n");
-      headerMade = true;
-  }
-  for (int i = 0; i < 20; i++){
-    if (outVals[i] != 420.69){
-      fprintf(usd_file_write,"%f", outVals[i]);
-    }
-    if (outVals[i+1] != 420.69){
-      fprintf(usd_file_write,",");
-    }
-    else{
-      break;
-    }
-  }
-  fprintf(usd_file_write,"\n");
-  fclose(usd_file_write);
 }
 
 tunedSystems_t PID;
@@ -666,6 +714,9 @@ void PIDTunnerTurret (){
   else i.e drifting, amount overshot, amount tipping etc...
   step down function
   data logging function to resume progress after changee battery.*/
+  
+  diff1.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+  diff2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 
   // initalizationstatic 
   double IPIDSS = 0;
@@ -679,11 +730,12 @@ void PIDTunnerTurret (){
   bool arrived = false;
   bool failout = false;
   double steps[10] = {0.21,  0.16,  0.11,  0.071, 0.051, 0.031, 0.021, 0.016, 0.011, 0.0071};
-  double PIDSSS[6] = {.8889, .236, 1.2818, 0.415, .00135, 2.6}; //current best guess
+  double PIDSSS[6] = {PID.turret.p, PID.turret.i, PID.turret.d, 0.415, .00135, 2.6}; //current best guess
   double prevPIDSSS[5][6] = {{.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}};
   bool prevFails[6] = {0, 0, 0, 0, 0, 0};
   int StepSizes[3] = {5, 5, 5};
   bool evenLoop = false;
+	robot.TurintAng = 0;
   // main loop
   srand(c::millis());
   while (finished == false) {
@@ -692,10 +744,10 @@ void PIDTunnerTurret (){
       return;
     }
     if (evenLoop){
-      robotGoal.angleBetweenHorABS = 135;
+      robotGoal.angleBetweenHorABS = 0;
     }
     else{
-      robotGoal.angleBetweenHorABS = 0;
+      robotGoal.angleBetweenHorABS = 135;
     }
     evenLoop = !evenLoop;
     
@@ -774,7 +826,7 @@ void PIDTunnerTurret (){
           sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
           FILE* usd_file_write = fopen(nameBuff, "a");
           char contBuffer[50];
-          sprintf(contBuffer,"%.5f,%.5f,%.5f\n", PID.turret.p, PID.turret.i, PID.turret.d);
+          sprintf(contBuffer,"%.5f,%.5f,%.5f,%.5f,%.5f,%.5f\n", PID.turret.p, PID.turret.i, PID.turret.d, PID.turret.p2, PID.turret.i2, PID.turret.d2);
           fputs(contBuffer, usd_file_write);
           fclose(usd_file_write);
         }
@@ -791,6 +843,8 @@ void PIDTunnerTurret (){
       }
       delay(20);
     }
+    diff1.brake();
+    diff2.brake();
 
     // descent logic
     if (!failout){
@@ -806,7 +860,7 @@ void PIDTunnerTurret (){
       double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD];
       base_line_value = penalty_value;
       //std::cout << "calced diff\n";
-      for (int i = 5; i > 0; i-=1){
+      for (int i = 3; i > 0; i-=1){
         prevPIDSSS[i][PorIorD] = prevPIDSSS[i-1][PorIorD];
         //std::cout << "set value loop\n";
       }
@@ -834,6 +888,7 @@ void PIDTunnerTurret (){
     }
 
     prevFails[PorIorD] = failout;
+    delay(2000);
 
   }
 }
@@ -860,16 +915,16 @@ void PIDTunnerFly (){
   static double previousets = 0;
   static double previouset = 0;
   double penalty_value = 0;
-  double base_line_value = 100000000;
-  int PorIorD = 0;
+  double base_line_value = 1000000000000;
+  int PorIorD = 1;
   double stepdirection[4] = {1,1,1,1};
   bool finished = false;
   bool arrived = false;
   bool failout = false;
   bool failoutPrev[3] = {0,0,0};
   double steps[10] = {0.021,  0.016,  0.011,  0.0071, 0.0051, 0.0031, 0.0021, 0.0016, 0.0011, 0.00071};
-  double PIDSSS[4] = {.1974, 0.01, .1, .01}; //current best guess
-  double prevPIDSSS[5][4] = {{.11974, 0.01, .1, .01}, {.11974, 0.01, .1, .01}, {.11974, 0.01, .1, .01}, {.11974, 0.01, .1, .01}, {.11974, 0.01, .1, .01}};
+  double PIDSSS[4] = {PID.flyWheel.p, PID.flyWheel.i, PID.flyWheel.d, PID.flyWheel.p2}; //current best guess
+  double prevPIDSSS[5][4] = {{PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}, {PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}, {PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}, {PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}, {PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}};
   bool prevFails[4] = {0, 0, 0, 0};
   double StepSizes[4] = {1, 1, 1, 1};
   bool evenLoop = false;
@@ -888,7 +943,7 @@ void PIDTunnerFly (){
       //std::cout << "battGood\n";
     }
     double goalSpd = 330 * (double(rand() % 500 + 1)/500);
-    goalSpd = 300;
+    goalSpd = 480;
     delay(50);
     master.clear();
     delay(50);
@@ -906,6 +961,209 @@ void PIDTunnerFly (){
     PID.flyWheel.i = PIDSSS[1];
     PID.flyWheel.d = PIDSSS[2];
     PID.flyWheel.p2 = PIDSSS[3];
+    // controller loop (motor control thread)
+    double IPIDang = 0;
+    double previousangdiff = 0;
+    delay(250);
+    double TSTime = millis();
+    while (arrived == false) {
+      static int testStay = -420;
+      double flyWVolt;
+      double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
+      double diffFlyWheelW = goalSpd-flyWheelW;
+
+      IPIDang += diffFlyWheelW;
+      double prop = PID.flyWheel.p*diffFlyWheelW;
+      double integ = IPIDang*PID.flyWheel.i;
+      double deriv = PID.flyWheel.d*(diffFlyWheelW - previousangdiff);
+      double prop2 = PID.flyWheel.p2 * goalSpd;
+      flyWVolt = 12000.0/127*(prop + integ + deriv + prop2);
+      
+      previousangdiff = diffFlyWheelW;
+      if (flyWVolt > 12000){
+        flyWVolt = 12000;
+      }
+      if (flyWVolt < -12000){
+        flyWVolt = -12000;
+      }
+      std::cout << millis() << "," <<  flyWheelW << "," << flyWVolt/12000*127 << "," << prop  << "," << integ  << "," << deriv  << "," << prop2 << "\n";
+		  flyWheel1.move_voltage(flyWVolt); 
+		  flyWheel2.move_voltage(flyWVolt); 
+
+      penalty_value += fabs(diffFlyWheelW) + fabs(deriv);
+
+      static double accel[3] = {0,0,0};
+      accel[2] = accel[1];
+      accel[1] = accel[0];
+      accel[0] = flyWheelW - accel[1];
+      double avgAccel = (accel[0] + accel[1] + accel[2])/3;
+
+      if (fabs(diffFlyWheelW) < 20 && fabs(deriv) < 20) {//good exit
+        if (testStay == -420){
+          testStay = millis();
+        }
+        else if (millis() - testStay < 20000){
+          
+        }
+        else{
+          // normal exit condition
+          arrived = true;
+          //motor controller reset to inital value
+          //declear normal exit
+          //record current pid value
+          if (startedTracking == true){
+            fileNum = startRecord();
+            startedTracking = false;
+          }
+          if (usd::is_installed()){
+            char nameBuff[25];
+            sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
+            FILE* usd_file_write = fopen(nameBuff, "a");
+            char contBuffer[50];
+            sprintf(contBuffer,"%.5f,%.5f,%.5f,%.5f\n", PID.flyWheel.p, PID.flyWheel.i, PID.flyWheel.d, PID.flyWheel.p2);
+            fputs(contBuffer, usd_file_write);
+            fclose(usd_file_write);
+          
+          }
+        }
+        
+      }
+      else{
+        testStay = -420;
+      }
+
+      ////////////////////////////////////std::cout << base_line_value << "," << penalty_value << "\n";
+      if (millis() - TSTime > 10000/* || flyWheelW > goalSpd*1.2*/) {
+        // exit condition two, overshooting detaction
+        arrived = true;
+        //failNum++;
+        //motor controlelr reset to inital value, declear abnormal exit
+        failout = true;
+        delay(50);
+        master.clear();
+        delay(50);
+        master.print(0,1,"Oh no");
+        delay(500);
+      }
+      
+      
+      delay(20);
+      //master.print(1,1,"W: %.2f, A: %.2f", diffFlyWheelW, avgAccel);
+    }
+
+    flyWheel1.brake();
+    flyWheel2.brake();
+
+    // descent logic
+    if (penalty_value < base_line_value){
+      //////////////////////////////////////////std::cout << "gout\n";
+      
+
+      //std::cout << "set 1 or -1\n";
+      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD];
+      base_line_value = penalty_value;
+      //std::cout << "calced diff\n";
+      for (int i = 4; i > 0; i-=1){
+        prevPIDSSS[i][PorIorD] = prevPIDSSS[i-1][PorIorD];
+        //std::cout << "set value loop\n";
+      }
+      prevPIDSSS[0][PorIorD] = PIDSSS[PorIorD];
+      //std::cout << "moved back 1\n";
+      PIDSSS[PorIorD] *= 1.0+diff;
+      //std::cout << "changed val\n";
+      prevFails[PorIorD] = false;
+
+    }
+    else{
+      /////////////////////////////////////////////////std::cout << "fout\n";
+      failNum++;
+      PIDSSS[PorIorD] = prevPIDSSS[0][PorIorD];
+      //std::cout << "reset value\n";
+      stepdirection[PorIorD]*=.5;
+      //std::cout << "adjusted step multiplier\n";
+      if (prevFails[PorIorD]){
+        stepdirection[PorIorD] = -stepdirection[PorIorD];
+      }
+      //std::cout << "checked to reverse dir\n";
+      PorIorD +=1;
+      if (PorIorD == 3) {
+        PorIorD = 0;
+      }
+      PIDSSS[PorIorD] *=1.0 + (.09 * stepdirection[PorIorD]);
+      //std::cout << "changed PorIorDor\n";
+      prevFails[PorIorD] = true;
+    }
+
+    //std::cout << "adjusted failout\n";
+    
+    
+    /////////////////////////////////////////////////////////////////////////////std::cout << PorIorD << "," << PIDSSS[PorIorD] - prevPIDSSS[1][PorIorD] << "," << stepdirection[PorIorD] << "\n";
+    //std::cout << "checked if PorIorD is too big\n";
+    delay(2000);
+
+  }
+}
+
+void PIDTunnerFlyHold (void){
+  flyWheel1.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+  flyWheel2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+  static moveToInfoInternal_t moveI;
+  //
+  /*function to find best PID constant, modeling movement of robot as function
+  of input of PID and Stop condition and output of time consumption and
+  drifting. By keep testing performence of the function by letting robot move
+  forward 48 inches, find the best intput.
+
+  consist of four part:
+  PID funciton with variable PID and Stop condition
+  panalty function sum up weight of time consumption and weight of something
+  else i.e drifting, amount overshot, amount tipping etc...
+  step down function
+  data logging function to resume progress after changee battery.*/
+
+  // initalizationstatic 
+  double IPIDSS = 0;
+  static double previousets = 0;
+  static double previouset = 0;
+  double penalty_value = 0;
+  double base_line_value = 100000000;
+  double stepdirection = 1;
+  bool finished = false;
+  bool arrived = false;
+  bool failout = false;
+  bool failoutPrev = 0;
+  double PIDSSS = .007; //current best guess
+  double prevPIDSSS[5] = {.01, .01, .01, .01, .01};
+  bool prevFail = 0;
+  double StepSize = 1;
+  bool evenLoop = false;
+  // main loop
+  srand(c::millis());
+  while (finished == false) {
+    static int loopNum = 0;
+    static int failNum = 0;
+    loopNum++;
+    if (pros::battery::get_capacity() <= 40) { //check battery
+      //std::cout << "battBad\n";
+      warn();
+      return;
+    }
+    else{
+      //std::cout << "battGood\n";
+    }
+    double goalSpd = 550 * (double(rand() % 500 + 1)/500);
+    delay(50);
+    master.clear();
+    delay(50);
+    master.print(0,1,"pass: %d, fail: %d", loopNum, failNum);
+    delay(50);
+    master.print(1,0,"steps: %.3f, g: %.2f", PIDSSS*100, goalSpd);
+    arrived = false;
+    
+
+    penalty_value = 0;
+
+    PID.flyWheel.p2 = PIDSSS;
     // controller loop (motor control thread)
     double IPIDang = 0;
     double previousangdiff = 0;
@@ -930,14 +1188,16 @@ void PIDTunnerFly (){
       if (flyWVolt < -12000){
         flyWVolt = -12000;
       }
-      std::cout << millis() << "," <<  flyWheelW << "," << flyWVolt/12000*127 << "," << prop  << "," << integ  << "," << deriv  << "," << prop2 << "\n";
+      std::cout << millis() << "," <<  goalSpd << "," <<  flyWheelW  << "," <<  testStay << "\n";
 		  flyWheel1.move_voltage(flyWVolt); 
 		  flyWheel2.move_voltage(flyWVolt); 
       if (fabs(diffFlyWheelW)<1&&flyWVolt==0){
         IPIDang = 0;
       }
 
-      penalty_value += IPIDang/* + 600*(diffFlyWheelW - previousangdiff)*/;
+      if (fabs(diffFlyWheelW) < 100){
+        penalty_value += fabs(diffFlyWheelW)/* + 600*(diffFlyWheelW - previousangdiff)*/;
+      }
       static double accel[3] = {0,0,0};
       accel[2] = accel[1];
       accel[1] = accel[0];
@@ -948,7 +1208,7 @@ void PIDTunnerFly (){
         if (testStay == -420){
           testStay = millis();
         }
-        else if (millis() - testStay < 500){
+        else if (millis() - testStay < 10000){
           
         }
         else{
@@ -961,16 +1221,7 @@ void PIDTunnerFly (){
             fileNum = startRecord();
             startedTracking = false;
           }
-          if (usd::is_installed()){
-            char nameBuff[25];
-            sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
-            FILE* usd_file_write = fopen(nameBuff, "a");
-            char contBuffer[50];
-            sprintf(contBuffer,"%.5f,%.5f,%.5f,%.5f\n", PID.flyWheel.p, PID.flyWheel.i, PID.flyWheel.d, PID.flyWheel.p2);
-            fputs(contBuffer, usd_file_write);
-            fclose(usd_file_write);
           
-          }
         }
         
       }
@@ -1003,45 +1254,40 @@ void PIDTunnerFly (){
     // descent logic
     if (!failout){
       //////////////////////////////////////////std::cout << "gout\n";
-      if (stepdirection[PorIorD] < 0){
-        stepdirection[PorIorD] = -1;
+      if (stepdirection < 0){
+        stepdirection = -1;
       }
-      if (stepdirection[PorIorD] > 0){
-        stepdirection[PorIorD] = 1;
+      if (stepdirection > 0){
+        stepdirection = 1;
       }
 
       //std::cout << "set 1 or -1\n";
-      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD];
+      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection;
       base_line_value = penalty_value;
       //std::cout << "calced diff\n";
       for (int i = 4; i > 0; i-=1){
-        prevPIDSSS[i][PorIorD] = prevPIDSSS[i-1][PorIorD];
+        prevPIDSSS[i] = prevPIDSSS[i-1];
         //std::cout << "set value loop\n";
       }
-      prevPIDSSS[0][PorIorD] = PIDSSS[PorIorD];
+      prevPIDSSS[0] = PIDSSS;
       //std::cout << "moved back 1\n";
-      PIDSSS[PorIorD] *= 1.0+diff;
+      PIDSSS *= 1.0+diff;
       //std::cout << "changed val\n";
     }
     else{
       /////////////////////////////////////////////////std::cout << "fout\n";
-      PIDSSS[PorIorD] = prevPIDSSS[0][PorIorD];
+      PIDSSS = prevPIDSSS[0];
       //std::cout << "reset value\n";
-      stepdirection[PorIorD]*=.5;
+      stepdirection*=.5;
       //std::cout << "adjusted step multiplier\n";
-      if (!prevFails[PorIorD]){
-        stepdirection[PorIorD] = -stepdirection[PorIorD];
+      if (!prevFail){
+        stepdirection = -stepdirection;
       }
       //std::cout << "checked to reverse dir\n";
-      PorIorD +=1;
-      if (PorIorD == 4) {
-        PorIorD = 0;
-      }
-      PIDSSS[PorIorD] *=1.0 + (.09 * stepdirection[PorIorD]);
       //std::cout << "changed PorIorDor\n";
     }
 
-    prevFails[PorIorD] = failout;
+    prevFail = failout;
 
     //std::cout << "adjusted failout\n";
     
@@ -1053,49 +1299,7 @@ void PIDTunnerFly (){
   }
 }
 
-void calibrateTurretDistances(void){
-  while (1){
-		static int pressed = 0;
-		static int spd = 0;
-    liftConrol();
-		if (master.get_digital(DIGITAL_UP)){
-			if (pressed > 10){
-				spd+=5;
-			}else{
-				spd+=1;
-			}
-			pressed+=1;
-		}
-		else if (master.get_digital(DIGITAL_DOWN)){
-			if (pressed < -10){
-				spd-=5;
-			}else{
-				spd-=1;
-			}
-			pressed-=1;
-		}
-		else{
-			pressed = 0;
-		}
 
-    double avgSpd = (flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
-
-		goalSpeed = spd;
-		delay(100);
-		master.clear();
-		delay(50);
-		master.print(0,0,"GS: %d, RPM: %f", spd, avgSpd);
-    if (usd::is_installed()){
-      char nameBuff[25];
-      sprintf(nameBuff, "/usd/FLYTEST_%d.csv", fileNum);
-      FILE* usd_file_write = fopen(nameBuff, "a");
-      char contBuffer[50];
-      sprintf(contBuffer,"%d,%.5f\n", spd, avgSpd);
-      fputs(contBuffer, usd_file_write);
-      fclose(usd_file_write);
-    }
-	}
-}
 #define EXAMPLE_SIG 1
 
 void cameraTest(void){
