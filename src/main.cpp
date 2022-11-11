@@ -74,10 +74,10 @@ void initialize(){
 	for (int i = 0; i<20;i++){
 		outVals[i] = 420.69;
 	}
-  	Task turrC(motorControl);
-  	Task varUP(updateInfoLoop);
-	Task sLoop(startLoop);
-	Task C2(controller2);
+  	//Task turrC(motorControl);
+  	//Task varUP(updateInfoLoop);
+	//Task sLoop(startLoop);
+	//Task C2(controller2);
 }
 
 void disabled() {
@@ -105,6 +105,8 @@ void autonomous(){
 }
 
 void opcontrol() {
+	chassis.driveTrain.running = false;
+	PIDTunnerFly();
 	// i want to go to world...
 	while(1){/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//left normal speed and right normal speed (as in not using mechanum superpowers)

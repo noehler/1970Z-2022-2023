@@ -546,6 +546,7 @@ void PIDTunnerFly (){
       if (flyWVolt < -12000){
         flyWVolt = -12000;
       }
+      
       std::cout << millis() << "," <<  flyWheelW << "," << flyWVolt/12000*127 << "," << prop  << "," << integ  << "," << deriv  << "," << prop2 << "\n";
 		  flyWheel1.move_voltage(flyWVolt); 
 		  flyWheel2.move_voltage(flyWVolt); 
@@ -557,40 +558,6 @@ void PIDTunnerFly (){
       accel[1] = accel[0];
       accel[0] = flyWheelW - accel[1];
       double avgAccel = (accel[0] + accel[1] + accel[2])/3;
-
-      /*if (fabs(diffFlyWheelW) < 20 && fabs(deriv) < 20) {//good exit
-        if (testStay == -420){
-          testStay = millis();
-        }
-        else if (millis() - testStay < 20000){
-          
-        }
-        else{
-          // normal exit condition
-          arrived = true;
-          //motor controller reset to inital value
-          //declear normal exit
-          //record current pid value
-          if (startedTracking == true){
-            fileNum = startRecord();
-            startedTracking = false;
-          }
-          if (usd::is_installed()){
-            char nameBuff[25];
-            sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
-            FILE* usd_file_write = fopen(nameBuff, "a");
-            char contBuffer[50];
-            sprintf(contBuffer,"%.5f,%.5f,%.5f,%.5f\n", PID.flyWheel.p, PID.flyWheel.i, PID.flyWheel.d, PID.flyWheel.p2);
-            fputs(contBuffer, usd_file_write);
-            fclose(usd_file_write);
-          
-          }
-        }
-        
-      }
-      else{
-        testStay = -420;
-      }*/
 
       ////////////////////////////////////std::cout << base_line_value << "," << penalty_value << "\n";
       if (millis() - TSTime > 10000/* || flyWheelW > goalSpd*1.2*/) {
