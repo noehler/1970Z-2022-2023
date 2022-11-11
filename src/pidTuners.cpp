@@ -558,7 +558,7 @@ void PIDTunnerFly (){
       accel[0] = flyWheelW - accel[1];
       double avgAccel = (accel[0] + accel[1] + accel[2])/3;
 
-      if (fabs(diffFlyWheelW) < 20 && fabs(deriv) < 20) {//good exit
+      /*if (fabs(diffFlyWheelW) < 20 && fabs(deriv) < 20) {//good exit
         if (testStay == -420){
           testStay = millis();
         }
@@ -590,7 +590,7 @@ void PIDTunnerFly (){
       }
       else{
         testStay = -420;
-      }
+      }*/
 
       ////////////////////////////////////std::cout << base_line_value << "," << penalty_value << "\n";
       if (millis() - TSTime > 10000/* || flyWheelW > goalSpd*1.2*/) {
@@ -652,6 +652,15 @@ void PIDTunnerFly (){
       PIDSSS[PorIorD] *=1.0 + (.09 * stepdirection[PorIorD]);
       //std::cout << "changed PorIorDor\n";
       prevFails[PorIorD] = true;
+    }
+    if (usd::is_installed()){
+        char nameBuff[25];
+        sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
+        FILE* usd_file_write = fopen(nameBuff, "a");
+        char contBuffer[50];
+        sprintf(contBuffer,"%.5f,%.5f,%.5f,%.5f\n", PID.flyWheel.p, PID.flyWheel.i, PID.flyWheel.d, PID.flyWheel.p2);
+        fputs(contBuffer, usd_file_write);
+        fclose(usd_file_write);
     }
 
     //std::cout << "adjusted failout\n";
