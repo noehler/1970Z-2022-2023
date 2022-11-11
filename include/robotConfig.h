@@ -9,6 +9,7 @@
 #include "autonomous.h"
 #include "backgroundFuncs.h"
 #include "motorControl.h"
+#include "pidTuners.h"
 
 using namespace pros;
 
