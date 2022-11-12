@@ -63,6 +63,7 @@ int startRecord(void){
   }
 }
 
+int loopTimes[5];
 bool startedTracking = true;
 void outPosSDCARD(void){
   static double prevPosX = robot.xpos;
@@ -71,15 +72,18 @@ void outPosSDCARD(void){
   if (startedTracking == true){
     fileNum = startRecord();
     startedTracking = false;
-  }
-  if (fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1){
     usd_file_write = fopen(filename, "a");
-    char buffer[50];
-    sprintf(buffer,"\n%.2f,%.2f,%.3f, %.3f", robot.xpos, robot.ypos, float(millis())/1000, diffFlyWheelW);
+    char buffer[100];
+    sprintf(buffer,"\nX,Y,Time,speed Diff,angle diff,usercontrol,motorContol,odometry,startloop,GUI");
     fputs(buffer, usd_file_write);
     fclose(usd_file_write);
-    prevPosX = robot.xpos;
-    prevPosY = robot.ypos;
+  }
+  if (/*fabs(robot.ypos - prevPosY) > 1 || fabs(robot.xpos - prevPosX) > 1*/1){
+    usd_file_write = fopen(filename, "a");
+    char buffer[100];
+    sprintf(buffer,"\n%f,%f,%f,%f,%f,%d,%d,%d,%d,%d", robot.xpos, robot.ypos, float(millis())/1000, diffFlyWheelW, angdiff,loopTimes[0],loopTimes[1],loopTimes[2],loopTimes[3],loopTimes[4]);
+    fputs(buffer, usd_file_write);
+    fclose(usd_file_write);
   }
 }
 

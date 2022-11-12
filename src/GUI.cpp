@@ -52,9 +52,9 @@ void controller2(void){
         double addxbot = 0;
         double addybot = 0;
 
-        if (sidecar.get_digital(DIGITAL_UP) && sidecar.get_digital(DIGITAL_DOWN)
+        if (sidecar.get_digital_new_press(DIGITAL_UP) && sidecar.get_digital(DIGITAL_DOWN)
         && sidecar.get_digital(DIGITAL_LEFT) && sidecar.get_digital(DIGITAL_RIGHT)){
-            manAngle = 1;
+            manAngle = !manAngle;
         }
         else if (sidecar.get_digital(DIGITAL_UP)){
             addybot+=1;
@@ -122,6 +122,10 @@ void controller2(void){
             flySpdMult -=.01;
             multchanged = true;
         }
+
+        static int prevTime = millis();
+		loopTimes[4] = millis() - prevTime;
+		prevTime = millis();
 
         delay(50);
         sidecar.clear();

@@ -34,7 +34,10 @@ void updateInfoLoop(void){
         robotGoal.dx = homeGoal.xpos-robot.xpos;
         robotGoal.dy = homeGoal.ypos-robot.ypos;
         robotGoal.dz = homeGoal.zpos-robot.zpos;
-        delay(100);
+        static int prevTime = millis();
+		loopTimes[2] = millis() - prevTime;
+		prevTime = millis();
+        delay(10);
     }
 }
 
@@ -44,8 +47,10 @@ void startLoop(void)
     while (1){
         //std::cout << "\nfps: " << odoCount /float((millis()-sT)/1000);
         singSameOldSongTimeTurretTwister();
+        static int prevTime = millis();
+		loopTimes[3] = millis() - prevTime;
+		prevTime = millis();
         delay(20);
-
     }
 
 }

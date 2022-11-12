@@ -49,6 +49,9 @@ extern moveToInfoExternal_t move;
 extern double diffFlyWheelW;
 extern chassis_t chassis;
 extern void waitShoot(void);
+extern bool readyFire;
+extern void waitShootuc(void);
+extern double angdiff;
 
 extern void motorControl(void);
 

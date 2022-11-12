@@ -2,7 +2,7 @@
 #define __AUTONOMOUS_H__
 
 enum autonMode_t{noAuton, flipShoot, winPoint};
-enum startPos_t{near, far};
+enum startPos_t{near, far, skills};
 extern autonMode_t autonMode;
 extern startPos_t startPos;
 

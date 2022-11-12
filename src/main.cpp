@@ -68,13 +68,13 @@ void initialize(){
 	robot.chaIntAng = 270;
 	robot.TurintAng = 90;
 
-	robot.xpos = 29.4;
+	robot.xpos = 31.9;
 	robot.ypos = 18;
 	robot.zpos = 12.3;
 
 	homeGoal.xpos = 18;
 	homeGoal.ypos = 126;
-	homeGoal.zpos = 20;
+	homeGoal.zpos = 25;
 	
 	for (int i = 0; i<20;i++){
 		outVals[i] = 420.69;
@@ -83,6 +83,7 @@ void initialize(){
   	Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);
 	Task C2(controller2);
+	Task shootControl(waitShootuc);
 }
 
 void disabled() {
@@ -101,7 +102,9 @@ void disabled() {
 	}*/
 }
 
-void competition_initialize() {}
+void competition_initialize() {
+	initialize();
+}
 
 void autonomous(){
 	chassis.teamColor = 0;
@@ -110,7 +113,7 @@ void autonomous(){
 }
 
 void opcontrol() {
-	//chassis.driveTrain.running = false;
+	chassis.driveTrain.running = true;
 	//calibrateTurretDistances();
 	//PIDTunnerTurret();
 	// i want to go to world...
@@ -132,8 +135,9 @@ void opcontrol() {
 
 		devCheck();
 
-		//have a 150 msec delay because of updating controller screen
+		static int prevTime = millis();
+		loopTimes[0] = millis() - prevTime;
+		prevTime = millis();
 		delay(20);
-
 	}
 }

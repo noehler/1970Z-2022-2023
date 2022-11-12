@@ -84,26 +84,11 @@ void liftConrol(void){
   static bool isHeld = false;
   static int startHoldTime = 0;
 
-  shootPist = master.get_digital(DIGITAL_L1)+ sidecar.get_digital(DIGITAL_L2);
-  elevatePist = master.get_digital(DIGITAL_L2)+ sidecar.get_digital(DIGITAL_L1);
+  if (master.get_digital_new_press(DIGITAL_L1) != 0){
+    readyFire = true;
+  }
+  elevatePist = master.get_digital(DIGITAL_L2);
 
-  if (shootPist == true){
-    if (!isHeld){
-      recoilPrevent = 1;
-      isHeld = true;
-      startHoldTime = millis();
-    }
-    else{
-      if (millis() - startHoldTime > 70){
-        recoilPrevent = 0;
-      }
-    }
-  }
-  else{
-    isHeld = false;
-  }
-  
-  shootPiston.set_value(shootPist);
   elevatePiston.set_value(elevatePist);
 
   if (master.get_digital(DIGITAL_R1)){

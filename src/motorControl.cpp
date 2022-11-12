@@ -5,6 +5,7 @@
 chassis_t chassis;
 
 bool underRoller = 0;
+double angdiff;
 double turrControl(void){
   static double PIDPosition = 0;
   static double PIDVelocity = 0;
@@ -16,7 +17,7 @@ double turrControl(void){
   static double turPredicScalar = 21.5833333;
   T = float(millis())/1000 - previousT;
   previousT+=T;
-  double angdiff = robotGoal.angleBetweenHorABS - robot.turAng;
+  angdiff = robotGoal.angleBetweenHorABS - robot.turAng;
   if (angdiff > 180){
       angdiff -= 360;
   }
@@ -81,6 +82,11 @@ double turrControl(void){
   }
   else{
     underRoller = false;
+  }
+  if (chassis.intakeRunning != 0){
+    PIDVelocity = 0;
+    IPIDvel = 0;
+    IPIDang = 0;
   }
 
   return PIDVelocity;
@@ -293,15 +299,18 @@ void spinRoller(void){
   }
 }
 
+double diffFlyWheelW;
 double flyWheelW;
 double flyPIDP(void){
-  
+  static double IPIDang = 0;
+  if (competition::is_disabled()){
+    IPIDang = 0;
+  }
   double flyWVolt;
   flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
-  double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
+  diffFlyWheelW = angularVelocityCalc()-flyWheelW;
   static double prevFWdiffSPD = angularVelocityCalc();
 
-  static double IPIDang = 0;
   IPIDang += diffFlyWheelW;
   double prop = PID.flyWheel.p*diffFlyWheelW;
   double integ = IPIDang*PID.flyWheel.i;
@@ -322,18 +331,39 @@ double flyPIDP(void){
   return flyWVolt;
 }
 
+bool readyFire = false;;
+void waitShootuc(void){
+  while(1){
+    while (readyFire != true){
+      delay(20);
+    }
+    /*while (fabs(angularVelocityCalc() - flyWheelW) > 5 || fabs(angdiff) > 3){
+      delay(20);
+    }*/
+    shootPiston.set_value(true);
+    recoilPrevent = 1;
+    delay(250);
+    recoilPrevent = 0;
+    delay(250);
+    shootPiston.set_value(false);
+    readyFire = false;
+    delay(20);
+  }
+}
+
+
 void waitShoot(void){
-  while (fabs(angularVelocityCalc() - flyWheelW) > 5){
+  while (fabs(angularVelocityCalc() - flyWheelW) > 5 || fabs(angdiff) > 3){
     delay(20);
   }
   shootPiston.set_value(true);
   recoilPrevent = 1;
-  delay(500);
-  shootPiston.set_value(false);
+  delay(250);
   recoilPrevent = 0;
+  delay(250);
+  shootPiston.set_value(false);
 }
 
-double diffFlyWheelW;
 void motorControl(void){
   while(1){
     std::cout << "GS: " << angularVelocityCalc() << ", RS: " << flyWheelW << "\n";
@@ -380,6 +410,9 @@ void motorControl(void){
         outValsSDCard();
       }
     }
+    static int prevTime = millis();
+		loopTimes[1] = millis() - prevTime;
+		prevTime = millis();
     delay(20);
   }
 

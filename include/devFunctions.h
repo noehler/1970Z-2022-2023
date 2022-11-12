@@ -31,5 +31,6 @@ extern void cameraTest(void);
 extern int startRecord(void);
 extern int fileNum;
 extern void warn(void);
+extern int loopTimes[5];
 
 #endif
