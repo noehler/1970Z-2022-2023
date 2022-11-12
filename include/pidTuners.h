@@ -15,6 +15,4 @@ extern tunedSystems_t PID;
 extern void PIDTunnerDrive(void);
 extern void PIDTunnerTurret(void);
 extern void PIDTunnerFly(void);
-extern void PIDTunnerFlyHold(void);
-
 #endif

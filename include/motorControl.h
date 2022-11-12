@@ -48,6 +48,7 @@ class moveToInfoExternal_t{
 extern moveToInfoExternal_t move;
 extern double diffFlyWheelW;
 extern chassis_t chassis;
+extern void waitShoot(void);
 
 extern void motorControl(void);
 

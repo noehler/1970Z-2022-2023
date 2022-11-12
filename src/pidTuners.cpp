@@ -261,7 +261,6 @@ void PIDTunnerDrive (){
 }
 
 void PIDTunnerTurret (){
-  static moveToInfoInternal_t moveI;
   //
   /*function to find best PID constant, modeling movement of robot as function
   of input of PID and Stop condition and output of time consumption and
@@ -279,26 +278,26 @@ void PIDTunnerTurret (){
   diff2.set_brake_mode(E_MOTOR_BRAKE_HOLD);
 
   // initalizationstatic 
-  double IPIDSS = 0;
-  static double previousets = 0;
-  static double previouset = 0;
   double penalty_value = 0;
-  double base_line_value = 100000;
-  int PorIorD = 0;
-  int stepdirection[6] = {1,1,1,1,1,1};
+  double base_line_value = 1000000000000;
+  int PorIorD = 1;
+  double stepdirection[6][2] = {{1,-1},{1,-1},{1,-1},{1,-1},{1,-1},{1,-1}};
   bool finished = false;
   bool arrived = false;
-  bool failout = false;
-  double steps[10] = {0.21,  0.16,  0.11,  0.071, 0.051, 0.031, 0.021, 0.016, 0.011, 0.0071};
-  double PIDSSS[6] = {PID.turret.p, PID.turret.i, PID.turret.d, 0.415, .00135, 2.6}; //current best guess
-  double prevPIDSSS[5][6] = {{.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}, {.8889, .236, 1.2818, 0.415, .00135, 2.6}};
+  bool forwardReverse[6] = {1,1,1,1,1,1};
+  double PIDSSS[6] = {PID.turret.p, PID.turret.i, PID.turret.d, PID.turret.p2,PID.turret.i2, PID.turret.d2}; //current best guess
+  double prevPIDSSS[5][6] = {{PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3], PIDSSS[4], PIDSSS[5]},{PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3], PIDSSS[4], PIDSSS[5]},{PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3], PIDSSS[4], PIDSSS[5]},{PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3], PIDSSS[4], PIDSSS[5]},{PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3], PIDSSS[4], PIDSSS[5]}};
   bool prevFails[6] = {0, 0, 0, 0, 0, 0};
-  int StepSizes[3] = {5, 5, 5};
+  double StepSizes[6] = {1, 1, 1, 1, 1, 1};
   bool evenLoop = false;
 	robot.TurintAng = 0;
   // main loop
   srand(c::millis());
   while (finished == false) {
+    static int loopNum = 0;
+    static int failNum = 0;
+    loopNum++;
+    
     if (pros::battery::get_capacity() <= 40) { //check battery
       warn();
       return;
@@ -307,15 +306,18 @@ void PIDTunnerTurret (){
       robotGoal.angleBetweenHorABS = 0;
     }
     else{
-      robotGoal.angleBetweenHorABS = 135;
+      robotGoal.angleBetweenHorABS = 20;
     }
     evenLoop = !evenLoop;
     
     delay(50);
     master.clear();
     delay(50);
-    master.print(0,1,"goalAngle: %.2f", robotGoal.angleBetweenHorABS);
-    arrived = false;
+    master.print(0,1,"pass: %d, fail: %d", loopNum, failNum);
+    delay(50);
+    master.print(1,0,"steps: %.3f, %.3f,", PIDSSS[0]*100, PIDSSS[1]*100);
+    delay(50);
+    master.print(2,0,"%.3f, %.3f", PIDSSS[2]*100, robotGoal.angleBetweenHorABS);
 
     penalty_value = 0;
 
@@ -325,8 +327,9 @@ void PIDTunnerTurret (){
     PID.turret.p2 = PIDSSS[3];
     PID.turret.i2 = PIDSSS[4];
     PID.turret.d2 = PIDSSS[5];
+    arrived = false;
     // controller loop (motor control thread)
-    delay(250);
+    double TSTime = millis();
     while (arrived == false) {
       static double PIDPosition = 0;
       static double PIDVelocity = 0;
@@ -366,89 +369,84 @@ void PIDTunnerTurret (){
       angularvels[2] = angularvels[1];
       angularvels[1] = angularvels[0];
       angularvels[0] = fabs(inertialTurret.get_gyro_rate().z);
-      penalty_value += angdiff + (angularvels[0] + angularvels[1] + angularvels[2])/3;
+      //std::cout << millis() << "," <<  angdiff << "," << PIDVelocity << "\n";
+
+      penalty_value += /*(fabs(angdiff)*pow((millis() - TSTime)/500,3) + */fabs((angularvels[0]*1000));
       
       diff1.move(PIDVelocity);
       diff2.move(-PIDVelocity);
-      if (fabs(angdiff) < 3 && abs(turretEncoder.get_velocity()) < 30) {//good exit
-        // normal exit condition
-        arrived = true;
-        //motor controller reset to inital value
-        move.resetMoveTo = true;
-        //declear normal exit
-        //record current pid value
-        if (startedTracking == true){
-          fileNum = startRecord();
-          startedTracking = false;
-        }
-        if (usd::is_installed()){
-          char nameBuff[25];
-          sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
-          FILE* usd_file_write = fopen(nameBuff, "a");
-          char contBuffer[50];
-          sprintf(contBuffer,"%.5f,%.5f,%.5f,%.5f,%.5f,%.5f\n", PID.turret.p, PID.turret.i, PID.turret.d, PID.turret.p2, PID.turret.i2, PID.turret.d2);
-          fputs(contBuffer, usd_file_write);
-          fclose(usd_file_write);
-        }
-        
-      }
 
-      if ((penalty_value - 20) > base_line_value) {
+      if (millis() - TSTime > 10000) {
         // exit condition two, overshooting detaction
         arrived = true;
         //forced exit, update penalty value
-        penalty_value = penalty_value + angdiff * 40;
+        penalty_value += fabs(angdiff)*100;
         //motor controlelr reset to inital value, declear abnormal exit
-        failout = true;
       }
       delay(20);
     }
     diff1.brake();
     diff2.brake();
+    if (usd::is_installed()){
+        char nameBuff[25];
+        sprintf(nameBuff, "/usd/PIDTURRET_%d.csv", fileNum);
+        FILE* usd_file_write = fopen(nameBuff, "a");
+        char contBuffer[50];
+        sprintf(contBuffer,"%.8f,%.8f,%.8f,%f\n", PID.turret.p, PID.turret.i, PID.turret.d, penalty_value);
+        fputs(contBuffer, usd_file_write);
+        fclose(usd_file_write);
+    }
+    double diff;
+    if (PIDSSS[PorIorD]-prevPIDSSS[0][PorIorD] !=0){
+      diff = -.00000001*(base_line_value - penalty_value) / (prevPIDSSS[0][PorIorD]-PIDSSS[PorIorD])/* * stepdirection[PorIorD][forwardReverse[PorIorD]]*/;
+    }
+    else{
+      diff = .09;
+    }
+    /*if (penalty_value > base_line_value){
+      diff *=-1;
+    }*/
+    std::cout << "\n" << "\n" << diff << "\n" << "\n";
+    prevPIDSSS[0][PorIorD] = PIDSSS[PorIorD];
+    if (fabs(diff) < .1){
+      PIDSSS[PorIorD] = prevPIDSSS[0][PorIorD];
+      PorIorD ++;
+    };
+    PIDSSS[PorIorD] *= (1.0+diff);
+    for (int i = 4; i > 0; i-=1){
+      prevPIDSSS[i][PorIorD] = prevPIDSSS[i-1][PorIorD];
+      //std::cout << "set value loop\n";
+    }
 
     // descent logic
-    if (!failout){
-      //////////////////////////////////////////std::cout << "gout\n";
-      if (stepdirection[PorIorD] < 0){
-        stepdirection[PorIorD] = -1;
-      }
-      if (stepdirection[PorIorD] > 0){
-        stepdirection[PorIorD] = 1;
-      }
+    if (penalty_value < base_line_value){
+      //std::cout << "gout\n";
 
       //std::cout << "set 1 or -1\n";
-      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD];
+      
       base_line_value = penalty_value;
       //std::cout << "calced diff\n";
-      for (int i = 3; i > 0; i-=1){
+      for (int i = 4; i > 0; i-=1){
         prevPIDSSS[i][PorIorD] = prevPIDSSS[i-1][PorIorD];
         //std::cout << "set value loop\n";
       }
       prevPIDSSS[0][PorIorD] = PIDSSS[PorIorD];
-      //std::cout << "moved back 1\n";
-      PIDSSS[PorIorD] *= 1.0+diff;
+      //std::cout << "moved back 1\n"
       //std::cout << "changed val\n";
+      prevFails[PorIorD] = false;
+
     }
     else{
-      /////////////////////////////////////////////////std::cout << "fout\n";
-      PIDSSS[PorIorD] = prevPIDSSS[0][PorIorD];
-      //std::cout << "reset value\n";
-      stepdirection[PorIorD]*=.5;
-      //std::cout << "adjusted step multiplier\n";
-      if (!prevFails[PorIorD]){
-        stepdirection[PorIorD] = -stepdirection[PorIorD];
-      }
-      //std::cout << "checked to reverse dir\n";
-      PorIorD +=1;
-      if (PorIorD == 6) {
-        PorIorD = 0;
-      }
-      PIDSSS[PorIorD] *=1.0 + (.09 * stepdirection[PorIorD]);
-      //std::cout << "changed PorIorDor\n";
+      //std::cout << "fout\n";
+      failNum++;
+    }
+    if (PorIorD == 3) {
+      PorIorD = 0;
     }
 
-    prevFails[PorIorD] = failout;
-    delay(2000);
+    
+
+    delay(1000);
 
   }
 }
@@ -456,7 +454,6 @@ void PIDTunnerTurret (){
 void PIDTunnerFly (){
   flyWheel1.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
   flyWheel2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-  static moveToInfoInternal_t moveI;
   //
   /*function to find best PID constant, modeling movement of robot as function
   of input of PID and Stop condition and output of time consumption and
@@ -471,18 +468,13 @@ void PIDTunnerFly (){
   data logging function to resume progress after changee battery.*/
 
   // initalizationstatic 
-  double IPIDSS = 0;
-  static double previousets = 0;
-  static double previouset = 0;
   double penalty_value = 0;
   double base_line_value = 1000000000000;
   int PorIorD = 1;
-  double stepdirection[4] = {1,1,1,1};
+  double stepdirection[4][2] = {{1,-1},{1,-1},{1,-1},{1,-1}};
   bool finished = false;
   bool arrived = false;
-  bool failout = false;
-  bool failoutPrev[3] = {0,0,0};
-  double steps[10] = {0.021,  0.016,  0.011,  0.0071, 0.0051, 0.0031, 0.0021, 0.0016, 0.0011, 0.00071};
+  bool forwardReverse[4] = {1,1,1,1};
   double PIDSSS[4] = {PID.flyWheel.p, PID.flyWheel.i, PID.flyWheel.d, PID.flyWheel.p2}; //current best guess
   double prevPIDSSS[5][4] = {{PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}, {PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}, {PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}, {PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}, {PIDSSS[0], PIDSSS[1], PIDSSS[2], PIDSSS[3]}};
   bool prevFails[4] = {0, 0, 0, 0};
@@ -560,12 +552,11 @@ void PIDTunnerFly (){
       double avgAccel = (accel[0] + accel[1] + accel[2])/3;
 
       ////////////////////////////////////std::cout << base_line_value << "," << penalty_value << "\n";
-      if (millis() - TSTime > 10000/* || flyWheelW > goalSpd*1.2*/) {
+      if (millis() - TSTime > 20000/* || flyWheelW > goalSpd*1.2*/) {
         // exit condition two, overshooting detaction
         arrived = true;
         //failNum++;
         //motor controlelr reset to inital value, declear abnormal exit
-        failout = true;
         delay(50);
         master.clear();
         delay(50);
@@ -587,7 +578,7 @@ void PIDTunnerFly (){
       
 
       //std::cout << "set 1 or -1\n";
-      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD];
+      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection[PorIorD][forwardReverse[PorIorD]];
       base_line_value = penalty_value;
       //std::cout << "calced diff\n";
       for (int i = 4; i > 0; i-=1){
@@ -606,17 +597,17 @@ void PIDTunnerFly (){
       failNum++;
       PIDSSS[PorIorD] = prevPIDSSS[0][PorIorD];
       //std::cout << "reset value\n";
-      stepdirection[PorIorD]*=.5;
+      stepdirection[PorIorD][forwardReverse[PorIorD]]*=.5;
       //std::cout << "adjusted step multiplier\n";
       if (prevFails[PorIorD]){
-        stepdirection[PorIorD] = -stepdirection[PorIorD];
+        forwardReverse[PorIorD] = !forwardReverse[PorIorD];
       }
       //std::cout << "checked to reverse dir\n";
       PorIorD +=1;
       if (PorIorD == 3) {
         PorIorD = 0;
       }
-      PIDSSS[PorIorD] *=1.0 + (.09 * stepdirection[PorIorD]);
+      PIDSSS[PorIorD] *=1.0 + (.09 * stepdirection[PorIorD][forwardReverse[PorIorD]]);
       //std::cout << "changed PorIorDor\n";
       prevFails[PorIorD] = true;
     }
@@ -639,199 +630,3 @@ void PIDTunnerFly (){
 
   }
 }
-
-void PIDTunnerFlyHold (void){
-  flyWheel1.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-  flyWheel2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-  static moveToInfoInternal_t moveI;
-  //
-  /*function to find best PID constant, modeling movement of robot as function
-  of input of PID and Stop condition and output of time consumption and
-  drifting. By keep testing performence of the function by letting robot move
-  forward 48 inches, find the best intput.
-
-  consist of four part:
-  PID funciton with variable PID and Stop condition
-  panalty function sum up weight of time consumption and weight of something
-  else i.e drifting, amount overshot, amount tipping etc...
-  step down function
-  data logging function to resume progress after changee battery.*/
-
-  // initalizationstatic 
-  double IPIDSS = 0;
-  static double previousets = 0;
-  static double previouset = 0;
-  double penalty_value = 0;
-  double base_line_value = 100000000;
-  double stepdirection = 1;
-  bool finished = false;
-  bool arrived = false;
-  bool failout = false;
-  bool failoutPrev = 0;
-  double PIDSSS = .007; //current best guess
-  double prevPIDSSS[5] = {.01, .01, .01, .01, .01};
-  bool prevFail = 0;
-  double StepSize = 1;
-  bool evenLoop = false;
-  // main loop
-  srand(c::millis());
-  while (finished == false) {
-    static int loopNum = 0;
-    static int failNum = 0;
-    loopNum++;
-    if (pros::battery::get_capacity() <= 40) { //check battery
-      //std::cout << "battBad\n";
-      warn();
-      return;
-    }
-    else{
-      //std::cout << "battGood\n";
-    }
-    double goalSpd = 550 * (double(rand() % 500 + 1)/500);
-    delay(50);
-    master.clear();
-    delay(50);
-    master.print(0,1,"pass: %d, fail: %d", loopNum, failNum);
-    delay(50);
-    master.print(1,0,"steps: %.3f, g: %.2f", PIDSSS*100, goalSpd);
-    arrived = false;
-    
-
-    penalty_value = 0;
-
-    PID.flyWheel.p2 = PIDSSS;
-    // controller loop (motor control thread)
-    double IPIDang = 0;
-    double previousangdiff = 0;
-    delay(250);
-    while (arrived == false || 1) {
-      static int testStay = -420;
-      double flyWVolt;
-      double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
-      double diffFlyWheelW = goalSpd-flyWheelW;
-
-      IPIDang += diffFlyWheelW;
-      double prop = PID.flyWheel.p*diffFlyWheelW;
-      double integ = IPIDang*PID.flyWheel.i;
-      double deriv = PID.flyWheel.d*(diffFlyWheelW - previousangdiff);
-      double prop2 = PID.flyWheel.p2 * goalSpd;
-      flyWVolt = 12000.0/127*(prop + integ + deriv + prop2);
-      
-      previousangdiff = diffFlyWheelW;
-      if (flyWVolt > 12000){
-        flyWVolt = 12000;
-      }
-      if (flyWVolt < -12000){
-        flyWVolt = -12000;
-      }
-      std::cout << millis() << "," <<  goalSpd << "," <<  flyWheelW  << "," <<  testStay << "\n";
-		  flyWheel1.move_voltage(flyWVolt); 
-		  flyWheel2.move_voltage(flyWVolt); 
-      if (fabs(diffFlyWheelW)<1&&flyWVolt==0){
-        IPIDang = 0;
-      }
-
-      if (fabs(diffFlyWheelW) < 100){
-        penalty_value += fabs(diffFlyWheelW)/* + 600*(diffFlyWheelW - previousangdiff)*/;
-      }
-      static double accel[3] = {0,0,0};
-      accel[2] = accel[1];
-      accel[1] = accel[0];
-      accel[0] = flyWheelW - accel[1];
-      double avgAccel = (accel[0] + accel[1] + accel[2])/3;
-
-      if (fabs(diffFlyWheelW) < 20 && fabs(deriv) < 20) {//good exit
-        if (testStay == -420){
-          testStay = millis();
-        }
-        else if (millis() - testStay < 10000){
-          
-        }
-        else{
-          // normal exit condition
-          arrived = true;
-          //motor controller reset to inital value
-          //declear normal exit
-          //record current pid value
-          if (startedTracking == true){
-            fileNum = startRecord();
-            startedTracking = false;
-          }
-          
-        }
-        
-      }
-      else{
-        testStay = -420;
-      }
-
-      ////////////////////////////////////std::cout << base_line_value << "," << penalty_value << "\n";
-      if ((penalty_value - 200) > base_line_value/* || flyWheelW > goalSpd*1.2*/) {
-        // exit condition two, overshooting detaction
-        arrived = true;
-        failNum++;
-        //motor controlelr reset to inital value, declear abnormal exit
-        failout = true;
-        delay(50);
-        master.clear();
-        delay(50);
-        master.print(0,1,"Oh no");
-        delay(500);
-      }
-      
-      
-      delay(20);
-      //master.print(1,1,"W: %.2f, A: %.2f", diffFlyWheelW, avgAccel);
-    }
-
-    flyWheel1.brake();
-    flyWheel2.brake();
-
-    // descent logic
-    if (!failout){
-      //////////////////////////////////////////std::cout << "gout\n";
-      if (stepdirection < 0){
-        stepdirection = -1;
-      }
-      if (stepdirection > 0){
-        stepdirection = 1;
-      }
-
-      //std::cout << "set 1 or -1\n";
-      double diff = (base_line_value - penalty_value) / base_line_value * stepdirection;
-      base_line_value = penalty_value;
-      //std::cout << "calced diff\n";
-      for (int i = 4; i > 0; i-=1){
-        prevPIDSSS[i] = prevPIDSSS[i-1];
-        //std::cout << "set value loop\n";
-      }
-      prevPIDSSS[0] = PIDSSS;
-      //std::cout << "moved back 1\n";
-      PIDSSS *= 1.0+diff;
-      //std::cout << "changed val\n";
-    }
-    else{
-      /////////////////////////////////////////////////std::cout << "fout\n";
-      PIDSSS = prevPIDSSS[0];
-      //std::cout << "reset value\n";
-      stepdirection*=.5;
-      //std::cout << "adjusted step multiplier\n";
-      if (!prevFail){
-        stepdirection = -stepdirection;
-      }
-      //std::cout << "checked to reverse dir\n";
-      //std::cout << "changed PorIorDor\n";
-    }
-
-    prevFail = failout;
-
-    //std::cout << "adjusted failout\n";
-    
-    
-    /////////////////////////////////////////////////////////////////////////////std::cout << PorIorD << "," << PIDSSS[PorIorD] - prevPIDSSS[1][PorIorD] << "," << stepdirection[PorIorD] << "\n";
-    //std::cout << "checked if PorIorD is too big\n";
-    delay(2000);
-
-  }
-}
-

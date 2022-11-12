@@ -23,7 +23,10 @@ double turrControl(void){
   else if( angdiff < -180){
       angdiff += 360;
   }
-  //std::cout << "\n" << angdiff;
+  if (fabs(angdiff) < 2){
+    angdiff = 0;
+  }
+  std::cout << "\n" << angdiff;
   //feed forward code todo here,
   //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
   //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
@@ -47,7 +50,7 @@ double turrControl(void){
     IPIDvel += veldiff;
     PIDVelocity =(0.415*veldiff + 0.135*IPIDvel*.01 + 2.6*(veldiff - previousveldiff));
     previousveldiff = veldiff;
-    if (fabs(angdiff)<1&&PIDPosition==0){
+    if (fabs(angdiff) == 0 || PIDPosition==0){
       IPIDang = 0;
     }
     if (fabs(veldiff)<0.1){
@@ -80,7 +83,7 @@ double turrControl(void){
     underRoller = false;
   }
 
-  return 0;
+  return PIDVelocity;
 }
 
 double intakeControl(double diffInSpd){
@@ -96,6 +99,7 @@ double intakeControl(double diffInSpd){
   }
 
   if (underRoller){
+    baseSPD *= .5;
     baseSPD -= (chassis.driveTrain.leftSpd + chassis.driveTrain.rightSpd)/2;
   }
   return baseSPD;
@@ -118,7 +122,6 @@ class moveToInfoInternal_t{
     int moveToforwardToggle = 1, Stop_type = 2;
     double tolerance=5;
 };
-
 moveToInfoExternal_t move;
 void moveTo(void){
   static moveToInfoInternal_t moveI;
@@ -290,19 +293,20 @@ void spinRoller(void){
   }
 }
 
+double flyWheelW;
 double flyPIDP(void){
   
   double flyWVolt;
-  double flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
-  double diffFlyWheelW = goalSpeed-flyWheelW;
-  static double prevFWdiffSPD = diffFlyWheelW;
+  flyWheelW =(flyWheel1.get_actual_velocity() + flyWheel2.get_actual_velocity())/2;
+  double diffFlyWheelW = angularVelocityCalc()-flyWheelW;
+  static double prevFWdiffSPD = angularVelocityCalc();
 
   static double IPIDang = 0;
   IPIDang += diffFlyWheelW;
   double prop = PID.flyWheel.p*diffFlyWheelW;
   double integ = IPIDang*PID.flyWheel.i;
   double deriv = PID.flyWheel.d*(diffFlyWheelW - prevFWdiffSPD);
-  double prop2 = PID.flyWheel.p2 * goalSpeed;
+  double prop2 = PID.flyWheel.p2 * flyWheel1.get_actual_velocity();
   prevFWdiffSPD = diffFlyWheelW;
   flyWVolt = 12000.0/127*(prop + integ + deriv + prop2);
   if (flyWVolt > 12000){
@@ -318,9 +322,21 @@ double flyPIDP(void){
   return flyWVolt;
 }
 
+void waitShoot(void){
+  while (fabs(angularVelocityCalc() - flyWheelW) > 5){
+    delay(20);
+  }
+  shootPiston.set_value(true);
+  recoilPrevent = 1;
+  delay(500);
+  shootPiston.set_value(false);
+  recoilPrevent = 0;
+}
+
 double diffFlyWheelW;
 void motorControl(void){
   while(1){
+    std::cout << "GS: " << angularVelocityCalc() << ", RS: " << flyWheelW << "\n";
     //std::cout << "\n(t*cos(" << -inertial.get_heading()/180*M_PI <<")+" << robot.xpos <<",t*sin(" << -inertial.get_heading()/180*M_PI << ")+" << -inertial.get_heading()/180*M_PI << ")";
     //getting speeds that diff needs to run at
     double diffInSpd = turrControl();

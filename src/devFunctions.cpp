@@ -1,4 +1,5 @@
 #include "main.h"
+#include "motorControl.h"
 #include "odometry.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.h"
@@ -123,7 +124,22 @@ void calibrateTurretDistances(void){
   while (1){
 		static int pressed = 0;
 		static int spd = 0;
-    liftConrol();
+    //liftConrol();
+    
+    elevatePiston.set_value(master.get_digital(DIGITAL_L2));
+    if (master.get_digital(DIGITAL_R1)){
+    chassis.intakeRunning = 2;
+    }
+    else if (master.get_digital(DIGITAL_R2)){
+      chassis.intakeRunning = 1;
+    }
+    else{
+      chassis.intakeRunning = 0;
+    }
+    if (master.get_digital_new_press(DIGITAL_L1)){
+      waitShoot();
+    }
+
 		if (master.get_digital(DIGITAL_UP)){
 			if (pressed > 10){
 				spd+=5;

@@ -1,4 +1,5 @@
 #include "main.h"
+#include "devFunctions.h"
 #include "odometry.h"
 #include "robotConfig.h"
 #include <cmath>
@@ -47,13 +48,17 @@ void initialize(){
 	PID.driveFR.i = 0;
 	PID.driveFR.d = 3;
 
-	PID.turret.p = .8889;
-	PID.turret.i = .236;
-	PID.turret.d = 2;
+	PID.turret.p = 1.5;
+	PID.turret.i = .167;
+	PID.turret.d = -.66492;
 
-	PID.flyWheel.p = .1974;
+	PID.turret.p2 = 0.415;
+	PID.turret.i2 = 0.00135;
+	PID.turret.d2 = 2.6;
+
+	PID.flyWheel.p = .20549;
     PID.flyWheel.i = 0.0215;
-    PID.flyWheel.d = .109;
+    PID.flyWheel.d = .10409;
     PID.flyWheel.p2 = .0;
 
 	robot.xVelocity=0;
@@ -64,20 +69,20 @@ void initialize(){
 	robot.TurintAng = 90;
 
 	robot.xpos = 29.4;
-	robot.ypos = 15.75;
+	robot.ypos = 18;
 	robot.zpos = 12.3;
 
 	homeGoal.xpos = 18;
 	homeGoal.ypos = 126;
-	homeGoal.zpos = 27;
+	homeGoal.zpos = 20;
 	
 	for (int i = 0; i<20;i++){
 		outVals[i] = 420.69;
 	}
-  	//Task turrC(motorControl);
-  	//Task varUP(updateInfoLoop);
-	//Task sLoop(startLoop);
-	//Task C2(controller2);
+  	Task turrC(motorControl);
+  	Task varUP(updateInfoLoop);
+	Task sLoop(startLoop);
+	Task C2(controller2);
 }
 
 void disabled() {
@@ -105,8 +110,9 @@ void autonomous(){
 }
 
 void opcontrol() {
-	chassis.driveTrain.running = false;
-	PIDTunnerFly();
+	//chassis.driveTrain.running = false;
+	//calibrateTurretDistances();
+	//PIDTunnerTurret();
 	// i want to go to world...
 	while(1){/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
