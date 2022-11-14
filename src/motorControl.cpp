@@ -1,5 +1,6 @@
 #include "pros/adi.h"
 #include "pros/misc.h"
+#include "pros/misc.hpp"
 #include "robotConfig.h"
 #include "main.h"
 chassis_t chassis;
@@ -17,6 +18,9 @@ double turrControl(void){
   static double turPredicScalar = 21.5833333;
   T = float(millis())/1000 - previousT;
   previousT+=T;
+  /*if (!competition::is_disabled() && !competition::is_autonomous()){
+    robotGoal.angleBetweenHorABS = robot.angle + 180;
+  }*/
   angdiff = robotGoal.angleBetweenHorABS - robot.turAng;
   if (angdiff > 180){
       angdiff -= 360;

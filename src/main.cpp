@@ -108,7 +108,7 @@ void competition_initialize() {
 
 void autonomous(){
 	chassis.teamColor = 0;
-	startPos = near;
+	startPos = far;
 	autonomousReal();
 }
 
