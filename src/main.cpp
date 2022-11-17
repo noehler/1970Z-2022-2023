@@ -46,6 +46,10 @@ void competition_initialize() {}
  */
 void autonomous() {}
 
+void driveControllerWrapper(void* mControl) {
+		((motorControl_t*) mControl)->driveController();
+}
+
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -62,9 +66,9 @@ void autonomous() {}
 void opcontrol() {
 	motorControl_t motorControl;
 	const char* temp[20];
-    sprintf(temp,"\ndrive");
+    //sprintf(temp,"\ndrive");
 
-	Task create(motorControl.driveController(), temp);
+	Task myTask(driveControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
 
 	while (true) {
 		

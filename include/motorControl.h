@@ -24,21 +24,23 @@ public:
                                                 flyWheel1(11, E_MOTOR_GEARSET_06, false), flyWheel2(13, E_MOTOR_GEARSET_06, true),
                                                 diff1(5, E_MOTOR_GEARSET_06, true), diff2(6, E_MOTOR_GEARSET_06, true){
     }
-    void driveController(void){
+    void driveController(){
         while(!competition::is_disabled()){
 
         }
     }
-    void turretIntakeController(void){
+    void turretIntakeController(){
         while(!competition::is_disabled()){
 
         }
     }
-    void flyController(void){
+    void flyController(){
         while(!competition::is_disabled()){
 
         }
     }
 };
+
+
 
 #endif
