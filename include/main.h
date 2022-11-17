@@ -34,8 +34,9 @@
  */
 #define PROS_USE_LITERALS
 
-//linking everything through the robotconfig file so that I can use extern pros::thing
+#include "api.h"
 #include "robotConfig.h"
+#include "motorControl.h"
 
 /**
  * You should add more #includes here
@@ -63,12 +64,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void autonomous(void);
 void initialize(void);
 void disabled(void);
 void competition_initialize(void);
-void autonomous();
 void opcontrol(void);
-extern double mod(double,double);
 #ifdef __cplusplus
 }
 #endif

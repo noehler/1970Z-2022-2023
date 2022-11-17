@@ -1,39 +1,20 @@
 #ifndef __ROBOTCONFIG_H__
 #define __ROBOTCONFIG_H__
 
+//will always end up being false but makes edditor realize that api.h is seen
+#ifndef _PROS_MAIN_H_
 #include "api.h"
-#include "flywheelCode.h"
-#include "GUI.h"
-#include "devFunctions.h"
-#include "odometry.h"
-#include "autonomous.h"
-#include "backgroundFuncs.h"
-#include "motorControl.h"
-#include "pidTuners.h"
-
+#endif
 using namespace pros;
+
 
 extern Controller master;
 extern Controller sidecar;
 
-extern Motor lfD;
-extern Motor lbD;
-extern Motor rfD;
-extern Motor rbD;
 extern ADIDigitalOut boomShackalacka;
-
-extern Motor flyWheel1;
-extern Motor flyWheel2;
-
-extern Motor diff1;
-extern Motor diff2;
 
 extern ADIDigitalOut shootPiston;
 extern ADIDigitalOut elevatePiston;
-
-//extern ADIUltrasonic leftUltra;
-//extern ADIUltrasonic rightUltra;
-//extern ADIUltrasonic revUltra;
 
 extern ADIEncoder leftEncoderFB;
 extern ADIEncoder rightEncoderFB;
