@@ -14,13 +14,18 @@
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
+	sensing_t sensing;
+	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
  */
-void disabled() {}
+void disabled() {
+	GUI_t GUI;
+	Task GUI_Task(autonSelectCheck_Wrapper, (void*) &GUI, "Auton Selector and Checker Task");
+}
 
 /**
  * Runs after initialize(), and before autonomous when connected to the Field
@@ -44,10 +49,12 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
-
-void driveControllerWrapper(void* mControl) {
-		((motorControl_t*) mControl)->driveController();
+void autonomous() {
+	motorControl_t motorControl;
+	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
+	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
+	
 }
 
 /**
@@ -65,10 +72,9 @@ void driveControllerWrapper(void* mControl) {
  */
 void opcontrol() {
 	motorControl_t motorControl;
-	const char* temp[20];
-    //sprintf(temp,"\ndrive");
-
-	Task myTask(driveControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
+	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
+	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
 	while (true) {
 		

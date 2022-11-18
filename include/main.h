@@ -37,6 +37,7 @@
 #include "api.h"
 #include "robotConfig.h"
 #include "motorControl.h"
+#include "GUI.h"
 
 /**
  * You should add more #includes here
