@@ -10,11 +10,13 @@ using namespace pros;
 
 class Object{
     public:
-        double xpos, ypos,zpos,angle, velX, velY, velW;
+        double xpos, ypos,zpos,angle, velX, velY, velW, turvelocity;
 };
 
 extern Controller master;
 extern Controller sidecar;
+extern double targetAngleOffest;
+extern double chaIntAng;
 
 class sensing_t{
     private:
@@ -31,11 +33,22 @@ class sensing_t{
         Imu inertial;
 
         Optical opticalSensor;
+        Distance distSense;
 
         Vision turVisionL;
         Vision turVisionR;
+        Vision discSearch;
         vision_signature_s_t REDGOAL;
         vision_signature_s_t BLUEGOAL;
+
+        double goalSpeed = 0;
+        class robotGoalRelatives {
+        public:
+            //storing the absolute and relative horizontal angle between goal and robot
+            double angleBetweenHorABS;
+            double angleBetweenHorREL;
+            double dx, dy,dz;
+        }robotGoal;
 
         //using pointers so that I can determine what ratio is needed to convert from degrees to distance without using a second variable
         double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
@@ -75,16 +88,17 @@ class sensing_t{
             return var;
         }
 
+        int optimalDelay = 20;
     public:
     
         Object robot;
         Object goal;
-        double chaIntAng = 0;
 
+        //discSearch and distSense does not have a port assigned yet;
         sensing_t(void):leftEncoderFB({{9,'C','D'}, true}), rightEncoderFB({{9,'E', 'F'},true }),
                         encoderLR({{9,'A','B'}}), turretEncoder(10), inertialTurret(12), upLoaded({22,'F'}),
                         deckLoaded({9,'H'}), holeLoaded({22,'E'}), inertial(8), opticalSensor(18),
-                        turVisionL(15), turVisionR(19)
+                        turVisionL(15), turVisionR(19), discSearch(0), distSense(0)
         {
             int startTime = millis();
             while (inertial.is_calibrating()  || inertialTurret.is_calibrating()){
@@ -174,12 +188,65 @@ class sensing_t{
             //when visOdom is working, change xpos to xposodom && same with ypos
             robot.xpos += Delta_x;
             robot.ypos += Delta_y;
+
+            //delay to allow for other tasks to run
+            delay(optimalDelay);
             }
         }
 
         void SSOSTTT(void){//singSameOldSongTimeTurretTwister       //(itterative Turret Angle calculation)
+            float g = 386.08858267717;
+            double a = -pow(g,2)*.25;
             while(!competition::is_disabled()){
+                //define quartic equation terms  
+                double c = pow(robot.velX, 2) + pow(robot.velY, 2) - robotGoal.dz * g;
+                double d = -2 * robotGoal.dx * robot.velX - 2 * robotGoal.dy * robot.velY;
+                double e = pow(robotGoal.dx, 2) + pow(robotGoal.dy, 2) - pow(robotGoal.dz, 2);
+                double D = 1000000000000;
+                double T = 0.1;
+                bool close_enough = false;
+                while (close_enough != true){
+                    if (D > 10000){
+                    T += 0.1;
+                    }  
+                    else if (D > 1){
+                    T += 0.001;
+                    }
+                    else{
+                    close_enough = true;
+                    }
+                    D = a * pow(T, 4) + c * pow(T, 2) + d * T + e;
+                }
                 
+                double P1 = robotGoal.dy - robot.velY * T;
+                double P2 = robotGoal.dx - robot.velX * T;
+                double Tar_ang = 0;
+                if (P2 == 0){
+                    if (P1 > 0){
+                    Tar_ang = M_PI/2;
+                    } else {
+                    Tar_ang = -M_PI/2;
+                    }
+                } else {
+                    Tar_ang = atan(P1 / P2);
+                    if (P2 < 0){
+                    Tar_ang = Tar_ang + M_PI;
+                    } else {
+                    Tar_ang = Tar_ang +2*M_PI;
+                    }
+                }
+
+                //std::cout<< "\nAngle: " << Tar_ang;
+                double P3 = cos(Tar_ang) * 0.707106781187 * T;
+                double V_disk = P2 / P3;
+                double turOfCenterOffset = 0; // offcenter offset, not tested yet
+                //outputting calculated values
+                if (0){
+                    robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
+                }
+                goalSpeed = V_disk;
+                robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2));
+                delay(optimalDelay);
             }
         }
 

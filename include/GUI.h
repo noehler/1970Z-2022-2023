@@ -97,6 +97,7 @@ class GUI_t{
             return LV_RES_OK;
         }
 
+        int optimalDelay = 20;
     public:
         GUI_t(void){
             isRed = false;
@@ -108,6 +109,7 @@ class GUI_t{
         void enabledLoop(void){
             while(!competition::is_disabled()){
 
+                delay(optimalDelay);
             }
         }
 
@@ -116,12 +118,13 @@ class GUI_t{
             lv_obj_t * test = createBtn(lv_scr_act(), 10,10,60,60,0,"test");
             setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(255, 100, 100), LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(0, 150, 0), LV_COLOR_MAKE(0, 0, 0), test), test);
             
-            lv_btn_set_action(test, LV_BTN_ACTION_CLICK, colorRedClick);
+            //lv_btn_set_action(test, LV_BTN_ACTION_CLICK, colorRedClick);
 
             while(1){
                 delay(200);
             }
             while(competition::is_disabled()){
+                delay(optimalDelay);
             }
         }
 };
