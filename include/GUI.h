@@ -101,9 +101,9 @@ class GUI_t{
     public:
         GUI_t(void){
             isRed = false;
-            myLabel = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
-            lv_label_set_text(myLabel, "No choice yet"); //sets label text
-            lv_obj_align(myLabel, NULL, LV_ALIGN_IN_RIGHT_MID, -10, 100); //set the position to center
+            //myLabel = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
+            //lv_label_set_text(myLabel, "No choice yet"); //sets label text
+            //lv_obj_align(myLabel, NULL, LV_ALIGN_IN_RIGHT_MID, -10, 100); //set the position to center
         }
 
         void enabledLoop(void){
@@ -115,16 +115,19 @@ class GUI_t{
 
 
         void autonSelectorAndCheck(void){
-            lv_obj_t * test = createBtn(lv_scr_act(), 10,10,60,60,0,"test");
-            setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(255, 100, 100), LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(0, 150, 0), LV_COLOR_MAKE(0, 0, 0), test), test);
-            
-            //lv_btn_set_action(test, LV_BTN_ACTION_CLICK, colorRedClick);
 
-            while(1){
-                delay(200);
-            }
-            while(competition::is_disabled()){
+            
+            myLabel = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
+            //lv_label_set_text(myLabel, "No choice yet"); //sets label text
+            lv_obj_align(myLabel, NULL, LV_ALIGN_IN_RIGHT_MID, -10, 100); //set the position to center
+
+            while(1/*competition::is_disabled()*/){
+                std::cout << "GUI\n";
+                char buffer[100];
+                sprintf(buffer, "%d", Task::get_count());
+                lv_label_set_text(myLabel, buffer);
                 delay(optimalDelay);
+                
             }
         }
 };

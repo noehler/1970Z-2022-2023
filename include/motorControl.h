@@ -62,6 +62,7 @@ class motorControl_t{
         
         void driveController(){
             while(!competition::is_disabled()){
+                std::cout << "drive\n";
                 static double leftSpd = 0;
                 static double rightSpd = 0;
                 if (competition::is_autonomous()){
@@ -87,11 +88,13 @@ class motorControl_t{
 
                 delay(optimalDelay);
             }
+            std::cout << "ended drive\n";
         }
         
         //voltage controller for flywheel motors
         void flyController(){
             while(!competition::is_disabled()){
+                std::cout << "fly\n";
                 static double IPIDang = 0;
                 if (competition::is_disabled()){
                     IPIDang = 0;
@@ -123,14 +126,17 @@ class motorControl_t{
 
                 delay(optimalDelay);
             }
+            std::cout << "ended fly\n";
         }
         
         //power controller for differential motors between intake and turret
         void turretIntakeController(){
             while(!competition::is_disabled()){
 
+                std::cout << "turret\n";
                 delay(optimalDelay);
             }
+            std::cout << "ended turret\n";
         }
 };
 

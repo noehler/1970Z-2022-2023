@@ -38,6 +38,7 @@
 #include "robotConfig.h"
 #include "motorControl.h"
 #include "GUI.h"
+#include "sdLogging.h"
 
 /**
  * You should add more #includes here
