@@ -102,6 +102,13 @@ void odometry(void){ // encoder odom, primary odom,
   //when visOdom is working, change xpos to xposodom && same with ypos
   robot.xpos += Delta_x;
   robot.ypos += Delta_y;
+
+  sprintf(outNames[0], "heading");
+  outVals[0] = odoHeading;//any double
+  sprintf(outNames[1], "Xpos");
+  outVals[1] = robot.xpos;
+  sprintf(outNames[2], "Ypos");
+  outVals[2] = robot.ypos;
 }
 
 void turAngupdate(){

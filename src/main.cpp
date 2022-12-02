@@ -117,6 +117,7 @@ void opcontrol() {
 	//calibrateTurretDistances();
 	//PIDTunnerTurret();
 	// i want to go to world...
+	delay(30);
 	while(1){/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//left normal speed and right normal speed (as in not using mechanum superpowers)
 		chassis.driveTrain.leftSpd = -master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_X);
@@ -130,9 +131,9 @@ void opcontrol() {
 	
 		if (usd::is_installed()){
 			outPosSDCARD();
-        	//outValsSDCard();
+        	outValsSDCard();
 		}
-
+		
 		devCheck();
 
 		static int prevTime = millis();

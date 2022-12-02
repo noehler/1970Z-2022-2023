@@ -37,6 +37,7 @@ void updateInfoLoop(void){
         static int prevTime = millis();
 		loopTimes[2] = millis() - prevTime;
 		prevTime = millis();
+
         delay(10);
     }
 }
