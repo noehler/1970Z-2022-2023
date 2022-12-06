@@ -39,10 +39,11 @@ class motorControl_t{
         }
     public:
         //Constructor to assign values to the motors and PID values
-        motorControl_t(void): lfD(1, E_MOTOR_GEARSET_06, true), lbD (2, E_MOTOR_GEARSET_06, true), rfD(7, E_MOTOR_GEARSET_06, false), rbD(4, E_MOTOR_GEARSET_06, false), 
-                                                    flyWheel1(11, E_MOTOR_GEARSET_06, false), flyWheel2(13, E_MOTOR_GEARSET_06, true),
-                                                    diff1(5, E_MOTOR_GEARSET_06, true), diff2(6, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'B'}}), intakeLiftPiston({{9,'G'}}),
-                                                    master(pros::E_CONTROLLER_MASTER), sidecar(pros::E_CONTROLLER_PARTNER){PID.driveFR.p = 1;
+        motorControl_t(void): lfD(1, E_MOTOR_GEARSET_06, true), lbD (6, E_MOTOR_GEARSET_06, true), rfD(3, E_MOTOR_GEARSET_06, false), rbD(4, E_MOTOR_GEARSET_06, false), 
+                                                    flyWheel1(7, E_MOTOR_GEARSET_06, false), flyWheel2(8, E_MOTOR_GEARSET_06, true),
+                                                    diff1(5, E_MOTOR_GEARSET_06, true), diff2(2, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'B'}}), intakeLiftPiston({{9,'G'}}),
+                                                    master(pros::E_CONTROLLER_MASTER), sidecar(pros::E_CONTROLLER_PARTNER){
+            PID.driveFR.p = 1;
             PID.driveFR.i = 0;
             PID.driveFR.d = 3;
 
@@ -62,14 +63,14 @@ class motorControl_t{
         
         void driveController(){
             while(!competition::is_disabled()){
-                std::cout << "drive\n";
+                //std::cout << "drive\n";
                 static double leftSpd = 0;
                 static double rightSpd = 0;
                 if (competition::is_autonomous()){
 
                 } else{ // usercontrol loop
-                    double leftSpd = -master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) - master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-		            double rightSpd = -master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) + master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+                    leftSpd = -master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) - master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+		            rightSpd = -master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) + master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
                 }
                 static int diffDir = 1;
                 
@@ -94,7 +95,7 @@ class motorControl_t{
         //voltage controller for flywheel motors
         void flyController(){
             while(!competition::is_disabled()){
-                std::cout << "fly\n";
+                //std::cout << "fly\n";
                 static double IPIDang = 0;
                 if (competition::is_disabled()){
                     IPIDang = 0;
@@ -133,7 +134,7 @@ class motorControl_t{
         void turretIntakeController(){
             while(!competition::is_disabled()){
 
-                std::cout << "turret\n";
+                //std::cout << "turret\n";
                 delay(optimalDelay);
             }
             std::cout << "ended turret\n";

@@ -39,6 +39,7 @@
 #include "motorControl.h"
 #include "GUI.h"
 #include "sdLogging.h"
+#include "Autons/autonSetup.h"
 
 /**
  * You should add more #includes here

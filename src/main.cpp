@@ -13,8 +13,9 @@
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
-//sensing_t sensing;
+sensing_t sensing;
 void initialize() {
+	setupScreen();
 	//Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
 }
 /**
@@ -23,8 +24,7 @@ void initialize() {
  * the robot is enabled, this task will exit.
  */
 void disabled() {
-	GUI_t GUI;
-	Task GUI_Task(autonSelectCheck_Wrapper, (void*) &GUI, "Auton Selector and Checker Task");
+
 }
 
 /**

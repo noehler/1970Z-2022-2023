@@ -13,8 +13,6 @@ class Object{
         double xpos, ypos,zpos,angle, velX, velY, velW, turvelocity;
 };
 
-extern Controller master;
-extern Controller sidecar;
 extern double targetAngleOffest;
 extern double chaIntAng;
 
@@ -24,7 +22,7 @@ class sensing_t{
         ADIEncoder rightEncoderFB;
         ADIEncoder encoderLR;
         Rotation turretEncoder;
-        Imu inertialTurret;
+        Imu inertial2;
 
         ADIAnalogIn upLoaded;
         ADIAnalogIn deckLoaded;
@@ -96,32 +94,17 @@ class sensing_t{
 
         //discSearch and distSense does not have a port assigned yet;
         sensing_t(void):leftEncoderFB({{9,'C','D'}, true}), rightEncoderFB({{9,'E', 'F'},true }),
-                        encoderLR({{9,'A','B'}}), turretEncoder(10), inertialTurret(12), upLoaded({22,'F'}),
-                        deckLoaded({9,'H'}), holeLoaded({22,'E'}), inertial(8), opticalSensor(18),
-                        turVisionL(15), turVisionR(19), discSearch(0), distSense(0)
+                        encoderLR({{9,'A','B'}}), turretEncoder(10), inertial2(12), upLoaded({22,'F'}),
+                        deckLoaded({9,'H'}), holeLoaded({22,'E'}), inertial(11), opticalSensor(18),
+                        turVisionL(20), turVisionR(19), discSearch(17), distSense(16)
         {
-            int startTime = millis();
-            while (inertial.is_calibrating()  || inertialTurret.is_calibrating()){
-                std::cout << "\nCalibrating!";
+            /*while (inertial.is_calibrating()  || inertial2.is_calibrating()){
+                //std::cout << "\nCalibrating!";
                 delay(40);
-                if (millis() - startTime > 3000){
-                    delay(50);
-                    master.clear();
-                    delay(50);
-                    master.print(2,1,"Calibration Failing.");
-                    delay(50);
-                    master.print(1,1,"B to ignore.");
-                    if (master.get_digital(E_CONTROLLER_DIGITAL_B)){
-                        break;
-                    }
-                }
+                
             }
             inertial.set_heading(0);
-            inertialTurret.set_heading(0);
-            delay(50);
-            master.clear();
-            delay(50);
-            master.print(1,1,"Calibration Success.");
+            inertial2.set_heading(0);*/
         }
 
         void odometry(void){
