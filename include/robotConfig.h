@@ -47,6 +47,8 @@ extern ADIAnalogIn deckLoaded;
 extern ADIAnalogIn holeLoaded;
 
 extern Imu inertial;
+extern Imu inertial2;
+extern Imu inertial3;
 
 extern Optical opticalSensor;
 

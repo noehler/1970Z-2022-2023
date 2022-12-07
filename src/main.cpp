@@ -4,34 +4,45 @@
 #include "robotConfig.h"
 #include <cmath>
 
-double mod(double base, double var){
-  while (base<var){//e.g. 361mod360 = 1
-    var-=base;
-  }
-  while (var<0){ // e.g. -361mod 360 = 359
-    var+=base;
-  }
-  return var;
+double mod(double base, double var)
+{
+	while (base < var)
+	{ // e.g. 361mod360 = 1
+		var -= base;
+	}
+	while (var < 0)
+	{ // e.g. -361mod 360 = 359
+		var += base;
+	}
+	return var;
 }
-void initialize(){
-  	opticalSensor.set_led_pwm(100);
-  	boomShackalacka.set_value(false);
+double i1offset, i2offset, i3offset, j1offset, j2offset, j3offset, k1offset, k2offset, k3offset;
+double o = 0;
+void initialize()
+{
+	opticalSensor.set_led_pwm(100);
+	boomShackalacka.set_value(false);
 	inertial.reset();
+	inertial2.reset();
+	inertial3.reset();
 	inertialTurret.reset();
 	guiInit();
 
 	int startTime = millis();
-	while (inertial.is_calibrating()  || inertialTurret.is_calibrating()){
+	while (inertial.is_calibrating() || inertialTurret.is_calibrating() || inertial2.is_calibrating() || inertial3.is_calibrating())
+	{
 		std::cout << "\nCalibrating!";
 		delay(40);
-		if (millis() - startTime > 3000){
+		if (millis() - startTime > 3000)
+		{
 			delay(50);
 			master.clear();
 			delay(50);
-			master.print(2,1,"Calibration Failing.");
+			master.print(2, 1, "Calibration Failing.");
 			delay(50);
-			master.print(1,1,"B to ignore.");
-			if (master.get_digital(DIGITAL_B)){
+			master.print(1, 1, "B to ignore.");
+			if (master.get_digital(DIGITAL_B))
+			{
 				break;
 			}
 		}
@@ -41,8 +52,29 @@ void initialize(){
 	delay(50);
 	master.clear();
 	delay(50);
-	master.print(1,1,"Calibration Success.");
-
+	
+	while (o<50){
+		o += 1;
+		i1offset += inertial.get_accel().x;
+		j1offset += inertial.get_accel().y;
+		k1offset += inertial.get_accel().z;
+		i2offset += -inertial2.get_accel().x;//negative to sensor 3
+		j2offset += inertial2.get_accel().y;
+		k2offset += -inertial2.get_accel().z;//negative to sensor 3
+		i3offset += inertial3.get_accel().x;
+		j3offset += inertial3.get_accel().y;
+		k3offset += inertial3.get_accel().z;
+		delay(5);
+	}
+	i1offset = i1offset / o;
+	j1offset = j1offset / o;
+	k1offset = k1offset / o;
+	j2offset = j2offset / o;
+	i2offset = i2offset / o;
+	k2offset = k2offset / o;
+	i3offset = i3offset / o;
+	j3offset = j3offset / o;
+	k3offset = k3offset / o;
 	
 	PID.driveFR.p = 1;
 	PID.driveFR.i = 0;
@@ -57,11 +89,11 @@ void initialize(){
 	PID.turret.d2 = 2.6;
 
 	PID.flyWheel.p = .20549;
-    PID.flyWheel.i = 0.0215;
-    PID.flyWheel.d = .10409;
-    PID.flyWheel.p2 = .0;
+	PID.flyWheel.i = 0.0215;
+	PID.flyWheel.d = .10409;
+	PID.flyWheel.p2 = .0;
 
-	robot.xVelocity=0;
+	robot.xVelocity = 0;
 	robot.yVelocity = 0;
 	robot.wVelocity = 0;
 	robot.velocity = 0;
@@ -75,19 +107,23 @@ void initialize(){
 	homeGoal.xpos = 18;
 	homeGoal.ypos = 126;
 	homeGoal.zpos = 25;
-	
-	for (int i = 0; i<20;i++){
+
+	for (int i = 0; i < 20; i++)
+	{
 		outVals[i] = 420.69;
 	}
-  	Task turrC(motorControl);
-  	Task varUP(updateInfoLoop);
+	Task turrC(motorControl);
+	Task varUP(updateInfoLoop);
 	Task sLoop(startLoop);
 	Task C2(controller2);
 	Task shootControl(waitShootuc);
+	
+	master.print(1, 1, "initalization complete");
 }
 
-void disabled() {
-	
+void disabled()
+{
+
 	/*while(1){
 		if (sidecar.get_digital_new_press(DIGITAL_L1)){
 			chassis.teamColor = !chassis.teamColor;
@@ -102,38 +138,37 @@ void disabled() {
 	}*/
 }
 
-void competition_initialize() {
+void competition_initialize()
+{
 	initialize();
 }
 
-void autonomous(){
+void autonomous()
+{
 	chassis.teamColor = 0;
 	startPos = far;
 	autonomousReal();
 }
 
-void opcontrol() {
+void opcontrol()
+{
 	chassis.driveTrain.running = true;
-	//calibrateTurretDistances();
-	//PIDTunnerTurret();
-	// i want to go to world...
+	// calibrateTurretDistances();
+	// PIDTunnerTurret();
+	//  i want to go to world...
 	delay(30);
-	while(1){/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//left normal speed and right normal speed (as in not using mechanum superpowers)
+	while (1)
+	{ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// left normal speed and right normal speed (as in not using mechanum superpowers)
 		chassis.driveTrain.leftSpd = -master.get_analog(ANALOG_LEFT_Y) - master.get_analog(ANALOG_RIGHT_X);
 		chassis.driveTrain.rightSpd = -master.get_analog(ANALOG_LEFT_Y) + master.get_analog(ANALOG_RIGHT_X);
 
-		//mechanum(magic) speed
+		// mechanum(magic) speed
 		chassis.driveTrain.mechSpd = -master.get_analog(ANALOG_LEFT_X);
 
-		//std::cout << "\nturenc:"<<double(turretEncoder.get_position())/2158.3333<<"chHeading:"<<-inertial.get_heading();
+		// std::cout << "\nturenc:"<<double(turretEncoder.get_position())/2158.3333<<"chHeading:"<<-inertial.get_heading();
 		liftConrol();
-	
-		if (usd::is_installed()){
-			outPosSDCARD();
-        	outValsSDCard();
-		}
-		
+
 		devCheck();
 
 		static int prevTime = millis();

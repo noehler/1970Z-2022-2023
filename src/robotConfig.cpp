@@ -20,7 +20,10 @@ Motor flyWheel2(13, E_MOTOR_GEARSET_06, true);
 Motor diff1(5, E_MOTOR_GEARSET_06, true);
 Motor diff2(6, E_MOTOR_GEARSET_06, true);
 Imu inertial(8);
+Imu inertial2(20);
+Imu inertial3(21);
 Imu inertialTurret(12);
+
 Rotation turretEncoder(10);
 Optical opticalSensor(18);
 

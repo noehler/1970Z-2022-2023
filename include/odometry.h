@@ -26,7 +26,9 @@ extern position_t homeGoal;
 #include <iostream>
 #include "string.h"
 
-extern void odometry(void);
+extern void enc_odometry(void);
+extern void imu_odometry(void);
+extern void mot_odometry(void);
 extern void turAngupdate(void);
 extern void visionOdom(void);
 

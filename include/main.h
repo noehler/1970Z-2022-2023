@@ -52,7 +52,7 @@
  * namespace.
  */
 // using namespace pros;
-// using namespace pros::literals;
+// using namespace pros::literals;W
 // using namespace okapi;
 
 /**
@@ -69,6 +69,7 @@ void competition_initialize(void);
 void autonomous();
 void opcontrol(void);
 extern double mod(double,double);
+extern double i1offset,i2offset,i3offset,j1offset,j2offset,j3offset,k1offset,k2offset,k3offset;
 #ifdef __cplusplus
 }
 #endif

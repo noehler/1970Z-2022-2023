@@ -1,6 +1,7 @@
 #include "pros/adi.h"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
+#include "pros/rtos.h"
 #include "robotConfig.h"
 #include "main.h"
 chassis_t chassis;
@@ -31,7 +32,6 @@ double turrControl(void){
   if (fabs(angdiff) < 2){
     angdiff = 0;
   }
-  std::cout << "\n" << angdiff;
   //feed forward code todo here,
   //chassie rotation rate = chassie change of angle in last cycle / elapsed time of last cycle (odom loop)
   //turret target speed = turret ang dif / elapsed time of last cycle (turret twister loop)
@@ -61,6 +61,7 @@ double turrControl(void){
     if (fabs(veldiff)<0.1){
       IPIDvel = 0;
     }
+
     /*if (deckLoaded.get_value() > 1000){
       PIDSpeedSpin = 0;
     }*/
@@ -370,22 +371,16 @@ void waitShoot(void){
 
 void motorControl(void){
   while(1){
-    std::cout << "GS: " << angularVelocityCalc() << ", RS: " << flyWheelW << "\n";
     //std::cout << "\n(t*cos(" << -inertial.get_heading()/180*M_PI <<")+" << robot.xpos <<",t*sin(" << -inertial.get_heading()/180*M_PI << ")+" << -inertial.get_heading()/180*M_PI << ")";
     //getting speeds that diff needs to run at
-    double diffInSpd = turrControl();
+    double diffInSpd = 0;//turrControl();
     int baseSPD = intakeControl(diffInSpd);
     double FlyWVolt, prevFlyWVolt;
-    //also put a speed controller for flywheel here, PID is not going to optimal.
-    //currently, driver have to wait for flywheel to drop speed down while moving, and the amount of decceleration seems to have no difference than turnning the motor off.
-    //I looked up bangbang ctl from https://wiki.purduesigbots.com/software/control-algorithms/bang-bang
-    //in the description it said to have low acc, but in vex game nothing but net, sigbots used this controller for their flywheels
-    //considering the simplisity and the amount of tolerance we have, this would be a good solution for now.
 
     diff1 = diffInSpd + baseSPD;
     diff2 = -diffInSpd + baseSPD;
     
-    double flyWVolt = flyPIDP();
+    double flyWVolt = 0;//flyPIDP();
 
     flyWheel1.move_voltage(flyWVolt); 
     flyWheel2.move_voltage(flyWVolt); 
