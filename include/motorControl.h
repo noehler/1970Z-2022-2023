@@ -38,10 +38,6 @@ class motorControl_t{
                 PID_t driveFR, driveSS, turret, flyWheel;
         } PID;
 
-        double angularVelocityCalc(void){
-            return 1;
-        }
-
         class moveToInfoInternal_t{
         public:
             double moveToxpos, moveToypos, targetHeading, ets, speed_limit=100, errtheta=5;
@@ -202,7 +198,93 @@ class motorControl_t{
             }
         }
 
+        double angularVelocityCalc(void){
+            return 1;
+        }
 
+        bool recoilPrevent;
+        int intakeRunning;
+        double turrControl(void){
+            static double PIDPosition = 0;
+            static double PIDVelocity = 0;
+            static double T = 0;
+            static double previousT=0;  
+            static double PIDscalar = 1.5;
+            static double gyroScalar = 21.5833333;
+            static double chassisScalar = 21.5833333;
+            static double turPredicScalar = 21.5833333;
+            static double angdiff;
+            T = float(millis())/1000 - previousT;
+            previousT+=T;
+            /*if (!competition::is_disabled() && !competition::is_autonomous()){
+                robotGoal.angleBetweenHorABS = robot.angle + 180;
+            }*/
+            angdiff = angleBetween - sensing.robot.turAng;
+            if (angdiff > 180){
+                angdiff -= 360;
+            }
+            else if( angdiff < -180){
+                angdiff += 360;
+            }
+            if (fabs(angdiff) < 2){
+                angdiff = 0;
+            }
+            std::cout << "\n" << angdiff;
+
+
+            static double IPIDvel = 0;
+            static double previousveldiff = 0;
+            static double IPIDang = 0;
+            static double previousangdiff = 0;
+            if (!competition::is_disabled()){
+                IPIDang += angdiff;
+                PIDPosition =(PID.turret.p*angdiff + PID.turret.i*IPIDang + PID.turret.d*(angdiff - previousangdiff));
+                previousangdiff = angdiff;
+                double veldiff = gyroScalar*T*(sensing.robot.angAccel)-sensing.robot.wVelocity*chassisScalar + turPredicScalar*sensing.robot.turvelocity+PIDPosition*PIDscalar + 0.025*recoilPrevent*sensing.goalSpeed;
+                IPIDvel += veldiff;
+                PIDVelocity =(0.415*veldiff + 0.135*IPIDvel*.01 + 2.6*(veldiff - previousveldiff));
+                previousveldiff = veldiff;
+                if (fabs(angdiff) == 0 || PIDPosition==0){
+                IPIDang = 0;
+                }
+                if (fabs(veldiff)<0.1){
+                IPIDvel = 0;
+                }
+            }
+            else{
+                PIDVelocity = 0;
+            }
+            
+            
+            if (sensing.underRoller){
+                PIDVelocity = 0;
+            }
+            if (intakeRunning != 0){
+                PIDVelocity = 0;
+                IPIDvel = 0;
+                IPIDang = 0;
+            }
+
+            return PIDVelocity;
+        }
+
+        double intakeControl(double diffInSpd){
+            int baseSPD;
+            if (intakeRunning == 2){
+                baseSPD = 127-fabs(diffInSpd);
+            }
+            else if (intakeRunning == 1){
+                baseSPD = -127+fabs(diffInSpd);
+            }
+            else{
+                baseSPD = 0;
+            }
+
+            if (sensing.underRoller){
+                baseSPD *= .5;
+            }
+            return baseSPD;
+        }
     public:
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(1, E_MOTOR_GEARSET_06, true), lbD (2, E_MOTOR_GEARSET_06, true), rfD(3, E_MOTOR_GEARSET_06, false), rbD(4, E_MOTOR_GEARSET_06, false), 
@@ -325,8 +407,10 @@ class motorControl_t{
         //power controller for differential motors between intake and turret
         void turretIntakeController(){
             while(!competition::is_disabled()){
-
-                //std::cout << "turret\n";
+                double diffInSpd = turrControl();
+                double baseSpd = intakeControl(diffInSpd);
+                diff1 = diffInSpd + baseSpd;
+                diff2 = -diffInSpd + baseSpd;
                 delay(optimalDelay);
             }
             std::cout << "ended turret\n";

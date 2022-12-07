@@ -15,7 +15,7 @@
  */
 void initialize() {
 	setupScreen();
-	//Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
+	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or

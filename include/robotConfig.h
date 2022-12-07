@@ -10,11 +10,12 @@ using namespace pros;
 
 class Object{
     public:
-        double xpos, ypos,zpos,angle, velX, velY, velW, turvelocity;
+        double xpos, ypos,zpos,angle, velX, velY, velW, turvelocity, turAng, wVelocity, angAccel;
 };
 
 extern double targetAngleOffest;
 extern double chaIntAng;
+extern double angleBetween;
 
 class sensing_t{
     private:
@@ -39,7 +40,6 @@ class sensing_t{
         vision_signature_s_t REDGOAL;
         vision_signature_s_t BLUEGOAL;
 
-        double goalSpeed = 0;
         class robotGoalRelatives {
         public:
             //storing the absolute and relative horizontal angle between goal and robot
@@ -91,7 +91,9 @@ class sensing_t{
     
         Object robot;
         Object goal;
-
+        double goalSpeed = 0;
+        bool underRoller;
+        
         //discSearch and distSense does not have a port assigned yet;
         sensing_t(void):leftEncoderFB({{9,'C','D'}, true}), rightEncoderFB({{9,'E', 'F'},true }),
                         encoderLR({{9,'A','B'}}), turretEncoder(10), inertial2(12), upLoaded({22,'F'}),
