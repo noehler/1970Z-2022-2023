@@ -8,5 +8,6 @@
 using namespace pros;
 
 void setupScreen(void);
+extern lv_obj_t * outLabels[20];
 
 #endif

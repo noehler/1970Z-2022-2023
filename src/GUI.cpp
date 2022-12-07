@@ -1,3 +1,4 @@
+#include "display/lv_core/lv_obj.h"
 #include "main.h"
 
 //global variables
@@ -10,6 +11,7 @@ lv_obj_t * autonTypeLabel;
 extern lv_obj_t * autonTypeLabel;
 lv_obj_t * colorBtn;
 lv_obj_t * posBtn;
+lv_obj_t * outLabels[20];
 
 
 /*This section has functions to make buttons*/
@@ -122,15 +124,39 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
 }
 
 void setupScreen(void){
-    colorBtn = createBtn(lv_scr_act(), 10,10,180,60,0,"Color");
+    /*Create a Tab view object*/
+    lv_obj_t *tabview;
+    tabview = lv_tabview_create(lv_scr_act(), NULL);
+
+    /*Add 3 tabs (the tabs are page (lv_page) and can be scrolled*/
+    lv_obj_t *tab1 = lv_tabview_add_tab(tabview, "Auton Selector");
+    lv_obj_t *tab2 = lv_tabview_add_tab(tabview, "Outputted Values");
+
+    /*Auton selector screen*/
+    colorBtn = createBtn(tab1, 10,10,120,30,0,"Color");
     setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(180, 180, 80), LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), colorBtn), colorBtn);
     lv_btn_set_action(colorBtn, LV_BTN_ACTION_CLICK, colorSwitchClick);
     
-    posBtn = createBtn(lv_scr_act(), 10,80,180,60,1,"Auton Type");
+    posBtn = createBtn(tab1, 10,80,120,30,1,"Auton Type");
     setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 80), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), posBtn), posBtn);
     lv_btn_set_action(posBtn, LV_BTN_ACTION_CLICK, autonSwitchClick);
 
-    autonTypeLabel = lv_label_create(lv_scr_act(), NULL); //create label and puts it on the screen
+    autonTypeLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(autonTypeLabel, "No choice yet"); //sets label text
     lv_obj_align(autonTypeLabel, NULL, LV_ALIGN_CENTER, 30, -10); //set the position to center
+
+    /*Value Output Screen*/
+    for (int i = 0; i < 20; i++){
+        outLabels[i] = lv_label_create(tab2, NULL); //create label and puts it on the screen
+        lv_label_set_text(outLabels[i], "No choice yet"); //sets label text
+        if (i < 7){
+            lv_obj_align(outLabels[i], NULL, LV_ALIGN_IN_TOP_LEFT, 5, 20*i+20); //set the position to left
+        }
+        else if (i < 14){
+            lv_obj_align(outLabels[i], NULL, LV_ALIGN_IN_TOP_MID, 0, 20*(i-7)+20); //set the position to center
+        }
+        else{
+            lv_obj_align(outLabels[i], NULL, LV_ALIGN_IN_TOP_RIGHT, -20, 20*(i-14)+20); //set the position to right
+        }
+    }
 }
