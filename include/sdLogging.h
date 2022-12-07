@@ -1,6 +1,7 @@
 #ifndef __SDLOGGING_H__
 #define __SDLOGGING_H__
 
-extern void logValue(char name[14], double value, int position);
+#include <string>
+extern void logValue(std::string name, double value, int position);
 
 #endif

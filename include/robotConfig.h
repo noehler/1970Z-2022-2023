@@ -6,6 +6,10 @@
 #include "api.h"
 #endif
 
+#ifndef __SDLOGGING_H__
+#include "sdLogging.h"
+#endif
+
 using namespace pros;
 
 class Object{
@@ -43,8 +47,6 @@ class sensing_t{
         class robotGoalRelatives {
         public:
             //storing the absolute and relative horizontal angle between goal and robot
-            double angleBetweenHorABS;
-            double angleBetweenHorREL;
             double dx, dy,dz;
         }robotGoal;
 
@@ -174,6 +176,8 @@ class sensing_t{
             robot.xpos += Delta_x;
             robot.ypos += Delta_y;
 
+            logValue("X", robot.xpos, 0);
+
             //delay to allow for other tasks to run
             delay(optimalDelay);
             }
@@ -227,7 +231,7 @@ class sensing_t{
                 double turOfCenterOffset = 0; // offcenter offset, not tested yet
                 //outputting calculated values
                 if (0){
-                    robotGoal.angleBetweenHorABS = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
+                    angleBetween = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
                 }
                 goalSpeed = V_disk;
                 robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2));

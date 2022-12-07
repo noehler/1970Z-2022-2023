@@ -1,6 +1,7 @@
 #include "main.h"
 #include <fstream>
 
+
 using namespace pros;
 
 //global Variables
@@ -10,8 +11,9 @@ char filename[20];
 double outVals[20];
 char outNames[20][50];
 
-void logValue(char name[14], double value, int position){
-    sprintf(outNames[position], "%s", name);
+void logValue(std::string name, double value, int position){
+    char buffer[name.length() + 1];
+    strcpy(outNames[position], name.c_str()); 
     outVals[position] = value;
 }
 
