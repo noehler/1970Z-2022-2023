@@ -4,12 +4,16 @@
 using namespace pros;
 
 //global Variables
-double outVals[20];
-char outNames[20][50];
 
 //local to file
 char filename[20];
+double outVals[20];
+char outNames[20][50];
 
+void logValue(char name[14], double value, int position){
+    sprintf(outNames[position], "%s", name);
+    outVals[position] = value;
+}
 
 int startRecord(void){
     int fileNum;
@@ -60,7 +64,7 @@ void outValsSDCard(void){
         if (outVals[i] != 420.69){
             fprintf(usd_file_write,"%f", outVals[i]);
             char buffer[20];
-            sprintf(buffer, "%s: %f", outNames[i], outVals[i]);
+            sprintf(buffer, "%s: %.4f", outNames[i], outVals[i]);
             lv_label_set_text(outLabels[i], buffer);
         }
         if (outVals[i+1] != 420.69){

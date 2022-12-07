@@ -237,6 +237,7 @@ class sensing_t{
 
 extern void odometry_Wrapper(void* sensing);
 extern void SSOSTTT_Wrapper(void* sensing);
+extern sensing_t sensing;
 
 
 #endif

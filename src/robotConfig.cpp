@@ -1,8 +1,7 @@
 #include "main.h"
 
 using namespace pros;
-Controller master(pros::E_CONTROLLER_MASTER);
-Controller sidecar(pros::E_CONTROLLER_PARTNER);
+sensing_t sensing;
 
 double targetAngleOffest = 0;
 double chaIntAng = 0;
