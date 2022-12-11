@@ -8,7 +8,10 @@ using namespace pros;
 
 //local to file
 char filename[20];
-double outVals[20];
+double outVals[20] = {420.69,420.69,420.69,420.69,420.69,
+                    420.69,420.69,420.69,420.69,420.69,
+                    420.69,420.69,420.69,420.69,420.69,
+                    420.69,420.69,420.69,420.69,420.69};
 char outNames[20][50];
 
 void logValue(std::string name, double value, int position){
@@ -52,15 +55,15 @@ void outValsSDCard(void){
             if (outVals[i] != 420.69){
                 fprintf(usd_file_write,"%s", outNames[i]);
             }
-        if (outVals[i+1] != 420.69){
-        fprintf(usd_file_write,",");
+            if (outVals[i+1] != 420.69){
+                fprintf(usd_file_write,",");
+            }
+            else{
+                break;
+            }
         }
-        else{
-            break;
-        }
-    }
-    fprintf(usd_file_write,"\n");
-    headerMade = true;
+        fprintf(usd_file_write,"\n");
+        headerMade = true;
     }
     for (int i = 0; i < 20; i++){
         if (outVals[i] != 420.69){

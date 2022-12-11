@@ -3,5 +3,6 @@
 
 #include <string>
 extern void logValue(std::string name, double value, int position);
+extern void outValsSDCard(void);
 
 #endif

@@ -3,7 +3,7 @@
 
 //these are needed in order to activate tasks of members of a class
 void drive_ControllerWrapper(void* mControl) {
-    if (competition::is_autonomous()){
+    if (!competition::is_autonomous()){
         ((motorControl_t*) mControl)->driveController();
     }
     else{

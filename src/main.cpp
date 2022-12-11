@@ -15,7 +15,7 @@
  */
 void initialize() {
 	setupScreen();
-	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
+	//Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -51,7 +51,7 @@ void competition_initialize() {}
 void autonomous() {
 	motorControl_t motorControl;
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+	//Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
 	//Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 	//Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "SSOSTTT Task");
 	
@@ -73,7 +73,7 @@ void autonomous() {
 void opcontrol() {
 	motorControl_t motorControl;
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+	//Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
 	//Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 	//Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "SSOSTTT Task");
 

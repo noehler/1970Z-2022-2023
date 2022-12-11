@@ -1,7 +1,9 @@
 #ifndef __MOTORCONTROL_H__
 #define __MOTORCONTROL_H__
 
+#include "pros/misc.h"
 #include "pros/misc.hpp"
+#include "sdLogging.h"
 #ifndef _PROS_MAIN_H_
 #include "api.h"
 #endif
@@ -287,9 +289,9 @@ class motorControl_t{
         }
     public:
         //Constructor to assign values to the motors and PID values
-        motorControl_t(void): lfD(1, E_MOTOR_GEARSET_06, true), lbD (2, E_MOTOR_GEARSET_06, true), rfD(3, E_MOTOR_GEARSET_06, false), rbD(4, E_MOTOR_GEARSET_06, false), 
+        motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
                                                     flyWheel1(7, E_MOTOR_GEARSET_06, false), flyWheel2(8, E_MOTOR_GEARSET_06, true),
-                                                    diff1(5, E_MOTOR_GEARSET_06, true), diff2(6, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'B'}}), intakeLiftPiston({{9,'G'}}),
+                                                    diff1(3, E_MOTOR_GEARSET_06, true), diff2(6, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'B'}}), intakeLiftPiston({{9,'G'}}),
                                                     master(pros::E_CONTROLLER_MASTER), sidecar(pros::E_CONTROLLER_PARTNER){
             PID.driveFR.p = 1;
             PID.driveFR.i = 0;
@@ -338,28 +340,56 @@ class motorControl_t{
         void driveController(){
             while(!competition::is_disabled()){
                 //std::cout << "drive\n";
-                static double leftSpd = 0;
-                static double rightSpd = 0;
-                if (competition::is_autonomous()){
-
-                } else{ // usercontrol loop
-                    leftSpd = -master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) - master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-		            rightSpd = -master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) + master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-                }
-                static int diffDir = 1;
+                double leftSpd;
+                double rightSpd;
+                double leftSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) + master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+                double rightSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) - master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
                 
-                if (diffDir == 1 && fabs(lfD.get_actual_velocity()) < 130){
+                static int diffDir = 1;
+                static int shiftTime = 0;
+
+                if (diffDir == -1 && (fabs(rfD.get_actual_velocity()) < 130.0 || fabs(lfD.get_actual_velocity()) < 130.0) && millis() - shiftTime > 250){
+                    diffDir = 1;
+                    shiftTime = millis();
+                }
+
+                if (diffDir == 1 && (fabs(rfD.get_actual_velocity()) > 190 || fabs(lfD.get_actual_velocity()) > 190) && millis() - shiftTime > 250){
+                    shiftTime = millis();
                     diffDir = -1;
                 }
 
-                if (diffDir == -1 && fabs(lfD.get_actual_velocity()) > 190){
-                    diffDir = 1;
+                leftSpd = leftSpdRaw;
+                rightSpd = rightSpdRaw;
+                double rSM = 1;
+                double lSM = 1;
+
+                if (rbD.get_actual_velocity() != 0){
+                    if (fabs(rfD.get_actual_velocity() / rbD.get_actual_velocity()) - 0.591168116 < .3){
+                        rSM = .8;
+                    }
                 }
 
-                lfD.move(leftSpd * diffDir);
-                lbD.move(leftSpd);
-                rfD.move(rightSpd * diffDir);
-                rbD.move(rightSpd);
+                if (lbD.get_actual_velocity() != 0){
+                    if (fabs(lfD.get_actual_velocity() / lbD.get_actual_velocity()) - 0.591168116 < .3){
+                        lSM = .8;
+                    }
+                }
+
+                lfD.move(leftSpd);
+                lbD.move(leftSpd * diffDir * rSM);
+                rfD.move(rightSpd);
+                rbD.move(rightSpd * diffDir * rSM);
+
+                logValue("lfD", lfD.get_actual_velocity(),0);
+                logValue("lbD", lbD.get_actual_velocity(),1);
+                logValue("rfD", rfD.get_actual_velocity(),2);
+                logValue("rbD", rbD.get_actual_velocity(),3);
+                logValue("rm", rSM, 4);
+                logValue("lm", lSM, 5);
+
+                if (c::usd_is_installed()){
+                    outValsSDCard();
+                }
 
                 delay(optimalDelay);
             }
