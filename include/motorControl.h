@@ -201,7 +201,7 @@ class motorControl_t{
         }
 
         double angularVelocityCalc(void){
-            return 1;
+            return sensing.goalSpeed;
         }
 
         bool recoilPrevent;
@@ -221,7 +221,7 @@ class motorControl_t{
             /*if (!competition::is_disabled() && !competition::is_autonomous()){
                 robotGoal.angleBetweenHorABS = robot.angle + 180;
             }*/
-            angdiff = angleBetween - sensing.robot.turAng;
+            angdiff = goalAngle - sensing.robot.turAng;
             if (angdiff > 180){
                 angdiff -= 360;
             }
@@ -290,8 +290,8 @@ class motorControl_t{
     public:
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
-                                                    flyWheel1(7, E_MOTOR_GEARSET_06, false), flyWheel2(8, E_MOTOR_GEARSET_06, true),
-                                                    diff1(3, E_MOTOR_GEARSET_06, true), diff2(6, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'B'}}), intakeLiftPiston({{9,'G'}}),
+                                                    flyWheel1(7, E_MOTOR_GEARSET_06, false), flyWheel2(11, E_MOTOR_GEARSET_06, true),
+                                                    diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{13,'B'}}),
                                                     master(pros::E_CONTROLLER_MASTER), sidecar(pros::E_CONTROLLER_PARTNER){
             PID.driveFR.p = 1;
             PID.driveFR.i = 0;
@@ -345,47 +345,74 @@ class motorControl_t{
                 double leftSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) + master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
                 double rightSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) - master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
                 
-                static int diffDir = 1;
+                static int diffDirR = 1;
+                static int diffDirL = 1;
                 static int shiftTime = 0;
 
-                if (diffDir == -1 && (fabs(rfD.get_actual_velocity()) < 130.0 || fabs(lfD.get_actual_velocity()) < 130.0) && millis() - shiftTime > 250){
-                    diffDir = 1;
+                if (diffDirL == -1 && (fabs(lfD.get_actual_velocity()) < 130.0) && millis() - shiftTime > 250){
+                    diffDirL = 1;
                     shiftTime = millis();
                 }
 
-                if (diffDir == 1 && (fabs(rfD.get_actual_velocity()) > 190 || fabs(lfD.get_actual_velocity()) > 190) && millis() - shiftTime > 250){
+                if (diffDirL == 1 && (fabs(lfD.get_actual_velocity()) > 190) && millis() - shiftTime > 250){
                     shiftTime = millis();
-                    diffDir = -1;
+                    diffDirL = -1;
+                }
+                
+                if (diffDirR == -1 && (fabs(rfD.get_actual_velocity()) < 130.0) && millis() - shiftTime > 250){
+                    diffDirR = 1;
+                    shiftTime = millis();
+                }
+
+                if (diffDirR == 1 && (fabs(rfD.get_actual_velocity()) > 190) && millis() - shiftTime > 250){
+                    shiftTime = millis();
+                    diffDirR = -1;
                 }
 
                 leftSpd = leftSpdRaw;
                 rightSpd = rightSpdRaw;
-                double rSM = 1;
-                double lSM = 1;
+                bool rSS = 0;
+                bool lSS = 0;
 
                 if (rbD.get_actual_velocity() != 0){
                     if (fabs(rfD.get_actual_velocity() / rbD.get_actual_velocity()) - 0.591168116 < .3){
-                        rSM = .8;
+                        rSS = 1;
                     }
                 }
 
                 if (lbD.get_actual_velocity() != 0){
                     if (fabs(lfD.get_actual_velocity() / lbD.get_actual_velocity()) - 0.591168116 < .3){
-                        lSM = .8;
+                        lSS = 1;
                     }
                 }
-
+                
                 lfD.move(leftSpd);
-                lbD.move(leftSpd * diffDir * rSM);
+                if (!lSS){
+                    lbD.move(leftSpd * diffDirL);
+                }
+                else{
+                    lbD.move_velocity(lfD.get_actual_velocity() * diffDirL);
+                }
                 rfD.move(rightSpd);
-                rbD.move(rightSpd * diffDir * rSM);
+                if (!rSS){
+                    rbD.move(leftSpd * diffDirR);
+                }
+                else{
+                    rbD.move_velocity(rfD.get_actual_velocity() * diffDirR);
+                }
 
-                logValue("lfD", lfD.get_actual_velocity(),0);
-                logValue("lbD", lbD.get_actual_velocity(),1);
-                logValue("rfD", rfD.get_actual_velocity(),2);
-                logValue("rbD", rbD.get_actual_velocity(),3);
-                logValue("rm", rSM, 4);
-                logValue("lm", lSM, 5);
+                logValue("time", c::millis(),0);
+                logValue("lfD", lfD.get_actual_velocity(),1);
+                logValue("lbD", lbD.get_actual_velocity(),2);
+                logValue("rfD", rfD.get_actual_velocity(),3);
+                logValue("rbD", rbD.get_actual_velocity(),4);
+                logValue("rm", rSS, 5);
+                logValue("lm", lSS, 6);
+                logValue("dMode", diffDirR, 7);
+                logValue("lfT", lfD.get_temperature(),8);
+                logValue("lbT", lbD.get_temperature(),9);
+                logValue("rfT", rfD.get_temperature(),10);
+                logValue("rbT", rbD.get_temperature(),11);
 
                 if (c::usd_is_installed()){
                     outValsSDCard();
@@ -437,6 +464,9 @@ class motorControl_t{
         //power controller for differential motors between intake and turret
         void turretIntakeController(){
             while(!competition::is_disabled()){
+                shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
+                intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_B));
+
                 double diffInSpd = turrControl();
                 double baseSpd = intakeControl(diffInSpd);
                 diff1 = diffInSpd + baseSpd;

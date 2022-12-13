@@ -10,6 +10,7 @@ bool autonChecker = false;
 lv_obj_t * autonTypeLabel;
 extern lv_obj_t * autonTypeLabel;
 lv_obj_t * colorBtn;
+lv_obj_t * turrSlider;
 lv_obj_t * posBtn;
 lv_obj_t * outLabels[20];
 
@@ -123,6 +124,11 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
     return LV_RES_OK;
 }
 
+static void event_handler(lv_obj_t * obj)
+{
+    printf("Value: %d\n", lv_slider_get_value(obj));
+}
+
 void setupScreen(void){
     /*Create a Tab view object*/
     lv_obj_t *tabview;
@@ -131,6 +137,7 @@ void setupScreen(void){
     /*Add 3 tabs (the tabs are page (lv_page) and can be scrolled*/
     lv_obj_t *tab1 = lv_tabview_add_tab(tabview, "Auton Selector");
     lv_obj_t *tab2 = lv_tabview_add_tab(tabview, "Outputted Values");
+    lv_obj_t *tab3 = lv_tabview_add_tab(tabview, "Dev");
 
     /*Auton selector screen*/
     colorBtn = createBtn(tab1, 10,10,120,30,0,"Color");
@@ -140,6 +147,11 @@ void setupScreen(void){
     posBtn = createBtn(tab1, 10,80,120,30,1,"Auton Type");
     setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 80), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), posBtn), posBtn);
     lv_btn_set_action(posBtn, LV_BTN_ACTION_CLICK, autonSwitchClick);
+
+    //slider for turret control
+    turrSlider = lv_slider_create(tab3, NULL);
+    lv_obj_align(turrSlider, NULL, LV_ALIGN_CENTER, 0, 0);
+    //lv_obj_set_event_cb(turrSlider, event_handler);
 
     autonTypeLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(autonTypeLabel, "No choice yet"); //sets label text

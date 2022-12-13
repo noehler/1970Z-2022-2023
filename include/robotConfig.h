@@ -19,7 +19,7 @@ class Object{
 
 extern double targetAngleOffest;
 extern double chaIntAng;
-extern double angleBetween;
+extern double goalAngle;
 
 class sensing_t{
     private:
@@ -88,6 +88,15 @@ class sensing_t{
             return var;
         }
 
+        double turretPosChoice(double angBetween){
+            if (distSense.get() < 100){
+                return angBetween;
+            }
+            else{
+                return 0;
+            }
+        }
+
         int optimalDelay = 20;
     public:
     
@@ -97,10 +106,10 @@ class sensing_t{
         bool underRoller;
         
         //discSearch and distSense does not have a port assigned yet;
-        sensing_t(void):leftEncoderFB({{9,'C','D'}, true}), rightEncoderFB({{9,'E', 'F'},true }),
-                        encoderLR({{9,'A','B'}}), turretEncoder(10), inertial2(12), upLoaded({22,'F'}),
-                        deckLoaded({9,'H'}), holeLoaded({22,'E'}), inertial(11), opticalSensor(18),
-                        turVisionL(20), turVisionR(19), discSearch(17), distSense(16)
+        sensing_t(void):leftEncoderFB({{16,'C','D'}, true}), rightEncoderFB({{16,'E', 'F'},true }),
+                        encoderLR({{16,'A','B'}}), turretEncoder(10), inertial2(20), upLoaded({22,'F'}),
+                        deckLoaded({16,'H'}), holeLoaded({22,'E'}), inertial(19), opticalSensor(18),
+                        turVisionL(13), turVisionR(15), discSearch(17), distSense(6)
         {
             /*while (inertial.is_calibrating()  || inertial2.is_calibrating()){
                 //std::cout << "\nCalibrating!";
@@ -176,8 +185,6 @@ class sensing_t{
             robot.xpos += Delta_x;
             robot.ypos += Delta_y;
 
-            logValue("X", robot.xpos, 0);
-
             //delay to allow for other tasks to run
             delay(optimalDelay);
             }
@@ -230,9 +237,8 @@ class sensing_t{
                 double V_disk = P2 / P3;
                 double turOfCenterOffset = 0; // offcenter offset, not tested yet
                 //outputting calculated values
-                if (0){
-                    angleBetween = Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset;
-                }
+                robot.turAng = turretEncoder.get_angle();
+                goalAngle = turretPosChoice(Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset);
                 goalSpeed = V_disk;
                 robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2));
                 delay(optimalDelay);
