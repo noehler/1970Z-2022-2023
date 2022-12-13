@@ -124,11 +124,6 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
     return LV_RES_OK;
 }
 
-static void event_handler(lv_obj_t * obj)
-{
-    printf("Value: %d\n", lv_slider_get_value(obj));
-}
-
 void setupScreen(void){
     /*Create a Tab view object*/
     lv_obj_t *tabview;
@@ -151,7 +146,8 @@ void setupScreen(void){
     //slider for turret control
     turrSlider = lv_slider_create(tab3, NULL);
     lv_obj_align(turrSlider, NULL, LV_ALIGN_CENTER, 0, 0);
-    //lv_obj_set_event_cb(turrSlider, event_handler);
+    lv_slider_set_range(turrSlider,0,360);
+    
 
     autonTypeLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(autonTypeLabel, "No choice yet"); //sets label text
@@ -172,3 +168,4 @@ void setupScreen(void){
         }
     }
 }
+

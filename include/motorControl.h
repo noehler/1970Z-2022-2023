@@ -1,6 +1,7 @@
 #ifndef __MOTORCONTROL_H__
 #define __MOTORCONTROL_H__
 
+#include "GUI.h"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "sdLogging.h"
@@ -344,75 +345,25 @@ class motorControl_t{
                 double rightSpd;
                 double leftSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) + master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
                 double rightSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) - master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-                
-                static int diffDirR = 1;
-                static int diffDirL = 1;
-                static int shiftTime = 0;
-
-                if (diffDirL == -1 && (fabs(lfD.get_actual_velocity()) < 130.0) && millis() - shiftTime > 250){
-                    diffDirL = 1;
-                    shiftTime = millis();
-                }
-
-                if (diffDirL == 1 && (fabs(lfD.get_actual_velocity()) > 190) && millis() - shiftTime > 250){
-                    shiftTime = millis();
-                    diffDirL = -1;
-                }
-                
-                if (diffDirR == -1 && (fabs(rfD.get_actual_velocity()) < 130.0) && millis() - shiftTime > 250){
-                    diffDirR = 1;
-                    shiftTime = millis();
-                }
-
-                if (diffDirR == 1 && (fabs(rfD.get_actual_velocity()) > 190) && millis() - shiftTime > 250){
-                    shiftTime = millis();
-                    diffDirR = -1;
-                }
 
                 leftSpd = leftSpdRaw;
                 rightSpd = rightSpdRaw;
-                bool rSS = 0;
-                bool lSS = 0;
-
-                if (rbD.get_actual_velocity() != 0){
-                    if (fabs(rfD.get_actual_velocity() / rbD.get_actual_velocity()) - 0.591168116 < .3){
-                        rSS = 1;
-                    }
-                }
-
-                if (lbD.get_actual_velocity() != 0){
-                    if (fabs(lfD.get_actual_velocity() / lbD.get_actual_velocity()) - 0.591168116 < .3){
-                        lSS = 1;
-                    }
-                }
                 
                 lfD.move(leftSpd);
-                if (!lSS){
-                    lbD.move(leftSpd * diffDirL);
-                }
-                else{
-                    lbD.move_velocity(lfD.get_actual_velocity() * diffDirL);
-                }
+                lbD.move(leftSpd);
                 rfD.move(rightSpd);
-                if (!rSS){
-                    rbD.move(leftSpd * diffDirR);
-                }
-                else{
-                    rbD.move_velocity(rfD.get_actual_velocity() * diffDirR);
-                }
+                rbD.move(rightSpd);
 
                 logValue("time", c::millis(),0);
                 logValue("lfD", lfD.get_actual_velocity(),1);
                 logValue("lbD", lbD.get_actual_velocity(),2);
                 logValue("rfD", rfD.get_actual_velocity(),3);
                 logValue("rbD", rbD.get_actual_velocity(),4);
-                logValue("rm", rSS, 5);
-                logValue("lm", lSS, 6);
-                logValue("dMode", diffDirR, 7);
-                logValue("lfT", lfD.get_temperature(),8);
-                logValue("lbT", lbD.get_temperature(),9);
-                logValue("rfT", rfD.get_temperature(),10);
-                logValue("rbT", rbD.get_temperature(),11);
+                logValue("lfT", lfD.get_temperature(),5);
+                logValue("lbT", lbD.get_temperature(),6);
+                logValue("rfT", rfD.get_temperature(),7);
+                logValue("rbT", rbD.get_temperature(),8);
+                logValue("sVal", lv_slider_get_value(turrSlider),9);
 
                 if (c::usd_is_installed()){
                     outValsSDCard();
