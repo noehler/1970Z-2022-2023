@@ -1,4 +1,5 @@
 #include "display/lv_core/lv_obj.h"
+#include "display/lv_objx/lv_slider.h"
 #include "main.h"
 
 //global variables
@@ -106,7 +107,7 @@ lv_res_t colorSwitchClick(lv_obj_t * btn){
 
 lv_res_t autonSwitchClick(lv_obj_t * btn){
     uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
-    std::cout << id;
+    //std::cout << id;
     if(id == 1)
     {
         switch (autonType){
@@ -145,8 +146,10 @@ void setupScreen(void){
 
     //slider for turret control
     turrSlider = lv_slider_create(tab3, NULL);
-    lv_obj_align(turrSlider, NULL, LV_ALIGN_CENTER, 0, 0);
-    lv_slider_set_range(turrSlider,0,360);
+    lv_obj_align(turrSlider, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+    lv_slider_set_range(turrSlider,-180,180);
+    lv_slider_set_value(turrSlider, 0);
+
     
 
     autonTypeLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen

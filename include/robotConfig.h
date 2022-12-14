@@ -2,15 +2,20 @@
 #define __ROBOTCONFIG_H__
 
 //will always end up being false but makes edditor realize that api.h is seen
+#include "display/lv_core/lv_obj.h"
+#include "pros/misc.hpp"
 #ifndef _PROS_MAIN_H_
 #include "api.h"
 #endif
 
 #ifndef __SDLOGGING_H__
 #include "sdLogging.h"
+#include "GUI.h"
 #endif
 
 using namespace pros;
+
+extern double getNum(std::string Output);
 
 class Object{
     public:
@@ -41,8 +46,9 @@ class sensing_t{
         Vision turVisionL;
         Vision turVisionR;
         Vision discSearch;
-        vision_signature_s_t REDGOAL;
-        vision_signature_s_t BLUEGOAL;
+
+        vision_signature_s_t REDGOAL = Vision::signature_from_utility(1, 4499, 8193, 6346, -1589, -429, -1009, 2.5, 0);
+        vision_signature_s_t BLUEGOAL = Vision::signature_from_utility(2, -1671, 1, -834, 2025, 4413, 3220, 2.000, 0);
 
         class robotGoalRelatives {
         public:
@@ -89,7 +95,8 @@ class sensing_t{
         }
 
         double turretPosChoice(double angBetween){
-            if (distSense.get() < 100){
+            if (1 || distSense.get() < 70){
+                std::cout << angBetween << "\n";
                 return angBetween;
             }
             else{
@@ -107,9 +114,9 @@ class sensing_t{
         
         //discSearch and distSense does not have a port assigned yet;
         sensing_t(void):leftEncoderFB({{16,'C','D'}, true}), rightEncoderFB({{16,'E', 'F'},true }),
-                        encoderLR({{16,'A','B'}}), turretEncoder(10), inertial2(20), upLoaded({22,'F'}),
+                        encoderLR({{16,'A','B'}}), turretEncoder(12), inertial2(20), upLoaded({22,'F'}),
                         deckLoaded({16,'H'}), holeLoaded({22,'E'}), inertial(19), opticalSensor(18),
-                        turVisionL(13), turVisionR(15), discSearch(17), distSense(6)
+                        turVisionL(13), turVisionR(14), discSearch(17), distSense(6)
         {
             /*while (inertial.is_calibrating()  || inertial2.is_calibrating()){
                 //std::cout << "\nCalibrating!";
@@ -121,6 +128,10 @@ class sensing_t{
         }
 
         void odometry(void){
+            while (1){
+                robot.turAng = double(turretEncoder.get_angle())/100;
+                delay(optimalDelay);
+            }
             while (1){
                 static double odoHeading = 0;
                 static double odomposx = 0;
@@ -193,7 +204,16 @@ class sensing_t{
         void SSOSTTT(void){//singSameOldSongTimeTurretTwister       //(itterative Turret Angle calculation)
             float g = 386.08858267717;
             double a = -pow(g,2)*.25;
+            targetAngleOffest = 0;
+            chaIntAng = 0;
             while(!competition::is_disabled()){
+                //getting inputs
+                robot.velX = getNum("VX: ");
+                robot.velY = getNum("VY: ");
+                robotGoal.dx = getNum("DX: ");
+                robotGoal.dy = getNum("DY: ");
+                robotGoal.dz = 13;
+
                 //define quartic equation terms  
                 double c = pow(robot.velX, 2) + pow(robot.velY, 2) - robotGoal.dz * g;
                 double d = -2 * robotGoal.dx * robot.velX - 2 * robotGoal.dy * robot.velY;
@@ -237,10 +257,37 @@ class sensing_t{
                 double V_disk = P2 / P3;
                 double turOfCenterOffset = 0; // offcenter offset, not tested yet
                 //outputting calculated values
-                robot.turAng = turretEncoder.get_angle();
                 goalAngle = turretPosChoice(Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset);
                 goalSpeed = V_disk;
                 robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2));
+                delay(optimalDelay);
+            }
+        }
+
+        void visionTracking(void){
+            turVisionL.set_signature(0, &REDGOAL);
+            //turVisionL.set_signature(1, &BLUEGOAL);
+
+            logValue("Y", 0, 11);
+            logValue("X", 0, 12);
+
+            while(1){
+                if (turVisionL.get_object_count() > 0){
+                    vision_object_s_t LOBJ = turVisionL.get_by_size(0);
+                    if (LOBJ.width > 20){
+                        logValue("Y", LOBJ.y_middle_coord, 11);
+                        logValue("X", LOBJ.x_middle_coord, 12);
+                        //lv_obj_align(posBtn, NULL, LV_ALIGN_CENTER, LOBJ.x_middle_coord-158, LOBJ.y_middle_coord - 106);
+                        goalAngle = robot.turAng + (LOBJ.x_middle_coord-158);
+                    }
+                    else{
+                        //goalAngle = 0;
+                    } 
+                }
+                else{
+                    //goalAngle = 0;
+                }
+
                 delay(optimalDelay);
             }
         }
@@ -249,6 +296,7 @@ class sensing_t{
 
 extern void odometry_Wrapper(void* sensing);
 extern void SSOSTTT_Wrapper(void* sensing);
+extern void VT_Wrapper(void* sensing);
 extern sensing_t sensing;
 
 

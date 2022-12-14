@@ -232,7 +232,7 @@ class motorControl_t{
             if (fabs(angdiff) < 2){
                 angdiff = 0;
             }
-            std::cout << "\n" << angdiff;
+            //std::cout << "\n" << angdiff;
 
 
             static double IPIDvel = 0;
@@ -258,25 +258,26 @@ class motorControl_t{
                 PIDVelocity = 0;
             }
             
-            
-            if (sensing.underRoller){
+            /*if (sensing.underRoller){
                 PIDVelocity = 0;
-            }
-            if (intakeRunning != 0){
+            }*/
+            if (isnanf(PIDVelocity)){
                 PIDVelocity = 0;
                 IPIDvel = 0;
                 IPIDang = 0;
             }
+
+            logValue("ad", angdiff,10);
 
             return PIDVelocity;
         }
 
         double intakeControl(double diffInSpd){
             int baseSPD;
-            if (intakeRunning == 2){
+            if (master.get_digital(E_CONTROLLER_DIGITAL_R2)){
                 baseSPD = 127-fabs(diffInSpd);
             }
-            else if (intakeRunning == 1){
+            else if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
                 baseSPD = -127+fabs(diffInSpd);
             }
             else{
@@ -291,7 +292,7 @@ class motorControl_t{
     public:
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
-                                                    flyWheel1(7, E_MOTOR_GEARSET_06, false), flyWheel2(11, E_MOTOR_GEARSET_06, true),
+                                                    flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(11, E_MOTOR_GEARSET_06, true),
                                                     diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{13,'B'}}),
                                                     master(pros::E_CONTROLLER_MASTER), sidecar(pros::E_CONTROLLER_PARTNER){
             PID.driveFR.p = 1;
@@ -363,13 +364,13 @@ class motorControl_t{
                 logValue("lbT", lbD.get_temperature(),6);
                 logValue("rfT", rfD.get_temperature(),7);
                 logValue("rbT", rbD.get_temperature(),8);
-                logValue("sVal", lv_slider_get_value(turrSlider),9);
+                logValue("sVal", goalAngle,9);
+
+                delay(optimalDelay);
 
                 if (c::usd_is_installed()){
                     outValsSDCard();
                 }
-
-                delay(optimalDelay);
             }
             std::cout << "ended drive\n";
         }
@@ -418,10 +419,12 @@ class motorControl_t{
                 shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
                 intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_B));
 
+
+
                 double diffInSpd = turrControl();
                 double baseSpd = intakeControl(diffInSpd);
-                diff1 = diffInSpd + baseSpd;
-                diff2 = -diffInSpd + baseSpd;
+                diff1 = -diffInSpd + baseSpd;
+                diff2 = -diffInSpd - baseSpd;
                 delay(optimalDelay);
             }
             std::cout << "ended turret\n";
