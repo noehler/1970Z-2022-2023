@@ -95,9 +95,9 @@ class sensing_t{
         }
 
         double turretPosChoice(double angBetween){
-            if (1 || distSense.get() < 70){
-                std::cout << angBetween << "\n";
-                return angBetween;
+            if (distSense.get() < 70){
+                //return angBetween;
+                return 90;
             }
             else{
                 return 0;
@@ -113,24 +113,39 @@ class sensing_t{
         bool underRoller;
         
         //discSearch and distSense does not have a port assigned yet;
-        sensing_t(void):leftEncoderFB({{16,'C','D'}, true}), rightEncoderFB({{16,'E', 'F'},true }),
-                        encoderLR({{16,'A','B'}}), turretEncoder(12), inertial2(20), upLoaded({22,'F'}),
-                        deckLoaded({16,'H'}), holeLoaded({22,'E'}), inertial(19), opticalSensor(18),
-                        turVisionL(13), turVisionR(14), discSearch(17), distSense(6)
-        {
-            /*while (inertial.is_calibrating()  || inertial2.is_calibrating()){
+        sensing_t(void):leftEncoderFB({{16,'E','F'}, true}), rightEncoderFB({{16,'C', 'D'},false }),
+                        encoderLR({{16,'A','B'}}), turretEncoder(12), inertial2(20), upLoaded({22,'E'}),
+                        deckLoaded({22,'C'}), holeLoaded({22,'D'}), inertial(21), opticalSensor(18),
+                        turVisionL(13), turVisionR(14), discSearch(17), distSense(6){}
+
+        void setUp(void){
+            robot.xpos = 0;
+            robot.ypos = 0;
+            robot.zpos = 8.5;
+
+            goal.xpos = 124;
+            goal.ypos = 124;
+            goal.zpos = 55;
+
+            std::cout << "values set\n";
+
+	        inertial.reset();
+	        inertial2.reset();
+            while (inertial.is_calibrating()  || inertial2.is_calibrating()){
                 //std::cout << "\nCalibrating!";
                 delay(40);
-                
+                std::cout << "calibrating\n";
             }
+            std::cout << "calibrated\n";
+
             inertial.set_heading(0);
-            inertial2.set_heading(0);*/
+            inertial2.set_heading(0);
         }
 
         void odometry(void){
             while (1){
                 robot.turAng = double(turretEncoder.get_angle())/100;
-                delay(optimalDelay);
+                delay(20);
             }
             while (1){
                 static double odoHeading = 0;
@@ -139,8 +154,8 @@ class sensing_t{
                 double Arc1 =distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
                 double Arc2 =distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positiv
                 double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
-                double a = 8; //distance between two tracking wheels
-                double b = -2.5; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+                double a = 4.865; //distance between two tracking wheels
+                double b = -3.1; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
                 double P1 = (Arc1 - Arc2);
                 double Delta_y, Delta_x;
                 double radRotation = mod(2*M_PI,(-inertial.get_heading()+chaIntAng)*M_PI/180);
@@ -195,9 +210,15 @@ class sensing_t{
             //when visOdom is working, change xpos to xposodom && same with ypos
             robot.xpos += Delta_x;
             robot.ypos += Delta_y;
+            robotGoal.dx = goal.xpos - robot.xpos;
+            robotGoal.dy = goal.ypos - robot.ypos;
+            robotGoal.dz = goal.zpos - robot.zpos;
+            robot.turAng = double(turretEncoder.get_angle())/100;
+
+            //outputting values for testings
 
             //delay to allow for other tasks to run
-            delay(optimalDelay);
+            delay(5);
             }
         }
 
@@ -207,13 +228,6 @@ class sensing_t{
             targetAngleOffest = 0;
             chaIntAng = 0;
             while(!competition::is_disabled()){
-                //getting inputs
-                robot.velX = getNum("VX: ");
-                robot.velY = getNum("VY: ");
-                robotGoal.dx = getNum("DX: ");
-                robotGoal.dy = getNum("DY: ");
-                robotGoal.dz = 13;
-
                 //define quartic equation terms  
                 double c = pow(robot.velX, 2) + pow(robot.velY, 2) - robotGoal.dz * g;
                 double d = -2 * robotGoal.dx * robot.velX - 2 * robotGoal.dy * robot.velY;
@@ -268,15 +282,10 @@ class sensing_t{
             turVisionL.set_signature(0, &REDGOAL);
             //turVisionL.set_signature(1, &BLUEGOAL);
 
-            logValue("Y", 0, 11);
-            logValue("X", 0, 12);
-
             while(1){
                 if (turVisionL.get_object_count() > 0){
                     vision_object_s_t LOBJ = turVisionL.get_by_size(0);
                     if (LOBJ.width > 20){
-                        logValue("Y", LOBJ.y_middle_coord, 11);
-                        logValue("X", LOBJ.x_middle_coord, 12);
                         //lv_obj_align(posBtn, NULL, LV_ALIGN_CENTER, LOBJ.x_middle_coord-158, LOBJ.y_middle_coord - 106);
                         goalAngle = robot.turAng + (LOBJ.x_middle_coord-158);
                     }

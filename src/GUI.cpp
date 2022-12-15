@@ -147,7 +147,7 @@ void setupScreen(void){
     //slider for turret control
     turrSlider = lv_slider_create(tab3, NULL);
     lv_obj_align(turrSlider, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
-    lv_slider_set_range(turrSlider,-180,180);
+    lv_slider_set_range(turrSlider,0,600);
     lv_slider_set_value(turrSlider, 0);
 
     

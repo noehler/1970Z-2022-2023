@@ -2,6 +2,7 @@
 #define __MOTORCONTROL_H__
 
 #include "GUI.h"
+#include "display/lv_objx/lv_slider.h"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "sdLogging.h"
@@ -202,7 +203,7 @@ class motorControl_t{
         }
 
         double angularVelocityCalc(void){
-            return sensing.goalSpeed;
+            return lv_slider_get_value(turrSlider);
         }
 
         bool recoilPrevent;
@@ -232,7 +233,6 @@ class motorControl_t{
             if (fabs(angdiff) < 2){
                 angdiff = 0;
             }
-            //std::cout << "\n" << angdiff;
 
 
             static double IPIDvel = 0;
@@ -267,8 +267,6 @@ class motorControl_t{
                 IPIDang = 0;
             }
 
-            logValue("ad", angdiff,10);
-
             return PIDVelocity;
         }
 
@@ -293,7 +291,7 @@ class motorControl_t{
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
                                                     flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(11, E_MOTOR_GEARSET_06, true),
-                                                    diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{13,'B'}}),
+                                                    diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}),
                                                     master(pros::E_CONTROLLER_MASTER), sidecar(pros::E_CONTROLLER_PARTNER){
             PID.driveFR.p = 1;
             PID.driveFR.i = 0;
@@ -354,18 +352,6 @@ class motorControl_t{
                 lbD.move(leftSpd);
                 rfD.move(rightSpd);
                 rbD.move(rightSpd);
-
-                logValue("time", c::millis(),0);
-                logValue("lfD", lfD.get_actual_velocity(),1);
-                logValue("lbD", lbD.get_actual_velocity(),2);
-                logValue("rfD", rfD.get_actual_velocity(),3);
-                logValue("rbD", rbD.get_actual_velocity(),4);
-                logValue("lfT", lfD.get_temperature(),5);
-                logValue("lbT", lbD.get_temperature(),6);
-                logValue("rfT", rfD.get_temperature(),7);
-                logValue("rbT", rbD.get_temperature(),8);
-                logValue("sVal", goalAngle,9);
-
                 delay(optimalDelay);
 
                 if (c::usd_is_installed()){
@@ -395,6 +381,8 @@ class motorControl_t{
                 double prop2 = PID.flyWheel.p2 * flyWheel1.get_actual_velocity();
                 prevFWdiffSPD = diffFlyWheelW;
                 flyWVolt = 12000.0/127*(prop + integ + deriv + prop2);
+
+
                 if (flyWVolt > 12000){
                     flyWVolt = 12000;
                 }
@@ -408,6 +396,15 @@ class motorControl_t{
                 flyWheel1.move_voltage(flyWVolt); 
                 flyWheel2.move_voltage(flyWVolt); 
 
+                logValue("time", millis(), 0);
+                logValue("FWVolt", flyWVolt, 1);
+                logValue("FW1Speed", flyWheel1.get_actual_velocity(), 2);
+                logValue("FW2Speed", flyWheel2.get_actual_velocity(), 3);
+                logValue("FW1Torque", flyWheel1.get_torque(), 4);
+                logValue("FW2Torque", flyWheel2.get_torque(), 5);
+                logValue("FW1Current", flyWheel1.get_current_draw(), 6);
+                logValue("FW2Current", flyWheel2.get_current_draw(), 7);
+
                 delay(optimalDelay);
             }
             std::cout << "ended fly\n";
@@ -418,8 +415,6 @@ class motorControl_t{
             while(!competition::is_disabled()){
                 shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
                 intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_B));
-
-
 
                 double diffInSpd = turrControl();
                 double baseSpd = intakeControl(diffInSpd);
