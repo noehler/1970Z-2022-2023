@@ -226,7 +226,11 @@ class motorControl_t{
             /*if (!competition::is_disabled() && !competition::is_autonomous()){
                 robotGoal.angleBetweenHorABS = robot.angle + 180;
             }*/
+            if (1){//turret lock
+            angdiff = - sensing.robot.turAng;
+            } else {
             angdiff = goalAngle - sensing.robot.turAng;
+            }
             if (angdiff > 180){
                 angdiff -= 360;
             }
@@ -304,9 +308,9 @@ class motorControl_t{
             PID.turret.i = .167;
             PID.turret.d = -.66492;
 
-            PID.turret.p2 = 0.415;
-            PID.turret.i2 = 0.00135;
-            PID.turret.d2 = 2.6;
+            PID.turret.p2 = 0.5;
+            PID.turret.i2 = 0.0015;
+            PID.turret.d2 = 2.8;
 
             PID.flyWheel.p = 0.294164;
             PID.flyWheel.i = 0.0215;
@@ -563,7 +567,6 @@ class motorControl_t{
             while(!competition::is_disabled()){
                 shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
                 intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_B));
-
                 double diffInSpd = turrControl();
                 double baseSpd = intakeControl(diffInSpd);
                 diff1 = -diffInSpd + baseSpd;
@@ -578,4 +581,4 @@ extern void drive_ControllerWrapper(void* mControl);
 extern void turretIntake_ControllerWrapper(void* mControl);
 extern void fly_ControllerWrapper(void* mControl);
 
-#endif
+#endif 

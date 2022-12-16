@@ -1,4 +1,5 @@
 #include "main.h"
+#include "flywheelCode.h"
 
 /**
  * A callback function for LLEMU's center button.
@@ -52,10 +53,11 @@ void competition_initialize() {}
 void autonomous() {
 	motorControl_t motorControl;
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-	//Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
-	//Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
-	//Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "SSOSTTT Task");
-	
+	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
+	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "SSOSTTT Task");
+	sensing.goalSpeed = 400;
+	goalAngle = 13;
 }
 
 /**
@@ -74,11 +76,11 @@ void autonomous() {
 void opcontrol() {
 	motorControl_t motorControl;
 	
-	//Task vision_Task(VT_Wrapper, (void*) &sensing, "My Vision Task");
+	Task vision_Task(VT_Wrapper, (void*) &sensing, "My Vision Task");
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-	//Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
-	//Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "SSOSTTT Task");
+	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "SSOSTTT Task");
 
 	while (true) {
 		
