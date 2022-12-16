@@ -6,6 +6,7 @@
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "pros/motors.h"
+#include "pros/rtos.h"
 #include "sdLogging.h"
 #ifndef _PROS_MAIN_H_
 #include "api.h"
@@ -536,6 +537,18 @@ class motorControl_t{
                 if (fabs(diffFlyWheelW2)<1&&flyWVolt2==0){
                     IPIDang2 = 0;
                 }
+
+                logValue("time", c::millis(), 0);
+                logValue("Volt1", flyWVolt, 1);
+                logValue("Volt2", flyWVolt2, 2);
+                logValue("Current1", flyWheel1.get_current_draw(), 3);
+                logValue("Current2", flyWheel2.get_current_draw(), 4);
+                logValue("Torque1", flyWheel1.get_torque(), 5);
+                logValue("Torque2", flyWheel2.get_torque(), 6);
+                logValue("Omega1", flyWheel1.get_actual_velocity(), 7);
+                logValue("Omega2", flyWheel2.get_actual_velocity(), 8);
+                logValue("temp1", flyWheel1.get_temperature(), 9);
+                logValue("temp2", flyWheel2.get_temperature(), 10);
 
                 flyWheel1.move_voltage(flyWVolt); 
                 flyWheel2.move_voltage(flyWVolt2); 

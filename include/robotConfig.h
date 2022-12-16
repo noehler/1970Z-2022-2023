@@ -213,7 +213,7 @@ class sensing_t{
             robot.turAng = double(turretEncoder.get_angle())/100;
 
             //outputting values for testings
-            logValue("T", millis(),0);
+            /*logValue("T", millis(),0);
             logValue("X", robot.xpos,1);
             logValue("Y", robot.ypos,2);
             logValue("xa", inertial.get_accel().x,3);
@@ -227,7 +227,7 @@ class sensing_t{
             logValue("za2", inertial2.get_accel().z,11);
             logValue("heading2", inertial2.get_heading(),12);
             logValue("roll2", inertial2.get_roll(),13);
-            logValue("pitch2", inertial2.get_pitch(),14);
+            logValue("pitch2", inertial2.get_pitch(),14);*/
             //delay to allow for other tasks to run
             delay(5);
             }
