@@ -203,7 +203,7 @@ class motorControl_t{
         }
 
         double angularVelocityCalc(void){
-            return lv_slider_get_value(turrSlider);
+            return master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + 250;
         }
 
         bool recoilPrevent;
@@ -291,7 +291,7 @@ class motorControl_t{
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
                                                     flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(11, E_MOTOR_GEARSET_06, true),
-                                                    diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'C'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}),
+                                                    diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}),
                                                     master(pros::E_CONTROLLER_MASTER), sidecar(pros::E_CONTROLLER_PARTNER){
             PID.driveFR.p = 1;
             PID.driveFR.i = 0;
@@ -395,15 +395,6 @@ class motorControl_t{
 
                 flyWheel1.move_voltage(flyWVolt); 
                 flyWheel2.move_voltage(flyWVolt); 
-
-                logValue("time", millis(), 0);
-                logValue("FWVolt", flyWVolt, 1);
-                logValue("FW1Speed", flyWheel1.get_actual_velocity(), 2);
-                logValue("FW2Speed", flyWheel2.get_actual_velocity(), 3);
-                logValue("FW1Torque", flyWheel1.get_torque(), 4);
-                logValue("FW2Torque", flyWheel2.get_torque(), 5);
-                logValue("FW1Current", flyWheel1.get_current_draw(), 6);
-                logValue("FW2Current", flyWheel2.get_current_draw(), 7);
 
                 delay(optimalDelay);
             }

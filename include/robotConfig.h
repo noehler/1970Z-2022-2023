@@ -60,13 +60,13 @@ class sensing_t{
         double distTraveled(ADIEncoder * encoderLoc, bool resetEncoder = true){
             double radius;
             if (encoderLoc == &leftEncoderFB){
-                radius=1.411811948;
+                radius=1.375;
             }
             if (encoderLoc == &rightEncoderFB){
-                radius=1.449;
+                radius=1.375;
             }
             else{
-                radius = 1.41326;
+                radius = 1.375;
             }
 
             double degreesTraveled = encoderLoc->get_value();
@@ -115,13 +115,14 @@ class sensing_t{
         //discSearch and distSense does not have a port assigned yet;
         sensing_t(void):leftEncoderFB({{16,'E','F'}, true}), rightEncoderFB({{16,'C', 'D'},false }),
                         encoderLR({{16,'A','B'}}), turretEncoder(12), inertial2(20), upLoaded({22,'E'}),
-                        deckLoaded({22,'C'}), holeLoaded({22,'D'}), inertial(21), opticalSensor(18),
+                        deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(18),
                         turVisionL(13), turVisionR(14), discSearch(17), distSense(6){}
 
         void setUp(void){
-            robot.xpos = 0;
-            robot.ypos = 0;
+            robot.xpos = 12;
+            robot.ypos = 12;
             robot.zpos = 8.5;
+            chaIntAng = 0;
 
             goal.xpos = 124;
             goal.ypos = 124;
@@ -143,10 +144,6 @@ class sensing_t{
         }
 
         void odometry(void){
-            while (1){
-                robot.turAng = double(turretEncoder.get_angle())/100;
-                delay(20);
-            }
             while (1){
                 static double odoHeading = 0;
                 static double odomposx = 0;
@@ -216,7 +213,21 @@ class sensing_t{
             robot.turAng = double(turretEncoder.get_angle())/100;
 
             //outputting values for testings
-
+            logValue("T", millis(),0);
+            logValue("X", robot.xpos,1);
+            logValue("Y", robot.ypos,2);
+            logValue("xa", inertial.get_accel().x,3);
+            logValue("ya", inertial.get_accel().y,4);
+            logValue("za", inertial.get_accel().z,5);
+            logValue("heading", inertial.get_heading(),6);
+            logValue("roll", inertial.get_roll(),7);
+            logValue("pitch", inertial.get_pitch(),8);
+            logValue("xa2", inertial2.get_accel().x,9);
+            logValue("ya2", inertial2.get_accel().y,10);
+            logValue("za2", inertial2.get_accel().z,11);
+            logValue("heading2", inertial2.get_heading(),12);
+            logValue("roll2", inertial2.get_roll(),13);
+            logValue("pitch2", inertial2.get_pitch(),14);
             //delay to allow for other tasks to run
             delay(5);
             }
