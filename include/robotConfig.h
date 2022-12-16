@@ -47,7 +47,9 @@ class sensing_t{
         Vision turVisionR;
         Vision discSearch;
 
+        //JOHN: When calibrating make sure that the id(first arguement) is 1
         vision_signature_s_t REDGOAL = Vision::signature_from_utility(1, 4499, 8193, 6346, -1589, -429, -1009, 2.5, 0);
+        //JOHN: When calibrating make sure that the id(first arguement) is 2
         vision_signature_s_t BLUEGOAL = Vision::signature_from_utility(2, -1671, 1, -834, 2025, 4413, 3220, 2.000, 0);
 
         class robotGoalRelatives {
@@ -96,8 +98,7 @@ class sensing_t{
 
         double turretPosChoice(double angBetween){
             if (distSense.get() < 70){
-                //return angBetween;
-                return 90;
+                return angBetween;
             }
             else{
                 return 0;
@@ -133,7 +134,6 @@ class sensing_t{
 	        inertial.reset();
 	        inertial2.reset();
             while (inertial.is_calibrating()  || inertial2.is_calibrating()){
-                //std::cout << "\nCalibrating!";
                 delay(40);
                 std::cout << "calibrating\n";
             }
@@ -297,15 +297,15 @@ class sensing_t{
                 if (turVisionL.get_object_count() > 0){
                     vision_object_s_t LOBJ = turVisionL.get_by_size(0);
                     if (LOBJ.width > 20){
-                        //lv_obj_align(posBtn, NULL, LV_ALIGN_CENTER, LOBJ.x_middle_coord-158, LOBJ.y_middle_coord - 106);
-                        goalAngle = robot.turAng + (LOBJ.x_middle_coord-158);
+                        lv_obj_align(posBtn, NULL, LV_ALIGN_CENTER, LOBJ.x_middle_coord-158, LOBJ.y_middle_coord - 106);
+                        goalAngle = turretPosChoice(robot.turAng + double(LOBJ.x_middle_coord-158)/5.1);
                     }
                     else{
-                        //goalAngle = 0;
+                        goalAngle = turretPosChoice(goalAngle);
                     } 
                 }
                 else{
-                    //goalAngle = 0;
+                    goalAngle = turretPosChoice(goalAngle);
                 }
 
                 delay(optimalDelay);
