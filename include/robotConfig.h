@@ -1,22 +1,10 @@
 #ifndef __ROBOTCONFIG_H__
 #define __ROBOTCONFIG_H__
 
-//will always end up being false but makes edditor realize that api.h is seen
-#include "display/lv_core/lv_obj.h"
-#include "pros/misc.hpp"
-#include "pros/optical.h"
-#ifndef _PROS_MAIN_H_
 #include "api.h"
-#endif
-
-#ifndef __SDLOGGING_H__
-#include "sdLogging.h"
 #include "GUI.h"
-#endif
-
-#ifndef __AUTONSETUP_H__
-#include "Autons\autonSetup.h"
-#endif
+#include "sdLogging.h"
+#include "Autons/autonSetup.h"
 
 using namespace pros;
 
@@ -218,21 +206,6 @@ class sensing_t{
             robotGoal.dz = goal.zpos - robot.zpos;
             robot.turAng = double(turretEncoder.get_angle())/100;
 
-            //outputting values for testings
-            /*logValue("X", robot.xpos,0);
-            logValue("Y", robot.ypos,1);
-            logValue("xa", inertial.get_accel().x,3);
-            logValue("ya", inertial.get_accel().y,4);
-            logValue("za", inertial.get_accel().z,5);
-            logValue("heading", inertial.get_heading(),6);
-            logValue("roll", inertial.get_roll(),7);
-            logValue("pitch", inertial.get_pitch(),8);
-            logValue("xa2", inertial2.get_accel().x,9);
-            logValue("ya2", inertial2.get_accel().y,10);
-            logValue("za2", inertial2.get_accel().z,11);
-            logValue("heading2", inertial2.get_heading(),12);
-            logValue("roll2", inertial2.get_roll(),13);
-            logValue("pitch2", inertial2.get_pitch(),14);*/
             //delay to allow for other tasks to run
             delay(5);
             }
@@ -331,9 +304,7 @@ class sensing_t{
         bool rollerIsGood(void){
             c::optical_rgb_s color = opticalSensor.get_rgb();
             static int startTime = millis();
-            logValue("R", color.red, 0);
-            logValue("G", color.green, 1);
-            logValue("B", color.blue, 2);
+            
             if (((color.red >  500 && color.blue < 400 && isRed == false) || (color.red < 300 && color.blue > 200 && isRed == true)) && underRoller()){
                 
             }

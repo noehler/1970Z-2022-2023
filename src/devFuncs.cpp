@@ -137,9 +137,9 @@ double universalTuner(void){
     return 0;
 }
 
-void universalTuner(int length, Motor *motors[length], double goal, double &currentpos(void), PID_t PID, int timeToTest, int delayTiming, bool doublePID){
+void universalTuner(double goal, double &currentpos(void), PID_t PIDU, int timeToTest, int delayTiming, bool doublePID, int length, void* motor){
     for (int i = 0; i<length; i++){
-        motors[i]->set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+        ((Motor*) motor)->set_brake_mode(E_MOTOR_BRAKE_BRAKE);
     }
 
     while (1){
@@ -157,7 +157,7 @@ void universalTuner(int length, Motor *motors[length], double goal, double &curr
             static double integ = 0;
             double deriv = prop - prevProp;
 
-            double RUNPOWER = PID.p * prop + PID.i * integ + PID.d * deriv;
+            double RUNPOWER = PIDU.p * prop + PIDU.i * integ + PIDU.d * deriv;
 
             integ += prop;
             prevProp = prop;
@@ -169,7 +169,7 @@ void universalTuner(int length, Motor *motors[length], double goal, double &curr
                 RUNPOWER = -127;
             }
             for (int i = 0; i<length; i++){
-                motors[i]->move(RUNPOWER);
+                ((Motor*) motor)->move(RUNPOWER);
             }
 
             pVal = fabs(RUNPOWER) + fabs(deriv);
@@ -188,7 +188,7 @@ void universalTuner(int length, Motor *motors[length], double goal, double &curr
                 else{
                     std::cout << "D\n";
                 }
-                std::cout << "P: " << PID.p << "\nI: " << PID.d << "\nD: " << PID.d << "\n";
+                std::cout << "P: " << PIDU.p << "\nI: " << PIDU.d << "\nD: " << PIDU.d << "\n";
                 prevGood[adjustSwitch] = 1;
                 blVal = pVal;
             }
@@ -203,7 +203,7 @@ void universalTuner(int length, Motor *motors[length], double goal, double &curr
                 else{
                     std::cout << "D\n";
                 }
-                std::cout << "P: " << PID.p << "\nI: " << PID.d << "\nD: " << PID.d << "\n";
+                std::cout << "P: " << PIDU.p << "\nI: " << PIDU.i << "\nD: " << PIDU.d << "\n";
                 if (!prevGood[adjustSwitch]){
                     moveDir[adjustSwitch][add[adjustSwitch]] *=.5;
                     add[adjustSwitch] = !add[adjustSwitch];
@@ -212,13 +212,13 @@ void universalTuner(int length, Motor *motors[length], double goal, double &curr
             }
 
             if (adjustSwitch == 0){
-                PID.p *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+                PIDU.p *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
             }
             else if (adjustSwitch == 1){
-                PID.i *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+                PIDU.i *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
             }
             else{
-                PID.d *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+                PIDU.d *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
             }
 
             if (blVal < pVal){

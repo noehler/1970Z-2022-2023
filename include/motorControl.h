@@ -1,20 +1,11 @@
 #ifndef __MOTORCONTROL_H__
 #define __MOTORCONTROL_H__
 
-#include "GUI.h"
-#include "display/lv_objx/lv_slider.h"
-#include "pros/misc.h"
-#include "pros/misc.hpp"
-#include "pros/motors.h"
-#include "pros/rtos.h"
-#include "sdLogging.h"
-#ifndef _PROS_MAIN_H_
 #include "api.h"
-#endif
-
-#ifndef __ROBOTCONFIG_H__
+#include "sdLogging.h"
+#include "Autons/autonSetup.h"
 #include "robotConfig.h"
-#endif
+
 
 using namespace pros;
 
@@ -377,7 +368,6 @@ class motorControl_t{
                 rbD.move_voltage(rightSpd);
                 delay(optimalDelay);
 
-		        logValue("rollerGood", sensing.rollerIsGood(), 0);
 
                 if (c::usd_is_installed()){
                     outValsSDCard();
@@ -438,19 +428,6 @@ class motorControl_t{
                 if (fabs(diffFlyWheelW2)<1&&flyWVolt2==0){
                     IPIDang2 = 0;
                 }
-
-                /*logValue("Volt1", flyWVolt, 15);
-                logValue("Volt2", flyWVolt2, 16);
-                logValue("Current1", flyWheel1.get_current_draw(), 17);
-                logValue("Current2", flyWheel2.get_current_draw(), 18);
-                logValue("Torque1", flyWheel1.get_torque(), 19);
-                logValue("Torque2", flyWheel2.get_torque(), 20);
-                logValue("Omega1", flyWheel1.get_actual_velocity(), 21);
-                logValue("Omega2", flyWheel2.get_actual_velocity(), 22);
-                logValue("temp1", flyWheel1.get_temperature(), 23);
-                logValue("temp2", flyWheel2.get_temperature(), 24);
-                logValue("Current1", flyWheel1.get_position(), 25);
-                logValue("Current2", flyWheel2.get_position(), 26);*/
 
                 flyWheel1.move_voltage(flyWVolt); 
                 flyWheel2.move_voltage(flyWVolt2); 

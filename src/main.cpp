@@ -103,13 +103,13 @@ void opcontrol() {
 	
 	//Task vision_Task(VT_Wrapper, (void*) &motorControl, "My vision Controller Task");
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
-	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
+	//Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+	//Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
 	while (true) {
-		goalAngle = 0;
-		
-		motorControl.speedToggle();		
+		logValue("robotAngle", sensing.robot.angle, 0);
+		logValue("turretAngle", sensing.robot.turAng, 1);
+		//motorControl.speedToggle();		
 		pros::delay(20);
 	}
 }

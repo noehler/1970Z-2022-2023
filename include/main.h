@@ -35,14 +35,14 @@
 #define PROS_USE_LITERALS
 
 #include "api.h"
-#include "robotConfig.h"
-#include "motorControl.h"
 #include "GUI.h"
 #include "devFuncs.h"
 #include "sdLogging.h"
 #include "Autons/autonSetup.h"
-
+#include "robotConfig.h"
+#include "motorControl.h"
 /**
+#include "motorControl.h"
  * You should add more #includes here
  */
 //#include "okapi/api.hpp"
