@@ -1,14 +1,20 @@
 #include "Autons/autonSetup.h"
 #include "display/lv_core/lv_obj.h"
+#include "display/lv_objx/lv_label.h"
 #include "display/lv_objx/lv_slider.h"
 #include "main.h"
+#include "pros/misc.hpp"
 
 //global variables
 bool devMode = false;
 bool autonChecker = false;
 
 
+bool colorSet = false;
+bool autonSet = false;
+
 lv_obj_t * autonTypeLabel;
+lv_obj_t * checklistLabel;
 extern lv_obj_t * autonTypeLabel;
 lv_obj_t * colorBtn;
 lv_obj_t * turrSlider;
@@ -90,6 +96,7 @@ void btnSetToggled(lv_obj_t * btn, bool toggled)
 /*this section has the events called when buttons are clicked*/
 lv_res_t colorSwitchClick(lv_obj_t * btn){
     uint8_t id = lv_obj_get_free_num(btn); //id useful when there are multiple buttons
+    colorSet = true;
 
     if(id == 0)
     {
@@ -108,20 +115,21 @@ lv_res_t colorSwitchClick(lv_obj_t * btn){
 lv_res_t autonSwitchClick(lv_obj_t * btn){
     uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
     //std::cout << id;
+    autonSet = true;
     if(id == 1)
     {
         switch (autonType){
             case basicAuton:
                 autonType = winPoint;
-                lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
+                //lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
                 break;
             case winPoint:
                 autonType = noAuton;
-                lv_label_set_text(autonTypeLabel, "no auton selected"); //sets label text
+                //lv_label_set_text(autonTypeLabel, "no auton selected"); //sets label text
                 break;
             case noAuton:
                 autonType = winPoint;
-                lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
+                //lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
                 break;
         }
     }
@@ -154,11 +162,13 @@ void setupScreen(void){
     lv_slider_set_range(turrSlider,0,600);
     lv_slider_set_value(turrSlider, 0);
 
-    
+    checklistLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
+    lv_label_set_text(checklistLabel, "making"); //sets label text
+    lv_obj_align(checklistLabel, NULL, LV_ALIGN_IN_TOP_MID, 30, -10); //set the position to center
 
     autonTypeLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(autonTypeLabel, "No choice yet"); //sets label text
-    lv_obj_align(autonTypeLabel, NULL, LV_ALIGN_CENTER, 30, -10); //set the position to center
+    lv_obj_align(autonTypeLabel, NULL, LV_ALIGN_IN_BOTTOM_MID, 30, 0); //set the position to center
 
     /*Value Output Screen*/
     for (int i = 0; i < 20; i++){
@@ -176,4 +186,31 @@ void setupScreen(void){
     }
 }
 
- 
+void preMatchCheck(void){
+    while (1){
+        char buffer[50];
+        if(colorSet){
+            sprintf(buffer, "Color Set: Done\n");
+        }
+        else{
+            sprintf(buffer, "Color Set: X\n");
+        }
+        
+        if(autonSet){
+            sprintf(buffer + strlen(buffer), "Auton Set: Done\n");
+        }
+        else{
+            sprintf(buffer + strlen(buffer), "Auton Set: X\n"); 
+        }
+        
+        if(pros::battery::get_capacity() > 80){
+            sprintf(buffer + strlen(buffer), "Battery: Good");
+        }
+        else{
+            sprintf(buffer + strlen(buffer), "Battery: Bad"); 
+        }
+        lv_label_set_text(checklistLabel, buffer);
+        delay(100);
+    
+    }
+} 

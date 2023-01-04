@@ -18,6 +18,7 @@
  */
 void initialize() {
 	setupScreen();
+	Task screenCheck(preMatchCheck);
 	sensing.setUp();
 	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
 	autonType = noAuton;
@@ -98,7 +99,13 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	goalAngle = 0;
+	goalAngle = sensing.robot.angle + 180;
+	while (goalAngle > 360){
+		goalAngle -= 360;
+	}
+	while (goalAngle < 0){
+		goalAngle += 360;
+	}
 	motorControl_t motorControl;
 	
 	//Task vision_Task(VT_Wrapper, (void*) &motorControl, "My vision Controller Task");
@@ -107,8 +114,13 @@ void opcontrol() {
 	//Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
 	while (true) {
-		logValue("robotAngle", sensing.robot.angle, 0);
-		logValue("turretAngle", sensing.robot.turAng, 1);
+		goalAngle = sensing.robot.angle + 180;
+		while (goalAngle > 360){
+			goalAngle -= 360;
+		}
+		while (goalAngle < 0){
+			goalAngle += 360;
+		}
 		//motorControl.speedToggle();		
 		pros::delay(20);
 	}

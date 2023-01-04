@@ -3,3 +3,7 @@
 
 autonTypes_t autonType = winPoint;
 bool isRed = true;
+
+void autonNotSetup(void){
+    
+}

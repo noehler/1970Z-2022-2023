@@ -2,6 +2,7 @@
 #define __MOTORCONTROL_H__
 
 #include "api.h"
+#include "pros/misc.hpp"
 #include "sdLogging.h"
 #include "Autons/autonSetup.h"
 #include "robotConfig.h"
@@ -320,7 +321,7 @@ class motorControl_t{
         moveToInfoExternal_t move;
         
         void autonDriveController(void){
-            while(!competition::is_disabled()){
+            while(!competition::is_disabled() && competition::is_autonomous()){
                 
                 static double leftSpd = 0;
                 static double rightSpd = 0;

@@ -204,7 +204,13 @@ class sensing_t{
             robotGoal.dx = goal.xpos - robot.xpos;
             robotGoal.dy = goal.ypos - robot.ypos;
             robotGoal.dz = goal.zpos - robot.zpos;
-            robot.turAng = double(turretEncoder.get_angle())/100;
+            robot.turAng = 540-double(turretEncoder.get_angle())/100 + robot.angle;
+            while (robot.turAng > 360){
+                robot.turAng -= 360;
+            }
+            while (robot.turAng < 0){
+                robot.turAng += 360;
+            }
 
             //delay to allow for other tasks to run
             delay(5);
