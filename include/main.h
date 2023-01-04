@@ -38,6 +38,7 @@
 #include "robotConfig.h"
 #include "motorControl.h"
 #include "GUI.h"
+#include "devFuncs.h"
 #include "sdLogging.h"
 #include "Autons/autonSetup.h"
 

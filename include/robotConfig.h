@@ -4,6 +4,7 @@
 //will always end up being false but makes edditor realize that api.h is seen
 #include "display/lv_core/lv_obj.h"
 #include "pros/misc.hpp"
+#include "pros/optical.h"
 #ifndef _PROS_MAIN_H_
 #include "api.h"
 #endif
@@ -11,6 +12,10 @@
 #ifndef __SDLOGGING_H__
 #include "sdLogging.h"
 #include "GUI.h"
+#endif
+
+#ifndef __AUTONSETUP_H__
+#include "Autons\autonSetup.h"
 #endif
 
 using namespace pros;
@@ -111,7 +116,6 @@ class sensing_t{
         Object robot;
         Object goal;
         double goalSpeed = 0;
-        bool underRoller;
         
         //discSearch and distSense does not have a port assigned yet;
         sensing_t(void):leftEncoderFB({{16,'E','F'}, true}), rightEncoderFB({{16,'C', 'D'},false }),
@@ -141,9 +145,11 @@ class sensing_t{
 
             inertial.set_heading(0);
             inertial2.set_heading(0);
+            opticalSensor.set_led_pwm(100);
         }
 
         void odometry(void){
+            
             while (1){
                 static double odoHeading = 0;
                 static double odomposx = 0;
@@ -213,9 +219,8 @@ class sensing_t{
             robot.turAng = double(turretEncoder.get_angle())/100;
 
             //outputting values for testings
-            /*logValue("T", millis(),0);
-            logValue("X", robot.xpos,1);
-            logValue("Y", robot.ypos,2);
+            /*logValue("X", robot.xpos,0);
+            logValue("Y", robot.ypos,1);
             logValue("xa", inertial.get_accel().x,3);
             logValue("ya", inertial.get_accel().y,4);
             logValue("za", inertial.get_accel().z,5);
@@ -298,7 +303,9 @@ class sensing_t{
                     vision_object_s_t LOBJ = turVisionL.get_by_size(0);
                     if (LOBJ.width > 20){
                         lv_obj_align(posBtn, NULL, LV_ALIGN_CENTER, LOBJ.x_middle_coord-158, LOBJ.y_middle_coord - 106);
-                        goalAngle = turretPosChoice(robot.turAng + double(LOBJ.x_middle_coord-158)/5.1);
+                        if (fabs(goalAngle - robot.turAng) < 3){
+                            goalAngle = turretPosChoice(robot.turAng + double(LOBJ.x_middle_coord-158)/5.1);
+                        }
                     }
                     else{
                         goalAngle = turretPosChoice(goalAngle);
@@ -309,6 +316,36 @@ class sensing_t{
                 }
 
                 delay(optimalDelay);
+            }
+        }
+
+        bool underRoller(void){
+            if (opticalSensor.get_proximity() > 180){
+                return 1;
+            }
+            else{
+                return 0;
+            }
+        }
+
+        bool rollerIsGood(void){
+            c::optical_rgb_s color = opticalSensor.get_rgb();
+            static int startTime = millis();
+            logValue("R", color.red, 0);
+            logValue("G", color.green, 1);
+            logValue("B", color.blue, 2);
+            if (((color.red >  500 && color.blue < 400 && isRed == false) || (color.red < 300 && color.blue > 200 && isRed == true)) && underRoller()){
+                
+            }
+            else{
+                startTime = millis();
+            }
+
+            if (millis() - startTime > 3){
+                return 1;
+            }
+            else{
+                return 0;
             }
         }
 

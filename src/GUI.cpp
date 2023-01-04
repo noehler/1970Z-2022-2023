@@ -1,9 +1,9 @@
+#include "Autons/autonSetup.h"
 #include "display/lv_core/lv_obj.h"
 #include "display/lv_objx/lv_slider.h"
 #include "main.h"
 
 //global variables
-bool isRed;
 bool devMode = false;
 bool autonChecker = false;
 
@@ -116,8 +116,12 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
                 lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
                 break;
             case winPoint:
-                autonType = basicAuton;
-                lv_label_set_text(autonTypeLabel, "Basic auton selected"); //sets label text
+                autonType = noAuton;
+                lv_label_set_text(autonTypeLabel, "no auton selected"); //sets label text
+                break;
+            case noAuton:
+                autonType = winPoint;
+                lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
                 break;
         }
     }

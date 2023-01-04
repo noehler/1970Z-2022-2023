@@ -1,5 +1,7 @@
 #include "main.h"
-#include "flywheelCode.h"
+#include "Autons/autonSetup.h"
+#include "pros/motors.hpp"
+#include "sdLogging.h"
 
 /**
  * A callback function for LLEMU's center button.
@@ -17,7 +19,9 @@
 void initialize() {
 	setupScreen();
 	sensing.setUp();
-	//Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
+	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
+	autonType = noAuton;
+	isRed = true;
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -51,13 +55,33 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	motorControl_t motorControl;
-	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
-	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
-	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "SSOSTTT Task");
-	sensing.goalSpeed = 400;
-	goalAngle = 13;
+	if (autonType == winPoint){
+		motorControl_t motorControl;
+
+		sensing.robot.xpos = 0;
+		sensing.robot.ypos = 0;
+		sensing.robot.zpos = 13;
+
+		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
+
+		sensing.goalSpeed = 325;
+		goalAngle = 0;
+
+		delay(6000);
+		motorControl.raiseAScore();
+
+		motorControl.driveToRoller();
+		
+		/*Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+		motorControl.spinRoller = true;
+		int startTime = millis();
+		while(motorControl.spinRoller == true){
+			delay(20);
+		}*/
+	}
+	else if (autonType == noAuton){
+
+	}
 }
 
 /**
@@ -74,16 +98,18 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+	goalAngle = 0;
 	motorControl_t motorControl;
 	
-	Task vision_Task(VT_Wrapper, (void*) &sensing, "My Vision Task");
+	//Task vision_Task(VT_Wrapper, (void*) &motorControl, "My vision Controller Task");
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
-	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "SSOSTTT Task");
 
 	while (true) {
+		goalAngle = 0;
 		
+		motorControl.speedToggle();		
 		pros::delay(20);
 	}
 }

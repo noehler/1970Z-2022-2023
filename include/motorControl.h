@@ -206,7 +206,7 @@ class motorControl_t{
 
         double angularVelocityCalc(void){
             //return master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + 250;
-            return lv_slider_get_value(turrSlider);
+            return sensing.goalSpeed;
         }
 
         bool recoilPrevent;
@@ -220,17 +220,15 @@ class motorControl_t{
             static double gyroScalar = 21.5833333;
             static double chassisScalar = 21.5833333;
             static double turPredicScalar = 21.5833333;
-            static double angdiff;
+            double angdiff;
             T = float(millis())/1000 - previousT;
             previousT+=T;
             /*if (!competition::is_disabled() && !competition::is_autonomous()){
                 robotGoal.angleBetweenHorABS = robot.angle + 180;
             }*/
-            if (1){//turret lock
-            angdiff = - sensing.robot.turAng;
-            } else {
+            
             angdiff = goalAngle - sensing.robot.turAng;
-            }
+
             if (angdiff > 180){
                 angdiff -= 360;
             }
@@ -279,22 +277,31 @@ class motorControl_t{
 
         double intakeControl(double diffInSpd){
             int baseSPD;
-            if (master.get_digital(E_CONTROLLER_DIGITAL_R2)){
-                baseSPD = 127-fabs(diffInSpd);
-            }
-            else if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
-                baseSPD = -127+fabs(diffInSpd);
+            if (!spinRoller){
+                if (master.get_digital(E_CONTROLLER_DIGITAL_R2)){
+                    baseSPD = 12000;
+                }
+                else if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
+                    baseSPD = -12000;
+                }
+                else{
+                    baseSPD = 0;
+                }
             }
             else{
-                baseSPD = 0;
+                
+                if (!sensing.rollerIsGood()){
+                    baseSPD = 12000;
+                }
+                else{
+                    spinRoller = false;
+                }
             }
-
-            if (sensing.underRoller){
-                baseSPD *= .5;
-            }
+            
             return baseSPD;
         }
     public:
+        bool spinRoller = 0;
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
                                                     flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(11, E_MOTOR_GEARSET_06, true),
@@ -326,20 +333,27 @@ class motorControl_t{
                 
                 static double leftSpd = 0;
                 static double rightSpd = 0;
-                static int diffDir = 1;
                 
                 moveTo(leftSpd, rightSpd);
-
-                if (diffDir == 1 && fabs(lfD.get_actual_velocity()) < 130){
-                    diffDir = -1;
+                if (leftSpd > 127){
+                    leftSpd = 127;
+                }
+                if (rightSpd > 127){
+                    rightSpd = 127;
                 }
 
-                if (diffDir == -1 && fabs(lfD.get_actual_velocity()) > 190){
-                    diffDir = 1;
+                if (leftSpd < -127){
+                    leftSpd = -127;
                 }
-                lfD.move(leftSpd * diffDir);
+                if (rightSpd < -127){
+                    rightSpd = -127;
+                }
+
+                std::cout << "lS: " << leftSpd << ", rS: " << leftSpd  << "\n";
+
+                lfD.move(leftSpd);
                 lbD.move(leftSpd);
-                rfD.move(rightSpd * diffDir);
+                rfD.move(rightSpd);
                 rbD.move(rightSpd);
 
                 delay(optimalDelay);
@@ -354,139 +368,22 @@ class motorControl_t{
                 double leftSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) + master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
                 double rightSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) - master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
-                leftSpd = leftSpdRaw;
-                rightSpd = rightSpdRaw;
+                leftSpd = leftSpdRaw*12000/127;
+                rightSpd = rightSpdRaw*12000/127;
                 
-                lfD.move(leftSpd);
-                lbD.move(leftSpd);
-                rfD.move(rightSpd);
-                rbD.move(rightSpd);
+                lfD.move_voltage(leftSpd);
+                lbD.move_voltage(leftSpd);
+                rfD.move_voltage(rightSpd);
+                rbD.move_voltage(rightSpd);
                 delay(optimalDelay);
+
+		        logValue("rollerGood", sensing.rollerIsGood(), 0);
 
                 if (c::usd_is_installed()){
                     outValsSDCard();
                 }
             }
             std::cout << "ended drive\n";
-        }
-
-        void flyTuner(void){
-            int PIDPOS = 1;
-            double bestPVal = 94000;
-            bool bsSet = 0;
-            double prevP = PID.flyWheel.p;
-            double prevI = PID.flyWheel.i;
-            double prevD = PID.flyWheel.d;
-            flyWheel1.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
-            flyWheel2.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
-            while (1){
-                int gS = 500;
-                int moveDir = -1;
-
-                bool testDone = false;
-                int startTime = millis();
-                double PVal = 0;
-                while (testDone == false){
-                    //std::cout << "fly\n";
-                    static double IPIDang = 0;
-                    if (competition::is_disabled()){
-                        IPIDang = 0;
-                    }
-                    double flyWVolt;
-                    double flyWheelW =(flyWheel2.get_actual_velocity());
-                    double diffFlyWheelW = gS-flyWheelW;
-                    static double prevFWdiffSPD = gS;
-
-                    IPIDang += diffFlyWheelW;
-                    double prop = PID.flyWheel.p*diffFlyWheelW;
-                    double integ = IPIDang*PID.flyWheel.i;
-                    double deriv = PID.flyWheel.d*(diffFlyWheelW - prevFWdiffSPD);
-                    flyWVolt = 12000.0/127*(prop + integ + deriv);
-
-                    PVal += fabs(diffFlyWheelW) + fabs(diffFlyWheelW - prevFWdiffSPD);
-
-                    prevFWdiffSPD = diffFlyWheelW;
-
-
-                    if (flyWVolt > 12000){
-                        flyWVolt = 12000;
-                    }
-                    if (flyWVolt < -12000){
-                        flyWVolt = -12000;
-                    } 
-                    if (fabs(diffFlyWheelW)<1&&flyWVolt==0){
-                        IPIDang = 0;
-                    }
-
-                    flyWheel2.move_voltage(flyWVolt);
-
-                    delay(optimalDelay);
-                    if (millis() - startTime > 10000){
-                        std::cout << "\n\nPVal: " << PVal << "\nbVal: " << bestPVal << "\n";
-                        testDone = true;
-                        flyWheel2.brake();
-                    }
-                }
-                if (!bsSet){
-                    bestPVal = PVal;
-                    bsSet = true;
-                    std::cout << "\n\nBVal: " << bestPVal << "\n";
-                }
-                else{
-                    if (PVal > bestPVal){
-                        std::cout << "fail\n";
-                        double diff = (bestPVal - PVal) / bestPVal;
-                        if (PIDPOS == 1){
-                            PID.flyWheel.p = prevP;
-                            PID.flyWheel.i *= 1.0-diff*moveDir;
-                            std::cout << "\nIA\n";
-                        }
-                        else if (PIDPOS == 2){
-                            PID.flyWheel.i = prevI;
-                            PID.flyWheel.d *= 1.0-diff * moveDir;
-                            std::cout << "\nDA\n";
-                        }
-                        else{
-                            PID.flyWheel.d = prevD;
-                            PID.flyWheel.p *= 1.0- diff * moveDir;
-                            std::cout << "\nPA\n";
-                        }
-
-                        PIDPOS++;
-                        if (PIDPOS > 3){
-                            PIDPOS = 1;
-                        }
-                        
-                    }
-                    else{
-                        std::cout << "good\n";
-                        double diff = (bestPVal - PVal) / bestPVal;
-                        bestPVal = PVal;
-
-                        if (PIDPOS == 1){
-                            prevP = PID.flyWheel.p;
-                            PID.flyWheel.p *= 1.0+diff*moveDir;
-                            std::cout << "PA\n";
-                        }
-                        else if (PIDPOS == 2){
-                            prevI = PID.flyWheel.i;
-                            PID.flyWheel.i *= 1.0+diff*moveDir;
-                            std::cout << "IA\n";
-                        }
-                        else{
-                            prevD = PID.flyWheel.d;
-                            PID.flyWheel.d *= 1.0+diff*moveDir;
-                            std::cout << "DA\n";
-                        }
-
-                    }
-                }
-                
-                std::cout << "P: " << PID.flyWheel.p << "\n" << "I: " << PID.flyWheel.i << "\n" << "D: " << PID.flyWheel.d << "\n";
-                std::cout << "pP: " << prevP << "\n" << "pI: " << prevI << "\n" << "pD: " << prevD << "\n";
-
-                delay(10000);
-            }
         }
         
         //voltage controller for flywheel motors
@@ -542,17 +439,18 @@ class motorControl_t{
                     IPIDang2 = 0;
                 }
 
-                logValue("time", c::millis(), 0);
-                logValue("Volt1", flyWVolt, 1);
-                logValue("Volt2", flyWVolt2, 2);
-                logValue("Current1", flyWheel1.get_current_draw(), 3);
-                logValue("Current2", flyWheel2.get_current_draw(), 4);
-                logValue("Torque1", flyWheel1.get_torque(), 5);
-                logValue("Torque2", flyWheel2.get_torque(), 6);
-                logValue("Omega1", flyWheel1.get_actual_velocity(), 7);
-                logValue("Omega2", flyWheel2.get_actual_velocity(), 8);
-                logValue("temp1", flyWheel1.get_temperature(), 9);
-                logValue("temp2", flyWheel2.get_temperature(), 10);
+                /*logValue("Volt1", flyWVolt, 15);
+                logValue("Volt2", flyWVolt2, 16);
+                logValue("Current1", flyWheel1.get_current_draw(), 17);
+                logValue("Current2", flyWheel2.get_current_draw(), 18);
+                logValue("Torque1", flyWheel1.get_torque(), 19);
+                logValue("Torque2", flyWheel2.get_torque(), 20);
+                logValue("Omega1", flyWheel1.get_actual_velocity(), 21);
+                logValue("Omega2", flyWheel2.get_actual_velocity(), 22);
+                logValue("temp1", flyWheel1.get_temperature(), 23);
+                logValue("temp2", flyWheel2.get_temperature(), 24);
+                logValue("Current1", flyWheel1.get_position(), 25);
+                logValue("Current2", flyWheel2.get_position(), 26);*/
 
                 flyWheel1.move_voltage(flyWVolt); 
                 flyWheel2.move_voltage(flyWVolt2); 
@@ -565,15 +463,53 @@ class motorControl_t{
         //power controller for differential motors between intake and turret
         void turretIntakeController(){
             while(!competition::is_disabled()){
-                shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
-                intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_B));
+                if (!competition::is_autonomous()){
+                    shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
+                    intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
+                }
                 double diffInSpd = turrControl();
-                double baseSpd = intakeControl(diffInSpd);
-                diff1 = -diffInSpd + baseSpd;
-                diff2 = -diffInSpd - baseSpd;
+                double baseSpd = intakeControl(0);
+                diff1.move_voltage(baseSpd);
+                diff2.move_voltage(-baseSpd);
+
                 delay(optimalDelay);
             }
             std::cout << "ended turret\n";
+        }
+        
+        void raiseAScore(void){
+            shootPiston.set_value(true);
+            delay(500);
+            shootPiston.set_value(false);
+        }
+
+        void speedToggle(void){
+		    static bool highspd = false;
+            if (master.get_digital_new_press(E_CONTROLLER_DIGITAL_Y)){
+                highspd = !highspd;
+            }
+            if (highspd){
+
+		        sensing.goalSpeed = 420;
+            }
+            else{
+
+		        sensing.goalSpeed = 312;
+            }
+
+        }
+        void driveToRoller(void){
+            lfD.move_voltage(4000);
+            lbD.move_voltage(4000);
+            rfD.move_voltage(4000);
+            rbD.move_voltage(4000);
+            delay(500);
+            diff1.move_voltage(12000);
+            diff2.move_voltage(-12000);
+            delay(600);
+            diff1.brake();
+            diff2.brake();
+
         }
 };
 
