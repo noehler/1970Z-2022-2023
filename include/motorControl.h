@@ -191,8 +191,10 @@ class motorControl_t{
                 }
             } else {
             
-                leftSpd = moveI.PIDSpeedL;
-                rightSpd = moveI.PIDSpeedR;
+                leftSpd = -moveI.PIDSpeedL;
+                rightSpd = -moveI.PIDSpeedR;
+                logValue("dist", moveI.dist, 2);
+                //logValue("good", move.resetMoveTo, 3);
             }
         }
 
@@ -283,7 +285,7 @@ class motorControl_t{
             else{
                 
                 if (!sensing.rollerIsGood()){
-                    baseSPD = 12000;
+                    baseSPD = 4000;
                 }
                 else{
                     spinRoller = false;
@@ -347,6 +349,10 @@ class motorControl_t{
                 lbD.move(leftSpd);
                 rfD.move(rightSpd);
                 rbD.move(rightSpd);
+
+                if (c::usd_is_installed()){
+                    outValsSDCard();
+                }
 
                 delay(optimalDelay);
             }
@@ -482,11 +488,48 @@ class motorControl_t{
             rfD.move_voltage(4000);
             rbD.move_voltage(4000);
             delay(500);
-            diff1.move_voltage(12000);
-            diff2.move_voltage(-12000);
-            delay(600);
-            diff1.brake();
-            diff2.brake();
+            spinRoller = true;
+            int startTime = millis();
+            while(spinRoller == true){
+                static int pwr = 4000;
+                if (!sensing.rollerIsGood() || fabs(diff1.get_actual_velocity()-60) < 20){
+                    if (fabs(diff1.get_actual_velocity()) < 60){
+                        if (pwr < 12000){
+                            pwr+=20;
+                        }
+                        else{
+                            pwr=12000;
+                        }
+                    }
+                    else{
+                        if (pwr > 2000){
+                            pwr-=10;
+                        }
+                        else{
+                            pwr = 2000;
+                        }
+                    }
+                    diff1.move_voltage(pwr);
+                    diff2.move_voltage(-pwr);
+                    
+                }
+                else{
+                    spinRoller = false;
+                }
+			    delay(20);
+            }
+            
+            diff1.move_voltage(0);
+            diff2.move_voltage(0);
+            lfD.move_voltage(-4000);
+            lbD.move_voltage(-4000);
+            rfD.move_voltage(-40000);
+            rbD.move_voltage(-4000);
+            delay(200);
+            lfD.move_voltage(0);
+            lbD.move_voltage(0);
+            rfD.move_voltage(0);
+            rbD.move_voltage(0);
 
         }
 };

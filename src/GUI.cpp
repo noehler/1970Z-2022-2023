@@ -15,6 +15,7 @@ bool autonSet = false;
 
 lv_obj_t * autonTypeLabel;
 lv_obj_t * checklistLabel;
+lv_obj_t * icon;
 extern lv_obj_t * autonTypeLabel;
 lv_obj_t * colorBtn;
 lv_obj_t * turrSlider;
@@ -121,15 +122,15 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
         switch (autonType){
             case basicAuton:
                 autonType = winPoint;
-                //lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
+                lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
                 break;
             case winPoint:
                 autonType = noAuton;
-                //lv_label_set_text(autonTypeLabel, "no auton selected"); //sets label text
+                lv_label_set_text(autonTypeLabel, "no auton selected"); //sets label text
                 break;
             case noAuton:
                 autonType = winPoint;
-                //lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
+                lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
                 break;
         }
     }
@@ -156,11 +157,11 @@ void setupScreen(void){
     setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 80), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), posBtn), posBtn);
     lv_btn_set_action(posBtn, LV_BTN_ACTION_CLICK, autonSwitchClick);
 
-    //slider for turret control
+    /*//slider for turret control
     turrSlider = lv_slider_create(tab3, NULL);
     lv_obj_align(turrSlider, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
     lv_slider_set_range(turrSlider,0,600);
-    lv_slider_set_value(turrSlider, 0);
+    lv_slider_set_value(turrSlider, 0);*/
 
     checklistLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(checklistLabel, "making"); //sets label text
@@ -169,6 +170,11 @@ void setupScreen(void){
     autonTypeLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(autonTypeLabel, "No choice yet"); //sets label text
     lv_obj_align(autonTypeLabel, NULL, LV_ALIGN_IN_BOTTOM_MID, 30, 0); //set the position to center
+
+    //pos output
+    //lv_obj_t * icon = lv_img_create(tab3, NULL);
+    //lv_img_set_src(icon, "S:/usd/images/robot.bin");
+    //lv_obj_align(icon, NULL, LV_ALIGN_IN_BOTTOM_MID, 0,0);
 
     /*Value Output Screen*/
     for (int i = 0; i < 20; i++){
@@ -204,11 +210,12 @@ void preMatchCheck(void){
         }
         
         if(pros::battery::get_capacity() > 80){
-            sprintf(buffer + strlen(buffer), "Battery: Good");
+            sprintf(buffer + strlen(buffer), "Battery: Good\n");
         }
         else{
-            sprintf(buffer + strlen(buffer), "Battery: Bad"); 
+            sprintf(buffer + strlen(buffer), "Battery: Bad\n"); 
         }
+        sprintf(buffer + strlen(buffer), "Stupid: For Sure"); 
         lv_label_set_text(checklistLabel, buffer);
         delay(100);
     

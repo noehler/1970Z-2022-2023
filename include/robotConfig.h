@@ -112,8 +112,8 @@ class sensing_t{
                         turVisionL(13), turVisionR(14), discSearch(17), distSense(6){}
 
         void setUp(void){
-            robot.xpos = 12;
-            robot.ypos = 12;
+            robot.xpos = 0;
+            robot.ypos = 0;
             robot.zpos = 8.5;
             chaIntAng = 0;
 
@@ -211,6 +211,8 @@ class sensing_t{
             while (robot.turAng < 0){
                 robot.turAng += 360;
             }
+            logValue("x", robot.xpos, 0);
+            logValue("y", robot.ypos, 1);
 
             //delay to allow for other tasks to run
             delay(5);
@@ -312,13 +314,6 @@ class sensing_t{
             static int startTime = millis();
             
             if (((color.red >  500 && color.blue < 400 && isRed == false) || (color.red < 300 && color.blue > 200 && isRed == true)) && underRoller()){
-                
-            }
-            else{
-                startTime = millis();
-            }
-
-            if (millis() - startTime > 3){
                 return 1;
             }
             else{
