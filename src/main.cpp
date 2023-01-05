@@ -56,29 +56,20 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
+	
 	if (autonType == winPoint){
 		motorControl_t motorControl;
 
-		sensing.robot.xpos = 0;
-		sensing.robot.ypos = 0;
-		sensing.robot.zpos = 13;
-
 		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
-		sensing.goalSpeed = 325;
+		sensing.goalSpeed = 340;
 		goalAngle = 0;
 
 		delay(6000);
 		motorControl.raiseAScore();
 
+		//Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
 		motorControl.driveToRoller();
-		
-		/*Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
-		motorControl.spinRoller = true;
-		int startTime = millis();
-		while(motorControl.spinRoller == true){
-			delay(20);
-		}*/
 	}
 	else if (autonType == noAuton){
 
@@ -100,6 +91,7 @@ void autonomous() {
  */
 void opcontrol() {
 	goalAngle = sensing.robot.angle + 180;
+	sensing.goalSpeed = 300;
 	while (goalAngle > 360){
 		goalAngle -= 360;
 	}
@@ -110,10 +102,11 @@ void opcontrol() {
 	
 	//Task vision_Task(VT_Wrapper, (void*) &motorControl, "My vision Controller Task");
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-	//Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
-	//Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
+	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
+	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
 	while (true) {
+		sensing.goalSpeed = 300;
 		goalAngle = sensing.robot.angle + 180;
 		while (goalAngle > 360){
 			goalAngle -= 360;
