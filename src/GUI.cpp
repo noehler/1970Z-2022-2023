@@ -98,6 +98,7 @@ void btnSetToggled(lv_obj_t * btn, bool toggled)
 lv_res_t colorSwitchClick(lv_obj_t * btn){
     uint8_t id = lv_obj_get_free_num(btn); //id useful when there are multiple buttons
     colorSet = true;
+    preMatchCheck();
 
     if(id == 0)
     {
@@ -117,6 +118,8 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
     uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
     //std::cout << id;
     autonSet = true;
+    preMatchCheck();
+
     if(id == 1)
     {
         switch (autonType){
@@ -171,6 +174,8 @@ void setupScreen(void){
     lv_label_set_text(autonTypeLabel, "No choice yet"); //sets label text
     lv_obj_align(autonTypeLabel, NULL, LV_ALIGN_IN_BOTTOM_MID, 30, 0); //set the position to center
 
+    preMatchCheck();
+
     //pos output
     //lv_obj_t * icon = lv_img_create(tab3, NULL);
     //lv_img_set_src(icon, "S:/usd/images/robot.bin");
@@ -193,31 +198,28 @@ void setupScreen(void){
 }
 
 void preMatchCheck(void){
-    while (1){
-        char buffer[50];
-        if(colorSet){
-            sprintf(buffer, "Color Set: Done\n");
-        }
-        else{
-            sprintf(buffer, "Color Set: X\n");
-        }
-        
-        if(autonSet){
-            sprintf(buffer + strlen(buffer), "Auton Set: Done\n");
-        }
-        else{
-            sprintf(buffer + strlen(buffer), "Auton Set: X\n"); 
-        }
-        
-        if(pros::battery::get_capacity() > 80){
-            sprintf(buffer + strlen(buffer), "Battery: Good\n");
-        }
-        else{
-            sprintf(buffer + strlen(buffer), "Battery: Bad\n"); 
-        }
-        sprintf(buffer + strlen(buffer), "Stupid: For Sure"); 
-        lv_label_set_text(checklistLabel, buffer);
-        delay(100);
-    
+    char buffer[70];
+    if(colorSet){
+        sprintf(buffer, "Color Set: Done\n");
     }
+    else{
+        sprintf(buffer, "Color Set: X\n");
+    }
+    
+    if(autonSet){
+        sprintf(buffer + strlen(buffer), "Auton Set: Done\n");
+    }
+    else{
+        sprintf(buffer + strlen(buffer), "Auton Set: X\n"); 
+    }
+    
+    if(pros::battery::get_capacity() > 80){
+        sprintf(buffer + strlen(buffer), "Battery: Good\n");
+    }
+    else{
+        sprintf(buffer + strlen(buffer), "Battery: Bad\n"); 
+    }
+    sprintf(buffer + strlen(buffer), "Stupid: For Sure"); 
+    lv_label_set_text(checklistLabel, buffer);
+    delay(100);
 } 

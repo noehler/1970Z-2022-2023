@@ -42,3 +42,6 @@ double getNum(std::string Output){
   }
   return realNum;
 }
+
+Controller master(pros::E_CONTROLLER_MASTER);
+Controller sidecar(pros::E_CONTROLLER_PARTNER);

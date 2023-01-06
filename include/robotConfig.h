@@ -3,10 +3,14 @@
 
 #include "api.h"
 #include "GUI.h"
+#include "pros/misc.hpp"
 #include "sdLogging.h"
 #include "Autons/autonSetup.h"
 
 using namespace pros;
+
+extern Controller master;
+extern Controller sidecar;
 
 extern double getNum(std::string Output);
 
@@ -43,7 +47,7 @@ class sensing_t{
         //JOHN: When calibrating make sure that the id(first arguement) is 1
         vision_signature_s_t REDGOAL = Vision::signature_from_utility(1, 4499, 8193, 6346, -1589, -429, -1009, 2.5, 0);
         //JOHN: When calibrating make sure that the id(first arguement) is 2
-        vision_signature_s_t BLUEGOAL = Vision::signature_from_utility(2, -1671, 1, -834, 2025, 4413, 3220, 2.000, 0);
+        vision_signature_s_t BLUEGOAL = Vision::signature_from_utility(2, -2553, -1927, -2240, 1009, 3205, 2107, 2.4, 0);
 
         class robotGoalRelatives {
         public:
@@ -90,11 +94,18 @@ class sensing_t{
         }
 
         double turretPosChoice(double angBetween){
-            if (distSense.get() < 70){
+            if (distSense.get() < 70 && !master.get_digital(E_CONTROLLER_DIGITAL_X)){
                 return angBetween;
             }
             else{
-                return 0;
+                double temp = robot.angle + 180;
+                while (temp > 360){
+                    temp -= 360;
+                }
+                while (temp < 0){
+                    temp += 360;
+                }
+                return temp;
             }
         }
 
@@ -105,7 +116,6 @@ class sensing_t{
         Object goal;
         double goalSpeed = 0;
         
-        //discSearch and distSense does not have a port assigned yet;
         sensing_t(void):leftEncoderFB({{16,'E','F'}, true}), rightEncoderFB({{16,'C', 'D'},false }),
                         encoderLR({{16,'A','B'}}), turretEncoder(12), inertial2(20), upLoaded({22,'E'}),
                         deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(18),
@@ -211,8 +221,6 @@ class sensing_t{
             while (robot.turAng < 0){
                 robot.turAng += 360;
             }
-            logValue("x", robot.xpos, 0);
-            logValue("y", robot.ypos, 1);
 
             //delay to allow for other tasks to run
             delay(5);
@@ -277,11 +285,17 @@ class sensing_t{
 
         void visionTracking(void){
             turVisionL.set_signature(0, &REDGOAL);
-            //turVisionL.set_signature(1, &BLUEGOAL);
+            turVisionL.set_signature(1, &BLUEGOAL);
 
             while(1){
                 if (turVisionL.get_object_count() > 0){
-                    vision_object_s_t LOBJ = turVisionL.get_by_size(0);
+                    vision_object_s_t LOBJ;
+                    if (isRed){
+                        LOBJ = turVisionL.get_by_sig(0, 0);
+                    }
+                    else{
+                        LOBJ = turVisionL.get_by_sig(0, 1);
+                    }
                     if (LOBJ.width > 20){
                         lv_obj_align(posBtn, NULL, LV_ALIGN_CENTER, LOBJ.x_middle_coord-158, LOBJ.y_middle_coord - 106);
                         if (fabs(goalAngle - robot.turAng) < 3){

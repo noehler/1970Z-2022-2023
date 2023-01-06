@@ -18,7 +18,6 @@
  */
 void initialize() {
 	setupScreen();
-	Task screenCheck(preMatchCheck);
 	sensing.setUp();
 	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
 	autonType = noAuton;
@@ -56,7 +55,6 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	
 	if (autonType == winPoint){
 		motorControl_t motorControl;
 
@@ -68,10 +66,30 @@ void autonomous() {
 		delay(6000);
 		motorControl.raiseAScore();
 
-		//Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
 		motorControl.driveToRoller();
 	}
 	else if (autonType == noAuton){
+		motorControl_t motorControl;
+		Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
+		
+		sensing.robot.xpos = 0;
+		sensing.robot.ypos = 0;
+		motorControl.move.tolerance = 1;
+
+		motorControl.move.moveToxpos = 24;
+		motorControl.move.moveToypos = 0;
+		motorControl.waitPosTime(5000);
+		delay(500);
+
+		motorControl.move.moveToxpos = 48;
+		motorControl.move.moveToypos = 24;
+		motorControl.waitPosTime(5000);
+		delay(500);
+		
+		motorControl.move.moveToforwardToggle = -1;
+		motorControl.move.moveToxpos = 24;
+		motorControl.move.moveToypos = 24;
+		motorControl.waitPosTime(5000);
 
 	}
 }
@@ -90,15 +108,16 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	goalAngle = sensing.robot.angle + 180;
 	sensing.goalSpeed = 300;
+	motorControl_t motorControl;
+
+	goalAngle = sensing.robot.angle + 180;
 	while (goalAngle > 360){
 		goalAngle -= 360;
 	}
 	while (goalAngle < 0){
 		goalAngle += 360;
 	}
-	motorControl_t motorControl;
 	
 	//Task vision_Task(VT_Wrapper, (void*) &motorControl, "My vision Controller Task");
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");

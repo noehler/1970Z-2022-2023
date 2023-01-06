@@ -6,7 +6,7 @@
 #include "sdLogging.h"
 #include "Autons/autonSetup.h"
 #include "robotConfig.h"
-
+#include "devFuncs.h"
 
 using namespace pros;
 
@@ -23,8 +23,6 @@ class motorControl_t{
         ADIDigitalOut boomShackalacka;
         ADIDigitalOut shootPiston;
         ADIDigitalOut intakeLiftPiston;
-        Controller master;
-        Controller sidecar;
         int optimalDelay = 20;
 
         class PID_t{
@@ -130,10 +128,10 @@ class motorControl_t{
             IPIDSS += moveI.ets;
             IPIDfw += et;
             if (move.moveToforwardToggle == 1){
-                moveI.PIDSS = 3 * moveI.ets + 0.1 * IPIDSS * .01 + 0.3 * (moveI.ets - previousets);
+                moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
             }
             else{
-                moveI.PIDSS = 3 * moveI.ets + 0.1 * IPIDSS * .01 + 0.3 * (moveI.ets - previousets);
+                moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
             }
             if (fabs(moveI.ets) < 10) {
                 if (move.moveToforwardToggle == 1){
@@ -193,8 +191,6 @@ class motorControl_t{
             
                 leftSpd = -moveI.PIDSpeedL;
                 rightSpd = -moveI.PIDSpeedR;
-                logValue("dist", moveI.dist, 2);
-                //logValue("good", move.resetMoveTo, 3);
             }
         }
 
@@ -257,9 +253,6 @@ class motorControl_t{
                 PIDVelocity = 0;
             }
             
-            /*if (sensing.underRoller){
-                PIDVelocity = 0;
-            }*/
             if (isnanf(PIDVelocity)){
                 PIDVelocity = 0;
                 IPIDvel = 0;
@@ -269,27 +262,16 @@ class motorControl_t{
             return PIDVelocity;
         }
 
-        double intakeControl(double diffInSpd){
+        double intakeControl(void){
             int baseSPD;
-            if (!spinRoller){
-                if (master.get_digital(E_CONTROLLER_DIGITAL_R2)){
-                    baseSPD = 12000;
-                }
-                else if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
-                    baseSPD = -12000;
-                }
-                else{
-                    baseSPD = 0;
-                }
+            if (master.get_digital(E_CONTROLLER_DIGITAL_R2)){
+                baseSPD = 127;
+            }
+            else if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
+                baseSPD = -127;
             }
             else{
-                
-                if (!sensing.rollerIsGood()){
-                    baseSPD = 4000;
-                }
-                else{
-                    spinRoller = false;
-                }
+                baseSPD = 0;
             }
             
             return baseSPD;
@@ -299,11 +281,14 @@ class motorControl_t{
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
                                                     flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(11, E_MOTOR_GEARSET_06, true),
-                                                    diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}),
-                                                    master(pros::E_CONTROLLER_MASTER), sidecar(pros::E_CONTROLLER_PARTNER){
+                                                    diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}){
             PID.driveFR.p = 1;
-            PID.driveFR.i = 0;
+            PID.driveFR.i = 0.01;
             PID.driveFR.d = 3;
+
+            PID.driveSS.p = 3;
+            PID.driveSS.i = 0.001;
+            PID.driveSS.d = 0.3;
 
             PID.turret.p = 1.5;
             PID.turret.i = .167;
@@ -322,6 +307,14 @@ class motorControl_t{
         }
         moveToInfoExternal_t move;
         
+        void waitPosTime(int maxTime){
+            int startTime = millis();
+            move.resetMoveTo = false;
+            while (millis() - startTime < maxTime && move.resetMoveTo == false){
+                delay(20);
+            }
+        }
+
         void autonDriveController(void){
             while(!competition::is_disabled() && competition::is_autonomous()){
                 
@@ -342,8 +335,6 @@ class motorControl_t{
                 if (rightSpd < -127){
                     rightSpd = -127;
                 }
-
-                std::cout << "lS: " << leftSpd << ", rS: " << leftSpd  << "\n";
 
                 lfD.move(leftSpd);
                 lbD.move(leftSpd);
@@ -451,10 +442,16 @@ class motorControl_t{
                     shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
                     intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
                 }
-                double diffInSpd = turrControl();
-                double baseSpd = intakeControl(0);
-                diff1.move_voltage(baseSpd);
-                diff2.move_voltage(-baseSpd);
+                double diffInSpd = intakeControl();
+                double baseSpd = turrControl();
+                if (baseSpd == 127){
+                    baseSpd -= fabs(diffInSpd);
+                }
+                else if (baseSpd == -127){
+                    baseSpd += fabs(diffInSpd);
+                }
+                diff1.move(diffInSpd + baseSpd);
+                diff2.move(-diffInSpd + baseSpd);
 
                 delay(optimalDelay);
             }
