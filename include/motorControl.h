@@ -259,7 +259,7 @@ class motorControl_t{
                 IPIDang = 0;
             }
 
-            return PIDVelocity;
+            return 0;
         }
 
         double intakeControl(void){
@@ -306,6 +306,12 @@ class motorControl_t{
             PID.flyWheel.d2 = 0.115106;
         }
         moveToInfoExternal_t move;
+
+        void setpistons(void){
+            shootPiston.set_value(true);
+            intakeLiftPiston.set_value(true);
+            boomShackalacka.set_value(false);
+        }
         
         void waitPosTime(int maxTime){
             int startTime = millis();
@@ -426,6 +432,17 @@ class motorControl_t{
                 if (fabs(diffFlyWheelW2)<1&&flyWVolt2==0){
                     IPIDang2 = 0;
                 }
+                
+                if (isnanf(flyWVolt)){
+                    flyWVolt = 0;
+                    prevFWdiffSPD = angularVelocityCalc();
+                    IPIDang = 0;
+                }
+                if (isnanf(flyWVolt2)){
+                    flyWVolt2 = 0;
+                    prevFWdiffSPD2 = angularVelocityCalc();
+                    IPIDang2 = 0;
+                }
 
                 flyWheel1.move_voltage(flyWVolt); 
                 flyWheel2.move_voltage(flyWVolt2); 
@@ -490,7 +507,7 @@ class motorControl_t{
             while(spinRoller == true){
                 static int pwr = 4000;
                 if (!sensing.rollerIsGood() || fabs(diff1.get_actual_velocity()-60) < 20){
-                    if (fabs(diff1.get_actual_velocity()) < 60){
+                    /*if (fabs(diff1.get_actual_velocity()) < 60){
                         if (pwr < 12000){
                             pwr+=20;
                         }
@@ -505,9 +522,9 @@ class motorControl_t{
                         else{
                             pwr = 2000;
                         }
-                    }
-                    diff1.move_voltage(pwr);
-                    diff2.move_voltage(-pwr);
+                    }*/
+                    diff1.move_voltage(-pwr);
+                    diff2.move_voltage(pwr);
                     
                 }
                 else{

@@ -18,6 +18,8 @@
  */
 void initialize() {
 	setupScreen();
+	motorControl_t mc;
+	mc.setpistons();
 	sensing.setUp();
 	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
 	autonType = noAuton;
@@ -69,27 +71,6 @@ void autonomous() {
 		motorControl.driveToRoller();
 	}
 	else if (autonType == noAuton){
-		motorControl_t motorControl;
-		Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-		
-		sensing.robot.xpos = 0;
-		sensing.robot.ypos = 0;
-		motorControl.move.tolerance = 1;
-
-		motorControl.move.moveToxpos = 24;
-		motorControl.move.moveToypos = 0;
-		motorControl.waitPosTime(5000);
-		delay(500);
-
-		motorControl.move.moveToxpos = 48;
-		motorControl.move.moveToypos = 24;
-		motorControl.waitPosTime(5000);
-		delay(500);
-		
-		motorControl.move.moveToforwardToggle = -1;
-		motorControl.move.moveToxpos = 24;
-		motorControl.move.moveToypos = 24;
-		motorControl.waitPosTime(5000);
 
 	}
 }
