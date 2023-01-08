@@ -20,6 +20,7 @@ extern lv_obj_t * autonTypeLabel;
 lv_obj_t * colorBtn;
 lv_obj_t * turrSlider;
 lv_obj_t * posBtn;
+lv_obj_t * CalibrateBtn;
 lv_obj_t * outLabels[20];
 
 
@@ -125,17 +126,38 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
         switch (autonType){
             case basicAuton:
                 autonType = winPoint;
-                lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
+                lv_label_set_text(autonTypeLabel, "winPoint far auton selected"); //sets label text
                 break;
             case winPoint:
                 autonType = noAuton;
                 lv_label_set_text(autonTypeLabel, "no auton selected"); //sets label text
                 break;
             case noAuton:
-                autonType = winPoint;
-                lv_label_set_text(autonTypeLabel, "winPoint auton selected"); //sets label text
+                autonType = basicAuton;
+                lv_label_set_text(autonTypeLabel, "winPoint near auton selected"); //sets label text
                 break;
         }
+    }
+
+    return LV_RES_OK;
+}
+
+/*this section has the events called when buttons are clicked*/
+lv_res_t calibrateClick(lv_obj_t * btn){
+    uint8_t id = lv_obj_get_free_num(btn); //id useful when there are multiple buttons
+    preMatchCheck();
+
+    if(id == 2)
+    {
+        
+        setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(200, 200, 200), LV_COLOR_MAKE(200, 200, 200), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), CalibrateBtn), CalibrateBtn);
+        sensing.setUp();
+        setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), CalibrateBtn), CalibrateBtn);
+        sensing.robot.xpos = 126.25;
+        sensing.robot.ypos = 123.75;
+        chaIntAng = 90;
+        sensing.robot.angle = chaIntAng;
+
     }
 
     return LV_RES_OK;
@@ -160,6 +182,9 @@ void setupScreen(void){
     setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 80), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), posBtn), posBtn);
     lv_btn_set_action(posBtn, LV_BTN_ACTION_CLICK, autonSwitchClick);
 
+    CalibrateBtn = createBtn(tab1, 10,-30,120,30,2,"Calibrate");
+    setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(180, 180, 80), LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), CalibrateBtn), CalibrateBtn);
+    lv_btn_set_action(CalibrateBtn, LV_BTN_ACTION_CLICK, calibrateClick);
     /*//slider for turret control
     turrSlider = lv_slider_create(tab3, NULL);
     lv_obj_align(turrSlider, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
@@ -168,7 +193,7 @@ void setupScreen(void){
 
     checklistLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(checklistLabel, "making"); //sets label text
-    lv_obj_align(checklistLabel, NULL, LV_ALIGN_IN_TOP_MID, 30, -10); //set the position to center
+    lv_obj_align(checklistLabel, NULL, LV_ALIGN_IN_TOP_MID, 30, 00); //set the position to center
 
     autonTypeLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(autonTypeLabel, "No choice yet"); //sets label text

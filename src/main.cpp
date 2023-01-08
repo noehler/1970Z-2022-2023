@@ -22,7 +22,7 @@ void initialize() {
 	mc.setpistons();
 	sensing.setUp();
 	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
-	autonType = noAuton;
+	autonType = basicAuton;
 	isRed = true;
 }
 /**
@@ -59,19 +59,48 @@ void competition_initialize() {}
 void autonomous() {
 	if (autonType == winPoint){
 		motorControl_t motorControl;
+		motorControl.setpistons();
 
 		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
-		sensing.goalSpeed = 340;
+		sensing.goalSpeed = 305;
 		goalAngle = 0;
 
-		delay(6000);
+		delay(5000);
 		motorControl.raiseAScore();
 
 		motorControl.driveToRoller();
+		fly_Task.suspend();
+
 	}
 	else if (autonType == noAuton){
 
+	}
+	else if (autonType == basicAuton){
+		motorControl_t motorControl;
+		motorControl.setpistons();
+
+		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
+
+		sensing.goalSpeed = 305;
+		goalAngle = 0;
+
+		delay(5000);
+		motorControl.raiseAScore();
+		
+		Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
+		motorControl.move.moveToxpos = 126;
+		motorControl.move.moveToypos = 132;
+		motorControl.move.tolerance = 3;
+		motorControl.waitPosTime(3000);
+
+		motorControl.move.moveToxpos = 132;
+		motorControl.move.moveToypos = 132;
+		motorControl.move.moveToforwardToggle = -1;
+		motorControl.waitPosTime(3000);
+		drive_Task.suspend();
+		
+		motorControl.driveToRoller();
 	}
 }
 

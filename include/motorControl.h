@@ -280,7 +280,7 @@ class motorControl_t{
         bool spinRoller = 0;
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
-                                                    flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(11, E_MOTOR_GEARSET_06, true),
+                                                    flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(14, E_MOTOR_GEARSET_06, true),
                                                     diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}){
             PID.driveFR.p = 1;
             PID.driveFR.i = 0.01;
@@ -308,8 +308,8 @@ class motorControl_t{
         moveToInfoExternal_t move;
 
         void setpistons(void){
-            shootPiston.set_value(true);
-            intakeLiftPiston.set_value(true);
+            shootPiston.set_value(false);
+            intakeLiftPiston.set_value(false);
             boomShackalacka.set_value(false);
         }
         
@@ -479,6 +479,14 @@ class motorControl_t{
             shootPiston.set_value(true);
             delay(500);
             shootPiston.set_value(false);
+            diff1.move(127);
+            diff2.move(-127);
+            delay(3000);
+            diff1.move(0);
+            diff2.move(0);
+            shootPiston.set_value(true);
+            delay(500);
+            shootPiston.set_value(false);
         }
 
         void speedToggle(void){
@@ -507,7 +515,7 @@ class motorControl_t{
             while(spinRoller == true){
                 static int pwr = 4000;
                 if (!sensing.rollerIsGood() || fabs(diff1.get_actual_velocity()-60) < 20){
-                    /*if (fabs(diff1.get_actual_velocity()) < 60){
+                    if (fabs(diff1.get_actual_velocity()) < 60){
                         if (pwr < 12000){
                             pwr+=20;
                         }
@@ -522,9 +530,9 @@ class motorControl_t{
                         else{
                             pwr = 2000;
                         }
-                    }*/
-                    diff1.move_voltage(-pwr);
-                    diff2.move_voltage(pwr);
+                    }
+                    diff1.move_voltage(pwr);
+                    diff2.move_voltage(-pwr);
                     
                 }
                 else{
