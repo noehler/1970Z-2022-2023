@@ -132,14 +132,18 @@ class sensing_t{
             goal.zpos = 55;
 
             std::cout << "values set\n";
-
-	        inertial.reset();
-	        inertial2.reset();
-            while (inertial.is_calibrating()  || inertial2.is_calibrating()){
-                delay(40);
-                std::cout << "calibrating\n";
+            static bool inertialsSet = false;
+            if (!inertialsSet){
+                inertial.reset();
+                inertial2.reset();
+                while (inertial.is_calibrating()  || inertial2.is_calibrating()){
+                    delay(40);
+                    std::cout << "calibrating\n";
+                }
+                std::cout << "calibrated\n";
+                inertialsSet = true;
             }
-            std::cout << "calibrated\n";
+	        
 
             inertial.set_heading(0);
             inertial2.set_heading(0);

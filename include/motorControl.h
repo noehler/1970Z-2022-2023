@@ -188,7 +188,6 @@ class motorControl_t{
 
                 }
             } else {
-            
                 leftSpd = -moveI.PIDSpeedL;
                 rightSpd = -moveI.PIDSpeedR;
             }
@@ -282,9 +281,9 @@ class motorControl_t{
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
                                                     flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(14, E_MOTOR_GEARSET_06, true),
                                                     diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}){
-            PID.driveFR.p = 1;
-            PID.driveFR.i = 0.01;
-            PID.driveFR.d = 3;
+            PID.driveFR.p = 2;
+            PID.driveFR.i = 10;
+            PID.driveFR.d = 0.00;
 
             PID.driveSS.p = 3;
             PID.driveSS.i = 0.001;
@@ -456,8 +455,18 @@ class motorControl_t{
         void turretIntakeController(){
             while(!competition::is_disabled()){
                 if (!competition::is_autonomous()){
-                    shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
                     intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
+                    if (master.get_digital(E_CONTROLLER_DIGITAL_A) && master.get_digital(E_CONTROLLER_DIGITAL_X) && 
+                        master.get_digital(E_CONTROLLER_DIGITAL_B) && master.get_digital(E_CONTROLLER_DIGITAL_Y))
+                    {
+                        boomShackalacka.set_value(true);
+                        shootPiston.set_value(false);
+
+                    }
+                    else{
+                        boomShackalacka.set_value(false);
+                        shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
+                    }
                 }
                 double diffInSpd = intakeControl();
                 double baseSpd = turrControl();

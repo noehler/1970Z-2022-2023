@@ -1,6 +1,7 @@
 #include "main.h"
 #include "Autons/autonSetup.h"
 #include "pros/motors.hpp"
+#include "robotConfig.h"
 #include "sdLogging.h"
 
 /**
@@ -22,8 +23,6 @@ void initialize() {
 	mc.setpistons();
 	sensing.setUp();
 	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
-	autonType = basicAuton;
-	isRed = true;
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -57,7 +56,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	if (autonType == winPoint){
+	if (autonType == winPointClose){//close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
@@ -73,10 +72,7 @@ void autonomous() {
 		fly_Task.suspend();
 
 	}
-	else if (autonType == noAuton){
-
-	}
-	else if (autonType == basicAuton){
+	else if (autonType == winPointFar){//far win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
@@ -89,18 +85,20 @@ void autonomous() {
 		motorControl.raiseAScore();
 		
 		Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-		motorControl.move.moveToxpos = 126;
+		motorControl.move.moveToxpos = 108;
 		motorControl.move.moveToypos = 132;
-		motorControl.move.tolerance = 3;
+		motorControl.move.tolerance = 2;
 		motorControl.waitPosTime(3000);
 
-		motorControl.move.moveToxpos = 132;
-		motorControl.move.moveToypos = 132;
-		motorControl.move.moveToforwardToggle = -1;
+		motorControl.move.moveToxpos = 108;
+		motorControl.move.moveToypos = 140;
 		motorControl.waitPosTime(3000);
 		drive_Task.suspend();
 		
 		motorControl.driveToRoller();
+	}
+	else if (autonType == noAuton){
+		
 	}
 }
 
