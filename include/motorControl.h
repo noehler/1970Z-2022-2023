@@ -563,6 +563,12 @@ class motorControl_t{
             rbD.move_voltage(0);
 
         }
+
+        void explode(void){
+            
+            boomShackalacka.set_value(true);
+            
+        }
 };
 
 extern void drive_ControllerWrapper(void* mControl);

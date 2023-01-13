@@ -152,6 +152,10 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
                 lv_label_set_text(autonTypeLabel, "no auton selected"); //sets label text
                 break;
             case noAuton:
+                autonType = skillsAuton;
+                lv_label_set_text(autonTypeLabel, "skills auton selected"); //sets label text
+                break;
+            case skillsAuton:
                 autonType = winPointFar;
                 lv_label_set_text(autonTypeLabel, "winPoint far auton selected"); //sets label text
                 break;

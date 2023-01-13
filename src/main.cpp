@@ -1,5 +1,6 @@
 #include "main.h"
 #include "Autons/autonSetup.h"
+#include "motorControl.h"
 #include "pros/motors.hpp"
 #include "robotConfig.h"
 #include "sdLogging.h"
@@ -56,7 +57,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	if (autonType == winPointClose){//close win Point auton
+	if (autonType == winPointClose || autonType == skillsAuton){//close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
@@ -99,6 +100,20 @@ void autonomous() {
 	}
 	else if (autonType == noAuton){
 		
+	}
+
+	if (autonType == skillsAuton){
+		motorControl_t mc;
+		Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
+		sensing.robot.xpos = 0;
+		sensing.robot.ypos = 0;
+		mc.move.moveToxpos = 24;
+		mc.move.moveToypos = 24;
+		mc.move.tolerance = 2;
+
+		mc.waitPosTime(3000);
+
+		mc.explode();
 	}
 }
 
