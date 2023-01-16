@@ -16,7 +16,7 @@ extern double getNum(std::string Output);
 
 class Object{
     public:
-        double xpos, ypos,zpos,angle, velX, velY, velW, turvelocity, turAng, wVelocity, angAccel;
+        double xpos, ypos,zpos,odoxpos, odoypos,inertialxpos, inertialypos,angle, velX, velY, velW, turvelocity, turAng, wVelocity, angAccel;
 };
 
 extern double targetAngleOffest;
@@ -41,8 +41,10 @@ class sensing_t{
         Distance distSense;
 
         Vision turVisionL;
-        Vision turVisionR;
+        //Vision turVisionR;
         Vision discSearch;
+
+        GPS GPS_sensor;
 
         //JOHN: When calibrating make sure that the id(first arguement) is 1
         vision_signature_s_t REDGOAL = Vision::signature_from_utility(1, 4499, 8193, 6346, -1589, -429, -1009, 2.5, 0);
@@ -119,7 +121,7 @@ class sensing_t{
         sensing_t(void):leftEncoderFB({{16,'E','F'}, true}), rightEncoderFB({{16,'C', 'D'},false }),
                         encoderLR({{16,'A','B'}}), turretEncoder(12), inertial2(20), upLoaded({22,'E'}),
                         deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(18),
-                        turVisionL(13), turVisionR(14), discSearch(17), distSense(6){}
+                        turVisionL(13)/*, turVisionR(14)*/, discSearch(17), distSense(6), GPS_sensor(14){}
 
         void setUp(void){
             robot.xpos = 0;
@@ -148,6 +150,26 @@ class sensing_t{
             inertial.set_heading(0);
             inertial2.set_heading(0);
             opticalSensor.set_led_pwm(100);
+        }
+
+        void GPS_tracking(void){
+            while (1){
+                double dist = 0;
+                static pros::c::gps_status_s_t status = GPS_sensor.get_status();
+                pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
+                if (temp_status.x != status.x || temp_status.y != status.y){
+                    robot.xpos = temp_status.x;
+                    robot.ypos = temp_status.y;
+                    status = temp_status;
+                }
+            }
+        }
+
+        void inertial_tracking(void){
+            //John can you please put the inertial sensor position calculation here
+            while (1){
+                
+            }
         }
 
         void odometry(void){
@@ -215,6 +237,10 @@ class sensing_t{
             //when visOdom is working, change xpos to xposodom && same with ypos
             robot.xpos += Delta_x;
             robot.ypos += Delta_y;
+
+            robot.odoxpos += Delta_x;
+            robot.odoypos += Delta_y;
+
             robotGoal.dx = goal.xpos - robot.xpos;
             robotGoal.dy = goal.ypos - robot.ypos;
             robotGoal.dz = goal.zpos - robot.zpos;
@@ -339,8 +365,21 @@ class sensing_t{
             }
         }
 
+        //useful for setting initial position because several sensors need data to be updated
+        void setPos(double xpos, double ypos){
+            robot.xpos = xpos;
+            robot.ypos = ypos;
+            robot.odoxpos = xpos;
+            robot.odoypos = ypos;
+            robot.inertialxpos = xpos;
+            robot.inertialypos = ypos;
+        }
+
 };
 
+extern void odometry_Wrapper(void* sensing);
+extern void GPS_Wrapper(void* sensing);
+extern void inertial_tracking_Wrapper(void* sensing);
 extern void odometry_Wrapper(void* sensing);
 extern void SSOSTTT_Wrapper(void* sensing);
 extern void VT_Wrapper(void* sensing);
