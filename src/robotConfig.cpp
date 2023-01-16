@@ -18,6 +18,12 @@ void SSOSTTT_Wrapper(void* sensing){
 void VT_Wrapper(void* sensing){
     ((sensing_t*) sensing)->visionTracking();
 }
+void GPS_Wrapper(void* sensing){
+    ((sensing_t*) sensing)->GPS_tracking();
+}
+void inertial_tracking_Wrapper(void* sensing){
+    ((sensing_t*) sensing)->inertial_tracking();
+}
 
 double getNum(std::string Output){
   std::string tempDist;

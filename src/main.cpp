@@ -105,10 +105,6 @@ void autonomous() {
 	if (autonType == skillsAuton){
 		motorControl_t mc;
 		Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
-		sensing.robot.xpos = 0;
-		sensing.robot.ypos = 0;
-		mc.move.moveToxpos = 24;
-		mc.move.moveToypos = 24;
 		mc.move.tolerance = 2;
 
 		mc.waitPosTime(3000);

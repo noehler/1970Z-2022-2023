@@ -126,9 +126,15 @@ lv_res_t calibrateClick(lv_obj_t * btn){
         setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(200, 200, 200), LV_COLOR_MAKE(200, 200, 200), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), CalibrateBtn), CalibrateBtn);
         sensing.setUp();
         setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), CalibrateBtn), CalibrateBtn);
-        sensing.robot.xpos = 80;
-        sensing.robot.ypos = 128;
-        chaIntAng = 0;
+        
+        if (autonType == winPointFar){
+            sensing.setPos(80, 128);
+            chaIntAng = 0;
+        }
+        if (autonType == winPointClose || skillsAuton){
+            sensing.setPos(80, 128);
+            chaIntAng = 0;
+        }
         sensing.robot.angle = chaIntAng;
 
     }
