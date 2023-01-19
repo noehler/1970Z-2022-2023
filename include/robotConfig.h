@@ -185,7 +185,8 @@ class sensing_t{
                 double b = -3.1; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
                 double P1 = (Arc1 - Arc2);
                 double Delta_y, Delta_x;
-                double radRotation = mod(2*M_PI,(-inertial.get_heading()+chaIntAng)*M_PI/180);
+                double radRotation = mod(2*M_PI,((-inertial.get_heading()-inertial2.get_heading())/2+chaIntAng)*M_PI/180);
+                robot.angle = radRotation*180/M_PI;
                 if (radRotation == PROS_ERR_F)
                 {
                     // JLO - handle error and exit, we can't continue
@@ -226,7 +227,13 @@ class sensing_t{
             }
             odoHeading += Delta_heading;
             odoHeading = mod(2*M_PI,odoHeading);
-            robot.angle = odoHeading*180/M_PI;
+
+            #if 0
+                //this is off until I can trust odometry again
+                robot.angle = odoHeading*180/M_PI;
+            #endif
+            
+
             static float T = 0;
             static double previousT =0;
             T = float(millis())/1000 - previousT;

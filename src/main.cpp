@@ -57,6 +57,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
+
 	if (autonType == winPointClose || autonType == skillsAuton){//close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
@@ -101,16 +102,6 @@ void autonomous() {
 	else if (autonType == noAuton){
 		
 	}
-
-	if (autonType == skillsAuton){
-		motorControl_t mc;
-		Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
-		mc.move.tolerance = 2;
-
-		mc.waitPosTime(3000);
-
-		mc.explode();
-	}
 }
 
 /**
@@ -127,7 +118,6 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	sensing.goalSpeed = 300;
 	motorControl_t motorControl;
 
 	goalAngle = sensing.robot.angle + 180;

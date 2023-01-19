@@ -278,12 +278,12 @@ class motorControl_t{
     public:
         bool spinRoller = 0;
         //Constructor to assign values to the motors and PID values
-        motorControl_t(void): lfD(5, E_MOTOR_GEARSET_18, false), lbD (4, E_MOTOR_GEARSET_18, false), rfD(2, E_MOTOR_GEARSET_18, true), rbD(1, E_MOTOR_GEARSET_18, true), 
+        motorControl_t(void): lfD(5, E_MOTOR_GEARSET_06, false), lbD (4, E_MOTOR_GEARSET_06, false), rfD(2, E_MOTOR_GEARSET_06, true), rbD(1, E_MOTOR_GEARSET_06, true), 
                                                     flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(14, E_MOTOR_GEARSET_06, true),
                                                     diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}){
             PID.driveFR.p = 2;
-            PID.driveFR.i = 10;
-            PID.driveFR.d = 0.00;
+            PID.driveFR.i = .5;
+            PID.driveFR.d = 1;
 
             PID.driveSS.p = 3;
             PID.driveSS.i = 0.001;
@@ -305,6 +305,237 @@ class motorControl_t{
             PID.flyWheel.d2 = 0.115106;
         }
         moveToInfoExternal_t move;
+
+        void driveDist(double goalDist){
+            double currentheading = sensing.robot.angle*M_PI/180;
+            move.targetHeading = currentheading;
+            lfD.tare_position();
+            lbD.tare_position();
+            rfD.tare_position();
+            rbD.tare_position();
+            moveToInfoInternal_t moveI;
+            double IPIDSS = 0;
+            double previousets = 0;
+            double IPIDfw = 0;
+            double previouset = 0;
+            IPIDSS = 0;
+            previousets = 0;
+            IPIDfw = 0;
+            previouset = 0;
+            moveI.dist = 0;          // change of position
+            moveI.distR = 0;         // chagne of right postion
+            moveI.distL = 0;         // change of left position
+            moveI.PIDSS = 0;         // PID turning speed
+            moveI.PIDFW = 0;         // PID moveforward speed
+            moveI.PIDSpeedL = 0;     // PID leftside speed
+            moveI.PIDSpeedR = 0;     // PID rightside speed
+            moveI.prevPIDFW = 0;     // PID moveforward speed at t = -1
+            moveI.prevPIDSS = 0;     // PID turning speed at t = -1
+            moveI.PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
+                    moveI.PIDSSFLAT = 0; 
+            move.resetMoveTo = false;
+            double distTraveled = 0;
+            while (!move.resetMoveTo){
+
+                currentheading = sensing.robot.angle*M_PI/180;
+                /*
+                function logic:
+                find errors of position, turn to target if robot cannot move in a arc to
+                it, than move to target in a arc. tracking center of robot is at the
+                center of two tracking wheels do not recomand using this funciton with
+                SpinTo() function. perferd to have a sperate thread for calculating live
+                position, than just take out codes from line 41 to line 48
+                */
+                double dist = goalDist - distTraveled;
+                double et = dist * 10;
+
+                moveI.ets = move.targetHeading - currentheading;
+                if (moveI.ets < -M_PI) {
+                moveI.ets += 2*M_PI;
+                }
+                if (moveI.ets > M_PI) {
+                moveI.ets -= 2*M_PI;
+                }
+                
+                moveI.ets = moveI.ets*180/M_PI;
+                IPIDSS += moveI.ets;
+                IPIDfw += et;
+                if (move.moveToforwardToggle == 1){
+                    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
+                }
+                else{
+                    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
+                }
+                if (fabs(moveI.ets) < 10) {
+                    if (move.moveToforwardToggle == 1){
+                    moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
+                    }
+                    else{
+                    moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
+                    }
+                } else {
+                    moveI.PIDFW = 0;
+                }
+                previousets = moveI.ets;
+                previouset = et;
+                moveI.PIDSSFLAT = moveI.PIDSS;
+                moveI.PIDFWFLAT = moveI.PIDFW;
+                if (moveI.PIDFWFLAT >= move.speed_limit) {
+                    moveI.PIDFWFLAT = move.speed_limit;
+                }
+                if (moveI.PIDFWFLAT <= -move.speed_limit) {
+                    moveI.PIDFWFLAT = -move.speed_limit;
+                }
+                if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
+                    moveI.PIDSSFLAT = 2 * move.speed_limit;
+                }
+                if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
+                    moveI.PIDSSFLAT = -2 * move.speed_limit;
+                }
+                if (move.moveToforwardToggle) {
+                    moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
+                    moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
+
+                } else {
+                    moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
+                    moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
+                }
+
+                if (fabs(dist) < move.tolerance) {
+                    move.resetMoveTo = true;
+                    move.Stop_type = 1;
+                    if (move.Stop_type == 1) {
+                        //motor stop (hold)
+                        lfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+                        rfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+                        lbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+                        rbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+                    } else {
+                        //motor stop (coast)
+                        lfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                        rfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                        lbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                        rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+
+                    }
+                    lfD.brake();
+                    rfD.brake();
+                    lbD.brake();
+                    rbD.brake();
+                } else {
+                    lfD.move(-moveI.PIDSpeedL);
+                    rfD.move(-moveI.PIDSpeedR);
+                    lbD.move(-moveI.PIDSpeedL);
+                    rbD.move(-moveI.PIDSpeedR);
+                }
+                distTraveled += double(lfD.get_position() + lbD.get_position() + rfD.get_position() + rbD.get_position())/8 / 180 * M_PI *1.375;
+                lfD.tare_position();
+                lbD.tare_position();
+                rfD.tare_position();
+                rbD.tare_position();
+                delay(20);
+            }
+            lfD.brake();
+            rfD.brake();
+            lbD.brake();
+            rbD.brake();
+        }
+
+        void rotateTo(double angleTo){
+            double currentheading = sensing.robot.angle*M_PI/180;
+            move.targetHeading = currentheading;
+            moveToInfoInternal_t moveI;
+            double IPIDSS = 0;
+            double previousets = 0;
+            double IPIDfw = 0;
+            double previouset = 0;
+            IPIDSS = 0;
+            previousets = 0;
+            IPIDfw = 0;
+            previouset = 0;
+            moveI.dist = 0;          // change of position
+            moveI.distR = 0;         // chagne of right postion
+            moveI.distL = 0;         // change of left position
+            moveI.PIDSS = 0;         // PID turning speed
+            moveI.PIDSpeedL = 0;     // PID leftside speed
+            moveI.PIDSpeedR = 0;     // PID rightside speed
+            moveI.prevPIDSS = 0;     // PID turning speed at t = -1
+            moveI.PIDSSFLAT = 0; 
+            move.resetMoveTo = false;
+            angleTo=angleTo*M_PI/180;
+            while (!move.resetMoveTo){
+                /*
+                function logic:
+                find errors of position, turn to target if robot cannot move in a arc to
+                it, than move to target in a arc. tracking center of robot is at the
+                center of two tracking wheels do not recomand using this funciton with
+                SpinTo() function. perferd to have a sperate thread for calculating live
+                position, than just take out codes from line 41 to line 48
+                */
+
+                currentheading = sensing.robot.angle*M_PI/180;
+                moveI.ets = angleTo - currentheading;
+                if (moveI.ets < -M_PI) {
+                moveI.ets += 2*M_PI;
+                }
+                if (moveI.ets > M_PI) {
+                moveI.ets -= 2*M_PI;
+                }
+                
+                moveI.ets = moveI.ets*180/M_PI;
+                IPIDSS += moveI.ets;
+                if (move.moveToforwardToggle == 1){
+                    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
+                }
+                else{
+                    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
+                }
+                previousets = moveI.ets;
+                moveI.PIDSSFLAT = moveI.PIDSS;
+                if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
+                    moveI.PIDSSFLAT = 2 * move.speed_limit;
+                }
+                if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
+                    moveI.PIDSSFLAT = -2 * move.speed_limit;
+                }
+                
+                moveI.PIDSpeedR = - moveI.PIDSSFLAT;
+                moveI.PIDSpeedL = moveI.PIDSSFLAT;
+
+                if (0 && fabs(moveI.ets) < 5*M_PI/180) {
+                    move.resetMoveTo = true;
+                    move.Stop_type = 1;
+                    if (move.Stop_type == 1) {
+                        //motor stop (hold)
+                        lfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+                        rfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+                        lbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+                        rbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+                    } else {
+                        //motor stop (coast)
+                        lfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                        rfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                        lbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                        rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+
+                    }
+                    lfD.brake();
+                    rfD.brake();
+                    lbD.brake();
+                    rbD.brake();
+                } else {
+                    lfD.move(-moveI.PIDSpeedL);
+                    rfD.move(-moveI.PIDSpeedR);
+                    lbD.move(-moveI.PIDSpeedL);
+                    rbD.move(-moveI.PIDSpeedR);
+                }
+                delay(20);
+            }
+            lfD.brake();
+            rfD.brake();
+            lbD.brake();
+            rbD.brake();
+        }
 
         void setpistons(void){
             shootPiston.set_value(false);

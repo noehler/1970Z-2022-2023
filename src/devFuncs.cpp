@@ -1,6 +1,8 @@
 #include "main.h"
 #include "motorControl.h"
+#include "pros/misc.hpp"
 #include "pros/motors.hpp"
+#include "sdLogging.h"
 
 using namespace pros;
 
@@ -133,11 +135,11 @@ void flyTuner(Motor flyWheel1, Motor flyWheel2, int loopDelay){
     }
 }
 
-double universalTuner(void){
+double universalTunerCP(void){
     return 0;
 }
 
-void universalTuner(double goal, double &currentpos(void), PID_t PIDU, int timeToTest, int delayTiming, bool doublePID, int length, void* motor){
+void universalTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bool doublePID, int length, void* motor){
     for (int i = 0; i<length; i++){
         ((Motor*) motor)->set_brake_mode(E_MOTOR_BRAKE_BRAKE);
     }
@@ -152,7 +154,7 @@ void universalTuner(double goal, double &currentpos(void), PID_t PIDU, int timeT
         bool add[6] = {1,1,1,1,1,1};
         int adjustSwitch = 0;
         while (millis() - startTime < timeToTest){
-            double prop = currentpos() - goal;
+            double prop = universalTunerCP() - goal;
             static double prevProp = prop;
             static double integ = 0;
             double deriv = prop - prevProp;
@@ -262,41 +264,72 @@ public:
     bool resetMoveTo;
 }move;
 
-void moveToCalibrate(double &leftSpd, double &rightSpd, double &PF,  double &IF, double &DF, double &PS,  double &IS, double &DS){
+Motor lfD(5, E_MOTOR_GEARSET_06, false);
+Motor lbD(4, E_MOTOR_GEARSET_06, false);
+Motor rfD(2, E_MOTOR_GEARSET_06, true);
+Motor rbD(1, E_MOTOR_GEARSET_06, true); 
+
+void calibrateDriveTo(double goalDist){
+    PID.driveFR.p = 2;
+    PID.driveFR.i = .5;
+    PID.driveFR.d = 1;
+
+    PID.driveSS.p = .5;
+    PID.driveSS.i = 0.001;
+    PID.driveSS.d = 0.3;
+
+    logValue("FP", PID.driveFR.p, 0);
+    logValue("FI", PID.driveFR.i, 1);
+    logValue("FD", PID.driveFR.d, 2);
+    logValue("FP", PID.driveSS.p, 3);
+    logValue("FI", PID.driveSS.i, 4);
+    logValue("FD", PID.driveSS.d, 5);
+    if (usd::is_installed()){
+        outValsSDCard();
+    }
+
+    double FRPVAL = 0;
+    double bestFRPVAL = 0;
+    double SSPVAL = 0;
+    double bestSSPVAL = 0;
+    bool baseRun = 1;
     while (1){
-        while(move.resetMoveTo == false){
-            static moveToInfoInternal_t moveI;
-            
-            static double IPIDSS = 0;
-            static double previousets = 0;
-            static double IPIDfw = 0;
-            static double previouset = 0;
-            if (move.resetMoveTo) {
-                IPIDSS = 0;
-                previousets = 0;
-                IPIDfw = 0;
-                previouset = 0;
-                moveI.dist = 0;          // change of position
-                moveI.distR = 0;         // chagne of right postion
-                moveI.distL = 0;         // change of left position
-                moveI.PIDSS = 0;         // PID turning speed
-                moveI.PIDFW = 0;         // PID moveforward speed
-                moveI.PIDSpeedL = 0;     // PID leftside speed
-                moveI.PIDSpeedR = 0;     // PID rightside speed
-                moveI.prevPIDFW = 0;     // PID moveforward speed at t = -1
-                moveI.prevPIDSS = 0;     // PID turning speed at t = -1
-                moveI.PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
-                moveI.PIDSSFLAT = 0;     // variable used for keeping turning speed < 20
-                // variable for for calculating first turning.
-                move.resetMoveTo = false;
-            }
-            double currentheading = sensing.robot.angle/180*M_PI;
-            if (currentheading == PROS_ERR_F)
-            {
-                // JLO - handle error and exit, we can't continue
-                std::cout << "\n headingFudge";
-                return;
-            }
+        double startTime = millis();
+
+        double currentheading = sensing.robot.angle*M_PI/180;
+        move.targetHeading = currentheading;
+        lfD.tare_position();
+        lbD.tare_position();
+        rfD.tare_position();
+        rbD.tare_position();
+        moveToInfoInternal_t moveI;
+        double IPIDSS = 0;
+        double previousets = 0;
+        double IPIDfw = 0;
+        double previouset = 0;
+        IPIDSS = 0;
+        previousets = 0;
+        IPIDfw = 0;
+        previouset = 0;
+        moveI.dist = 0;          // change of position
+        moveI.distR = 0;         // chagne of right postion
+        moveI.distL = 0;         // change of left position
+        moveI.PIDSS = 0;         // PID turning speed
+        moveI.PIDFW = 0;         // PID moveforward speed
+        moveI.PIDSpeedL = 0;     // PID leftside speed
+        moveI.PIDSpeedR = 0;     // PID rightside speed
+        moveI.prevPIDFW = 0;     // PID moveforward speed at t = -1
+        moveI.prevPIDSS = 0;     // PID turning speed at t = -1
+        moveI.PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
+        moveI.PIDSSFLAT = 0; 
+        move.tolerance = .5;
+        move.resetMoveTo = false;
+        double distTraveled = 0;
+        logValue("S or T", 0, 10);
+
+        while (!move.resetMoveTo){
+
+            currentheading = sensing.robot.angle*M_PI/180;
             /*
             function logic:
             find errors of position, turn to target if robot cannot move in a arc to
@@ -305,21 +338,9 @@ void moveToCalibrate(double &leftSpd, double &rightSpd, double &PF,  double &IF,
             SpinTo() function. perferd to have a sperate thread for calculating live
             position, than just take out codes from line 41 to line 48
             */
-            double etx = move.moveToxpos - sensing.robot.xpos;//change of x
-            double ety = move.moveToypos - sensing.robot.ypos;//change of y
-            double dist = sqrt(pow(etx, 2) + pow(ety, 2));
+            double dist = goalDist - distTraveled;
             double et = dist * 10;
 
-            //std::cout << "\n Hi5";
-            move.targetHeading = atan(ety/etx);
-            if (etx<0){
-                move.targetHeading +=M_PI;
-            } else if(etx ==0){
-                move.targetHeading = M_PI/2*(fabs(ety)/ety);
-            }
-            if (move.moveToforwardToggle == -1){
-                move.targetHeading +=M_PI;
-            }
             moveI.ets = move.targetHeading - currentheading;
             if (moveI.ets < -M_PI) {
             moveI.ets += 2*M_PI;
@@ -332,21 +353,22 @@ void moveToCalibrate(double &leftSpd, double &rightSpd, double &PF,  double &IF,
             IPIDSS += moveI.ets;
             IPIDfw += et;
             if (move.moveToforwardToggle == 1){
-                moveI.PIDSS = PS * moveI.ets + IS * IPIDSS + DS * (moveI.ets - previousets);
+                moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
             }
             else{
-                moveI.PIDSS = PS * moveI.ets + IS * IPIDSS + DS * (moveI.ets - previousets);
+                moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
             }
             if (fabs(moveI.ets) < 10) {
                 if (move.moveToforwardToggle == 1){
-                    moveI.PIDFW = move.moveToforwardToggle * (PF * et + IF * IPIDfw + DF * (et - previouset));
+                moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
                 }
                 else{
-                    moveI.PIDFW = move.moveToforwardToggle * (PF * et + IF * IPIDfw + DF * (et - previouset));
+                moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
                 }
             } else {
                 moveI.PIDFW = 0;
             }
+            moveI.PIDFW = 50;
             previousets = moveI.ets;
             previouset = et;
             moveI.PIDSSFLAT = moveI.PIDSS;
@@ -371,19 +393,210 @@ void moveToCalibrate(double &leftSpd, double &rightSpd, double &PF,  double &IF,
                 moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
                 moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
             }
-            if (dist < move.tolerance) {
-                move.resetMoveTo = true;
-                if (move.Stop_type == 1) {
-                    //motor stop (hold)
-                    leftSpd = 0;
-                    rightSpd = 0;
-                }
+
+            if (fabs(dist) < move.tolerance) {
+                move.resetMoveTo = true;    
+                lfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                rfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                lbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                lfD.brake();
+                rfD.brake();
+                lbD.brake();
+                rbD.brake();
+                logValue("lfP", 0, 6);
+                logValue("lbP", 0, 7);
+                logValue("rfP", 0, 8);
+                logValue("rbP", 0, 9);
+
             } else {
+                lfD.move(-moveI.PIDSpeedL);
+                rfD.move(-moveI.PIDSpeedR);
+                lbD.move(-moveI.PIDSpeedL);
+                rbD.move(-moveI.PIDSpeedR);
+                logValue("lfP", lfD.get_voltage(), 6);
+                logValue("lbP", lbD.get_voltage(), 7);
+                logValue("rfP", rfD.get_voltage(), 8);
+                logValue("rbP", rbD.get_voltage(), 9);
+            }
+            distTraveled += double(lfD.get_position() + lbD.get_position() + rfD.get_position() + rbD.get_position())/8 / 180 * M_PI *1.375;
+            lfD.tare_position();
+            lbD.tare_position();
+            rfD.tare_position();
+            rbD.tare_position();
+            delay(20);
+        }
+        lfD.brake();
+        rfD.brake();
+        lbD.brake();
+        rbD.brake();
+        delay(2000);
+        while (1){
+            delay(200);
+        }
+        FRPVAL = millis() - startTime + lfD.get_position();
+        startTime = millis();
+        
+        //rotational Section
+        IPIDSS = 0;
+        previousets = 0;
+        IPIDfw = 0;
+        previouset = 0;
+        moveI.dist = 0;          // change of position
+        moveI.distR = 0;         // chagne of right postion
+        moveI.distL = 0;         // change of left position
+        moveI.PIDSS = 0;         // PID turning speed
+        moveI.PIDFW = 0;         // PID moveforward speed
+        moveI.PIDSpeedL = 0;     // PID leftside speed
+        moveI.PIDSpeedR = 0;     // PID rightside speed
+        moveI.prevPIDFW = 0;     // PID moveforward speed at t = -1
+        moveI.prevPIDSS = 0;     // PID turning speed at t = -1
+        moveI.PIDFWFLAT = 0;     // variable used for keeping move forward speed < 100
+        moveI.PIDSSFLAT = 0; 
+        move.resetMoveTo = false;
+        static double angleTo = 0;
+
+        if (angleTo == 0){
+            angleTo = M_PI/2;
+        }
+        else{
+            angleTo = 0;
+        }
+        logValue("S or T", 1, 10);
+        while (!move.resetMoveTo){
+            /*
+            function logic:
+            find errors of position, turn to target if robot cannot move in a arc to
+            it, than move to target in a arc. tracking center of robot is at the
+            center of two tracking wheels do not recomand using this funciton with
+            SpinTo() function. perferd to have a sperate thread for calculating live
+            position, than just take out codes from line 41 to line 48
+            */
+
+            currentheading = sensing.robot.angle*M_PI/180;
+            moveI.ets = angleTo - currentheading;
+            if (moveI.ets < -M_PI) {
+            moveI.ets += 2*M_PI;
+            }
+            if (moveI.ets > M_PI) {
+            moveI.ets -= 2*M_PI;
+            }
             
-                leftSpd = -moveI.PIDSpeedL;
-                rightSpd = -moveI.PIDSpeedR;
+            moveI.ets = moveI.ets*180/M_PI;
+            IPIDSS += moveI.ets;
+            if (move.moveToforwardToggle == 1){
+                moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
+            }
+            else{
+                moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
+            }
+            previousets = moveI.ets;
+            moveI.PIDSSFLAT = moveI.PIDSS;
+            if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
+                moveI.PIDSSFLAT = 2 * move.speed_limit;
+            }
+            if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
+                moveI.PIDSSFLAT = -2 * move.speed_limit;
+            }
+            
+            moveI.PIDSpeedR = - moveI.PIDSSFLAT;
+            moveI.PIDSpeedL = moveI.PIDSSFLAT;
+
+            if (fabs(angleTo) < move.tolerance) {
+                move.resetMoveTo = true;
+                move.Stop_type = 1;
+                lfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                rfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                lbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+                lfD.brake();
+                rfD.brake();
+                lbD.brake();
+                rbD.brake();
+                logValue("lfP", 0, 6);
+                logValue("lbP", 0, 7);
+                logValue("rfP", 0, 8);
+                logValue("rbP", 0, 9);
+
+            } else {
+                lfD.move(-moveI.PIDSpeedL);
+                rfD.move(-moveI.PIDSpeedR);
+                lbD.move(-moveI.PIDSpeedL);
+                rbD.move(-moveI.PIDSpeedR);
+                logValue("lfP", lfD.get_voltage(), 6);
+                logValue("lbP", lbD.get_voltage(), 7);
+                logValue("rfP", rfD.get_voltage(), 8);
+                logValue("rbP", rbD.get_voltage(), 9);
+            }
+            delay(20);
+        }
+        lfD.brake();
+        rfD.brake();
+        lbD.brake();
+        rbD.brake();
+        delay(2000);
+        currentheading = sensing.robot.angle*M_PI/180;
+        moveI.ets = angleTo - currentheading;
+        FRPVAL = millis() - startTime + moveI.ets;
+
+        
+        static int FRadjustSwitch = 0;
+        static int SSadjustSwitch = 0;
+
+        if (baseRun == 1){
+            bestFRPVAL = FRPVAL;
+            bestSSPVAL = SSPVAL;
+        }
+        else{
+            double FRdiff = (bestFRPVAL - FRPVAL) / bestFRPVAL;
+            //linear PID adjust
+            if (FRadjustSwitch == 0){
+                PID.driveFR.p *= 1.0+FRdiff;
+            }
+            else if (FRadjustSwitch == 1){
+                PID.driveFR.i *= 1.0+FRdiff;
+            }
+            else{
+                PID.driveFR.d *= 1.0+FRdiff;
+            }
+
+            if (bestFRPVAL < FRPVAL){
+                FRadjustSwitch++;
+            }
+            if (FRadjustSwitch == 3){
+                FRadjustSwitch = 0;
+            }
+            
+            
+            //rotational PID adjust
+            double SSdiff = (bestSSPVAL - SSPVAL) / bestSSPVAL;
+            //linear PID adjust
+            if (SSadjustSwitch == 0){
+                PID.driveSS.p *= 1.0+SSdiff;
+            }
+            else if (SSadjustSwitch == 1){
+                PID.driveSS.i *= 1.0+SSdiff;
+            }
+            else{
+                PID.driveSS.d *= 1.0+SSdiff;
+            }
+
+            if (bestFRPVAL < FRPVAL){
+                SSadjustSwitch++;
+            }
+            if (SSadjustSwitch == 3){
+                SSadjustSwitch = 0;
+            }
+            logValue("FP", PID.driveFR.p, 0);
+            logValue("FI", PID.driveFR.i, 1);
+            logValue("FD", PID.driveFR.d, 2);
+            logValue("FP", PID.driveSS.p, 3);
+            logValue("FI", PID.driveSS.i, 4);
+            logValue("FD", PID.driveSS.d, 5);
+            if (usd::is_installed()){
+                outValsSDCard();
             }
         }
-        
+        baseRun = 0;
     }
 }

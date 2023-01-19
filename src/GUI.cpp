@@ -17,7 +17,6 @@ lv_obj_t * autonTypeLabel;
 lv_obj_t * checklistLabel;
 lv_obj_t * icon;
 lv_obj_t *tab1;
-extern lv_obj_t * autonTypeLabel;
 lv_obj_t * colorBtn;
 lv_obj_t * turrSlider;
 lv_obj_t * posBtn;
@@ -164,6 +163,10 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
             case skillsAuton:
                 autonType = winPointFar;
                 lv_label_set_text(autonTypeLabel, "winPoint far auton selected"); //sets label text
+                break;
+            default:
+                autonType = winPointClose;
+                lv_label_set_text(autonTypeLabel, "winPoint near auton selected"); //sets label text
                 break;
         }
         if (!autonSet){
