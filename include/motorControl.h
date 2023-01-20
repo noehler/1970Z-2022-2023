@@ -518,6 +518,10 @@ class motorControl_t{
                 logValue("cHeading", sensing.robot.angle, 2);
                 logValue("LS", moveI.PIDSpeedL, 3);
                 logValue("RS", moveI.PIDSpeedR, 4);
+                logValue("templf", lfD.get_temperature(), 5);
+                logValue("templb", lbD.get_temperature(), 6);
+                logValue("temprf", rfD.get_temperature(), 7);
+                logValue("templb", rbD.get_temperature(), 8);
                 if (usd::is_installed()){
                     outValsSDCard();
                 }
@@ -541,8 +545,8 @@ class motorControl_t{
                 } else {
                     lfD.move_voltage(-moveI.PIDSpeedL*12000/127);
                     rfD.move_voltage(-moveI.PIDSpeedR*12000/127);
-                    lbD.move(-moveI.PIDSpeedL*12000/127);
-                    rbD.move(-moveI.PIDSpeedR*12000/127);
+                    lbD.move_voltage(-moveI.PIDSpeedL*12000/127);
+                    rbD.move_voltage(-moveI.PIDSpeedR*12000/127);
                 }
                 delay(20);
             }

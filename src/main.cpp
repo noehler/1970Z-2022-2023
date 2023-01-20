@@ -58,8 +58,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	skillsAutonomous();
-	if (autonType == winPointClose || autonType == skillsAuton){//close win Point auton
+	if (autonType == winPointClose){//close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
@@ -103,8 +102,8 @@ void autonomous() {
 	else if (autonType == noAuton){
 		
 	}
-	else {
-
+	else {	
+		skillsAutonomous();
 	}
 }
 
