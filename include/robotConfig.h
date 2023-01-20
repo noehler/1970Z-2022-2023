@@ -22,7 +22,6 @@ class Object{
 extern double targetAngleOffest;
 extern double chaIntAng;
 extern double goalAngle;
-
 class sensing_t{
     private:
         ADIEncoder leftEncoderFB;
@@ -165,10 +164,13 @@ class sensing_t{
             }
         }
 
+        
+
         void inertial_tracking(void){
             //John can you please put the inertial sensor position calculation here
             while (1){
-                
+                robot.inertialxpos;
+                robot.inertialypos;
             }
         }
 

@@ -286,8 +286,8 @@ class motorControl_t{
             PID.driveFR.d = 1;
 
             PID.driveSS.p = 3;
-            PID.driveSS.i = 0.001;
-            PID.driveSS.d = 0.3;
+            PID.driveSS.i = 0.02;
+            PID.driveSS.d = .25;
 
             PID.turret.p = 1.5;
             PID.turret.i = .167;
@@ -461,9 +461,9 @@ class motorControl_t{
             moveI.PIDSpeedR = 0;     // PID rightside speed
             moveI.prevPIDSS = 0;     // PID turning speed at t = -1
             moveI.PIDSSFLAT = 0; 
-            move.resetMoveTo = false;
+            bool resetMoveToSS = false;
             angleTo=angleTo*M_PI/180;
-            while (!move.resetMoveTo){
+            while (!resetMoveToSS){
                 /*
                 function logic:
                 find errors of position, turn to target if robot cannot move in a arc to
@@ -490,6 +490,10 @@ class motorControl_t{
                 else{
                     moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
                 }
+                
+                if (moveI.ets > 180){
+                    moveI.PIDSS *= -1;
+                }
                 previousets = moveI.ets;
                 moveI.PIDSSFLAT = moveI.PIDSS;
                 if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
@@ -498,12 +502,28 @@ class motorControl_t{
                 if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
                     moveI.PIDSSFLAT = -2 * move.speed_limit;
                 }
+
+                if (moveI.PIDSSFLAT > 127){
+                    moveI.PIDSSFLAT = 127;
+                }
+                if (moveI.PIDSSFLAT < -127){
+                    moveI.PIDSSFLAT = -127;
+                }
                 
                 moveI.PIDSpeedR = - moveI.PIDSSFLAT;
                 moveI.PIDSpeedL = moveI.PIDSSFLAT;
 
-                if (0 && fabs(moveI.ets) < 5*M_PI/180) {
-                    move.resetMoveTo = true;
+                logValue("angDiff", moveI.ets, 0);
+                logValue("Gang", angleTo*180/M_PI, 1);
+                logValue("cHeading", sensing.robot.angle, 2);
+                logValue("LS", moveI.PIDSpeedL, 3);
+                logValue("RS", moveI.PIDSpeedR, 4);
+                if (usd::is_installed()){
+                    outValsSDCard();
+                }
+
+                if (fabs(moveI.ets)< 1 && lfD.get_actual_velocity() < 40) {
+                    resetMoveToSS = true;
                     move.Stop_type = 1;
                     if (move.Stop_type == 1) {
                         //motor stop (hold)
@@ -517,17 +537,12 @@ class motorControl_t{
                         rfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
                         lbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
                         rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
-
                     }
-                    lfD.brake();
-                    rfD.brake();
-                    lbD.brake();
-                    rbD.brake();
                 } else {
-                    lfD.move(-moveI.PIDSpeedL);
-                    rfD.move(-moveI.PIDSpeedR);
-                    lbD.move(-moveI.PIDSpeedL);
-                    rbD.move(-moveI.PIDSpeedR);
+                    lfD.move_voltage(-moveI.PIDSpeedL*12000/127);
+                    rfD.move_voltage(-moveI.PIDSpeedR*12000/127);
+                    lbD.move(-moveI.PIDSpeedL*12000/127);
+                    rbD.move(-moveI.PIDSpeedR*12000/127);
                 }
                 delay(20);
             }
@@ -752,7 +767,7 @@ class motorControl_t{
             delay(500);
             spinRoller = true;
             int startTime = millis();
-            while(spinRoller == true){
+            while(spinRoller == true && millis() - startTime < 4000){
                 static int pwr = 4000;
                 if (!sensing.rollerIsGood() || fabs(diff1.get_actual_velocity()-60) < 20){
                     if (fabs(diff1.get_actual_velocity()) < 60){
@@ -773,7 +788,13 @@ class motorControl_t{
                     }
                     diff1.move_voltage(pwr);
                     diff2.move_voltage(-pwr);
-                    
+                    logValue("templf", lfD.get_temperature(), 0);
+                    logValue("templb", lbD.get_temperature(), 1);
+                    logValue("temprf", rfD.get_temperature(), 2);
+                    logValue("templb", rbD.get_temperature(), 3);
+                    if(usd::is_installed()){
+                        outValsSDCard();
+                    }
                 }
                 else{
                     spinRoller = false;
@@ -783,15 +804,7 @@ class motorControl_t{
             
             diff1.move_voltage(0);
             diff2.move_voltage(0);
-            lfD.move_voltage(-4000);
-            lbD.move_voltage(-4000);
-            rfD.move_voltage(-40000);
-            rbD.move_voltage(-4000);
-            delay(200);
-            lfD.move_voltage(0);
-            lbD.move_voltage(0);
-            rfD.move_voltage(0);
-            rbD.move_voltage(0);
+            driveDist(-3);
 
         }
 

@@ -39,6 +39,7 @@
 #include "devFuncs.h"
 #include "sdLogging.h"
 #include "Autons/autonSetup.h"
+#include "Autons/skillsAuton.h"
 #include "robotConfig.h"
 #include "motorControl.h"
 /**
