@@ -57,14 +57,14 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {
+void autonomous() {	
 	if (autonType == winPointClose){//close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
 		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
-		sensing.goalSpeed = 315;
+		sensing.goalSpeed = 325;
 
 		goalAngle = 0;
 
@@ -76,27 +76,23 @@ void autonomous() {
 
 	}
 	else if (autonType == winPointFar){//far win Point auton
+		chaIntAng = 90;
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
 		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
-		sensing.goalSpeed = 305;
+		sensing.goalSpeed = 335;
 		goalAngle = 0;
-
 		delay(5000);
-		motorControl.raiseAScore(2);
-		
-		Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-		motorControl.move.moveToxpos = 108;
-		motorControl.move.moveToypos = 132;
-		motorControl.move.tolerance = 2;
-		motorControl.waitPosTime(3000);
+		motorControl.raiseAScore(1);
 
-		motorControl.move.moveToxpos = 108;
-		motorControl.move.moveToypos = 140;
-		motorControl.waitPosTime(3000);
-		drive_Task.suspend();
+		motorControl.rotateTo(0);
+
+		motorControl.driveDist(-15);
+		
+		motorControl.rotateTo(80);
+		delay(1000);
 		
 		motorControl.driveToRoller();
 	}
@@ -138,7 +134,7 @@ void opcontrol() {
 	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
 	while (true) {
-		sensing.goalSpeed = 300;
+		sensing.goalSpeed = 290;
 		goalAngle = sensing.robot.angle + 180;
 		while (goalAngle > 360){
 			goalAngle -= 360;

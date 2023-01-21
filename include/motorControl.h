@@ -510,7 +510,7 @@ class motorControl_t{
                     moveI.PIDSSFLAT = -127;
                 }
                 
-                if (fabs(moveI.ets)< 10){
+                if (fabs(moveI.ets)< 15){
                     if (moveI.ets > 0){
                         moveI.PIDSSFLAT = 50;
                     }else{
@@ -533,8 +533,6 @@ class motorControl_t{
                 if (usd::is_installed()){
                     outValsSDCard();
                 }
-
-                
 
                 if (fabs(moveI.ets)< 2 && lfD.get_actual_velocity() < 40) {
                     resetMoveToSS = true;
@@ -560,6 +558,10 @@ class motorControl_t{
                 }
                 delay(20);
             }
+            lfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+            rfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+            lbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+            rbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
             lfD.brake();
             rfD.brake();
             lbD.brake();
@@ -787,24 +789,32 @@ class motorControl_t{
             while(spinRoller == true && millis() - startTime < 4000){
                 static int pwr = 4000;
                 if (!sensing.rollerIsGood() || fabs(diff1.get_actual_velocity()-60) < 20){
-                    if (fabs(diff1.get_actual_velocity()) < 60){
-                        if (pwr < 12000){
-                            pwr+=50;
+                    if (sensing.underRoller()){
+                        if (fabs(diff1.get_actual_velocity()) < 60){    
+                            if (pwr < 12000){
+                                pwr+=50;
+                            }
+                            else{
+                                pwr=12000;
+                            }
                         }
                         else{
-                            pwr=12000;
+                            if (pwr > 2000){
+                                pwr-=10;
+                            }
+                            else{
+                                pwr = 2000;
+                            }
                         }
+                        diff1.move_voltage(pwr);
+                        diff2.move_voltage(-pwr);
                     }
                     else{
-                        if (pwr > 2000){
-                            pwr-=10;
-                        }
-                        else{
-                            pwr = 2000;
-                        }
+                        diff1.move_voltage(12000);
+                        diff2.move_voltage(-12000);
                     }
-                    diff1.move_voltage(pwr);
-                    diff2.move_voltage(-pwr);
+                    
+                    
                     logValue("templf", lfD.get_temperature(), 0);
                     logValue("templb", lbD.get_temperature(), 1);
                     logValue("temprf", rfD.get_temperature(), 2);

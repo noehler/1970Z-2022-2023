@@ -8,7 +8,7 @@ void skillsAutonomous(void){
     //shoot preload discs
     Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 
-    sensing.goalSpeed = 315;
+    sensing.goalSpeed = 330;
     goalAngle = 0;
 
     delay(5000);
