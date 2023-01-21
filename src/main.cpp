@@ -58,19 +58,18 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	autonType = skillsAuton;
-	skillsAutonomous();
 	if (autonType == winPointClose){//close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
 		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
-		sensing.goalSpeed = 305;
+		sensing.goalSpeed = 315;
+
 		goalAngle = 0;
 
 		delay(5000);
-		motorControl.raiseAScore(2);
+		motorControl.raiseAScore(1);
 
 		motorControl.driveToRoller();
 		fly_Task.suspend();

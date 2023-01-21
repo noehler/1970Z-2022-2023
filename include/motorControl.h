@@ -258,7 +258,7 @@ class motorControl_t{
                 IPIDang = 0;
             }
 
-            return 0;
+            return PIDVelocity;
         }
 
         double intakeControl(void){
@@ -285,9 +285,9 @@ class motorControl_t{
             PID.driveFR.i = .5;
             PID.driveFR.d = 1;
 
-            PID.driveSS.p = .9;
-            PID.driveSS.i = .0175;
-            PID.driveSS.d = 1.1;
+            PID.driveSS.p = 2;
+            PID.driveSS.i = .022;
+            PID.driveSS.d = 1.15;
 
             PID.turret.p = 1.5;
             PID.turret.i = .167;
@@ -510,6 +510,14 @@ class motorControl_t{
                     moveI.PIDSSFLAT = -127;
                 }
                 
+                if (fabs(moveI.ets)< 10){
+                    if (moveI.ets > 0){
+                        moveI.PIDSSFLAT = 50;
+                    }else{
+                        moveI.PIDSSFLAT = -50;
+                    }
+                }
+
                 moveI.PIDSpeedR = - moveI.PIDSSFLAT;
                 moveI.PIDSpeedL = moveI.PIDSSFLAT;
 
@@ -525,6 +533,8 @@ class motorControl_t{
                 if (usd::is_installed()){
                     outValsSDCard();
                 }
+
+                
 
                 if (fabs(moveI.ets)< 2 && lfD.get_actual_velocity() < 40) {
                     resetMoveToSS = true;
@@ -779,7 +789,7 @@ class motorControl_t{
                 if (!sensing.rollerIsGood() || fabs(diff1.get_actual_velocity()-60) < 20){
                     if (fabs(diff1.get_actual_velocity()) < 60){
                         if (pwr < 12000){
-                            pwr+=20;
+                            pwr+=50;
                         }
                         else{
                             pwr=12000;

@@ -5,21 +5,10 @@
 
 void skillsAutonomous(void){
     motorControl_t mc;
-    chaIntAng = 180;
-    while (1){
-        mc.rotateTo(90);
-        delay(300);
-        mc.rotateTo(0);
-        delay(300);
-        mc.rotateTo(-90);
-        delay(300);
-        mc.rotateTo(180);
-        delay(300);
-    }
     //shoot preload discs
     Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 
-    sensing.goalSpeed = 310;
+    sensing.goalSpeed = 315;
     goalAngle = 0;
 
     delay(5000);
@@ -46,7 +35,7 @@ void skillsAutonomous(void){
     //moving to opposite corner
     mc.rotateTo(135);
     delay(300);
-    mc.driveDist(-85);
+    mc.driveDist(-87);
     delay(300);
 
     //third Roller
