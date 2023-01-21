@@ -58,6 +58,8 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
+	autonType = skillsAuton;
+	skillsAutonomous();
 	if (autonType == winPointClose){//close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
@@ -68,7 +70,7 @@ void autonomous() {
 		goalAngle = 0;
 
 		delay(5000);
-		motorControl.raiseAScore();
+		motorControl.raiseAScore(2);
 
 		motorControl.driveToRoller();
 		fly_Task.suspend();
@@ -84,7 +86,7 @@ void autonomous() {
 		goalAngle = 0;
 
 		delay(5000);
-		motorControl.raiseAScore();
+		motorControl.raiseAScore(2);
 		
 		Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
 		motorControl.move.moveToxpos = 108;

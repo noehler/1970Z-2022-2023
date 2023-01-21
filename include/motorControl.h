@@ -285,9 +285,9 @@ class motorControl_t{
             PID.driveFR.i = .5;
             PID.driveFR.d = 1;
 
-            PID.driveSS.p = 3;
-            PID.driveSS.i = 0.02;
-            PID.driveSS.d = .25;
+            PID.driveSS.p = .9;
+            PID.driveSS.i = .0175;
+            PID.driveSS.d = 1.1;
 
             PID.turret.p = 1.5;
             PID.turret.i = .167;
@@ -526,7 +526,7 @@ class motorControl_t{
                     outValsSDCard();
                 }
 
-                if (fabs(moveI.ets)< 1 && lfD.get_actual_velocity() < 40) {
+                if (fabs(moveI.ets)< 2 && lfD.get_actual_velocity() < 40) {
                     resetMoveToSS = true;
                     move.Stop_type = 1;
                     if (move.Stop_type == 1) {
@@ -734,18 +734,21 @@ class motorControl_t{
             std::cout << "ended turret\n";
         }
         
-        void raiseAScore(void){
+        void raiseAScore(int times){
             shootPiston.set_value(true);
             delay(500);
             shootPiston.set_value(false);
-            diff1.move(127);
-            diff2.move(-127);
-            delay(3000);
-            diff1.move(0);
-            diff2.move(0);
-            shootPiston.set_value(true);
-            delay(500);
-            shootPiston.set_value(false);
+            if (times > 1){
+                diff1.move(127);
+                diff2.move(-127);
+                delay(3000);
+                diff1.move(0);
+                diff2.move(0);
+                shootPiston.set_value(true);
+                delay(500);
+                shootPiston.set_value(false);
+            }
+            
         }
 
         void speedToggle(void){
