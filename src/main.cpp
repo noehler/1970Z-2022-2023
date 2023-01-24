@@ -91,7 +91,7 @@ void autonomous() {
 
 		motorControl.driveDist(-15);
 		
-		motorControl.rotateTo(80);
+		motorControl.rotateTo(70);
 		delay(1000);
 		
 		motorControl.driveToRoller();
@@ -134,7 +134,7 @@ void opcontrol() {
 	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
 	while (true) {
-		sensing.goalSpeed = 290;
+		sensing.goalSpeed = 260;
 		goalAngle = sensing.robot.angle + 180;
 		while (goalAngle > 360){
 			goalAngle -= 360;
