@@ -25,6 +25,7 @@ void initialize() {
 	mc.setpistons();
 	sensing.setUp();
 	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
+	Task gps_Task(GPS_Wrapper, (void*) &sensing, "GPS Task");
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -118,31 +119,13 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+	chaIntAng = 180;
 	motorControl_t motorControl;
-
-	goalAngle = sensing.robot.angle + 180;
-	while (goalAngle > 360){
-		goalAngle -= 360;
-	}
-	while (goalAngle < 0){
-		goalAngle += 360;
-	}
-	
-	//Task vision_Task(VT_Wrapper, (void*) &motorControl, "My vision Controller Task");
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
-
-	while (true) {
-		sensing.goalSpeed = 260;
-		goalAngle = sensing.robot.angle + 180;
-		while (goalAngle > 360){
-			goalAngle -= 360;
-		}
-		while (goalAngle < 0){
-			goalAngle += 360;
-		}
-		//motorControl.speedToggle();		
-		pros::delay(20);
+	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
+	while (1){
+		delay(20);
 	}
 }

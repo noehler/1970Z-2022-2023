@@ -217,7 +217,9 @@ class motorControl_t{
             }*/
             
             angdiff = goalAngle - sensing.robot.turAng;
-
+            logValue("AD", angdiff, 3);
+            logValue("Tang", sensing.robot.turAng, 4);
+            
             if (angdiff > 180){
                 angdiff -= 360;
             }
@@ -633,6 +635,9 @@ class motorControl_t{
                 rbD.move_voltage(rightSpd);
                 delay(optimalDelay);
 
+                logValue("xpos", sensing.robot.xpos, 0);
+                logValue("ypos", sensing.robot.ypos, 1);
+                logValue("goalAngle", goalAngle, 2);
 
                 if (c::usd_is_installed()){
                     outValsSDCard();
