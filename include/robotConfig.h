@@ -144,7 +144,7 @@ class sensing_t{
 
             goal.xpos = 124;
             goal.ypos = 20;
-            goal.zpos = 55;
+            goal.zpos = 30;
 
             std::cout << "values set\n";
             static bool inertialsSet = false;

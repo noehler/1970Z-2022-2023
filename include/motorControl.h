@@ -195,11 +195,10 @@ class motorControl_t{
 
         double angularVelocityCalc(void){
             //return master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + 250;
-            return sensing.goalSpeed;
+            return sensing.goalSpeed*1.56;
         }
 
         bool recoilPrevent;
-        int intakeRunning;
         double turrControl(void){
             static double PIDPosition = 0;
             static double PIDVelocity = 0;
@@ -265,10 +264,10 @@ class motorControl_t{
 
         double intakeControl(void){
             int baseSPD;
-            if (master.get_digital(E_CONTROLLER_DIGITAL_R2)){
+            if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1){
                 baseSPD = 127;
             }
-            else if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
+            else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) || intakeRunning == 2){
                 baseSPD = -127;
             }
             else{
@@ -278,6 +277,7 @@ class motorControl_t{
             return baseSPD;
         }
     public:
+        int intakeRunning;
         bool spinRoller = 0;
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_06, false), lbD (4, E_MOTOR_GEARSET_06, false), rfD(2, E_MOTOR_GEARSET_06, true), rbD(1, E_MOTOR_GEARSET_06, true), 

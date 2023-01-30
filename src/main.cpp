@@ -59,6 +59,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {	
+	skillsAutonomous();
 	if (autonType == winPointClose){//close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
@@ -119,6 +120,7 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+
 	chaIntAng = 180;
 	motorControl_t motorControl;
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
