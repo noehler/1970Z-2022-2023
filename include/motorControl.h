@@ -280,7 +280,7 @@ class motorControl_t{
         int intakeRunning;
         bool spinRoller = 0;
         //Constructor to assign values to the motors and PID values
-        motorControl_t(void): lfD(5, E_MOTOR_GEARSET_06, false), lbD (4, E_MOTOR_GEARSET_06, false), rfD(2, E_MOTOR_GEARSET_06, true), rbD(1, E_MOTOR_GEARSET_06, true), 
+        motorControl_t(void): lfD(5, E_MOTOR_GEARSET_06, false), lbD (4, E_MOTOR_GEARSET_06, false), rfD(2, E_MOTOR_GEARSET_06, false), rbD(1, E_MOTOR_GEARSET_06, false), 
                                                     flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(14, E_MOTOR_GEARSET_06, true),
                                                     diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}){
             PID.driveFR.p = 2;
@@ -308,7 +308,12 @@ class motorControl_t{
         }
         moveToInfoExternal_t move;
 
-        void driveDist(double goalDist){
+        void driveDist(double goalDist, int P = -100, int I = -100, int D = -100){
+            if (P != -100){
+               PID.driveFR.p =  P;
+               PID.driveFR.i =  I;
+               PID.driveFR.d =  D;
+            }
             double currentheading = sensing.robot.angle*M_PI/180;
             move.targetHeading = currentheading;
             lfD.tare_position();
@@ -443,7 +448,12 @@ class motorControl_t{
             rbD.brake();
         }
 
-        void rotateTo(double angleTo){
+        void rotateTo(double angleTo, int P = -100, int I = -100, int D = -100){
+            if (P != -100){
+               PID.driveSS.p =  P;
+               PID.driveSS.i =  I;
+               PID.driveSS.d =  D;
+            }
             double currentheading = sensing.robot.angle*M_PI/180;
             move.targetHeading = currentheading;
             moveToInfoInternal_t moveI;
