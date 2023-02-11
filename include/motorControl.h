@@ -284,7 +284,7 @@ class motorControl_t{
         //Constructor to assign values to the motors and PID values
         motorControl_t(void): lfD(5, E_MOTOR_GEARSET_06, true), lbD (4, E_MOTOR_GEARSET_06, false), rfD(2, E_MOTOR_GEARSET_06, false), rbD(1, E_MOTOR_GEARSET_06, true), 
                                                     flyWheel1(13, E_MOTOR_GEARSET_06, false), flyWheel2(17, E_MOTOR_GEARSET_06, true),
-                                                    turretMotor(6, E_MOTOR_GEARSET_06, true), intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shoot3({{22,'A'}}), shoot1({{22,'B'}}), ejectPiston({{22,'C'}}){
+                                                    turretMotor(6, E_MOTOR_GEARSET_06, true), intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'B'}}), shoot3({{22,'A'}}), shoot1({{22,'C'}}), ejectPiston({{22,'D'}}){
             PID.driveFR.p = 2;
             PID.driveFR.i = .5;
             PID.driveFR.d = 1;
@@ -293,9 +293,9 @@ class motorControl_t{
             PID.driveSS.i = .022;
             PID.driveSS.d = 1.15;
 
-            PID.turret.p = .3;
-            PID.turret.i = .001;
-            PID.turret.d = .02;
+            PID.turret.p = 0.1;
+            PID.turret.i = .00001;
+            PID.turret.d = 0.4;
 
             PID.turret.p2 = 0.5;
             PID.turret.i2 = 0.0015;
@@ -721,8 +721,8 @@ class motorControl_t{
                     }
                     else{
                         boomShackalacka.set_value(false);
-                        shoot1.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_B));
-                        shoot3.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
+                        shoot1.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
+                        shoot3.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1));
                         ejectPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_X));
                     }
                 }

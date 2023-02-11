@@ -137,7 +137,7 @@ void opcontrol() {
 		if (autoAim == false){
 			sensing.SSOSTTT_bool = false;
 			goalAngle = sensing.robot.angle+180;
-			sensing.goalSpeed = 195;
+			sensing.goalSpeed = 180;
 			started = false;
 		}
 		else{
