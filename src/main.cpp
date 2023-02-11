@@ -66,7 +66,7 @@ void autonomous() {
 
 		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
-		sensing.goalSpeed = 325;
+		sensing.goalSpeed = 200;
 
 		goalAngle = 0;
 
@@ -84,7 +84,7 @@ void autonomous() {
 
 		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 
-		sensing.goalSpeed = 335;
+		sensing.goalSpeed = 200;
 		goalAngle = 0;
 		delay(5000);
 		motorControl.raiseAScore(1);
@@ -127,7 +127,31 @@ void opcontrol() {
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
+	
 	while (1){
+		static bool started = false;
+		static bool autoAim = false;
+		if (master.get_digital_new_press(DIGITAL_Y)){
+			autoAim = !autoAim;
+		}
+		if (autoAim == false){
+			sensing.SSOSTTT_bool = false;
+			goalAngle = sensing.robot.angle+180;
+			sensing.goalSpeed = 195;
+			started = false;
+		}
+		else{
+			if (started == false){
+				started = true;
+			}
+		}
+		
+		logValue("x", sensing.robot.xpos, 0);
+		logValue("y", sensing.robot.ypos, 1);
+		logValue("GoalAngle", goalAngle, 2);
+		logValue("CurrentAngle", sensing.robot.turAng, 3);
+		//logValue("autoAim", autoAim, 4);
+		outValsSDCard();
 		delay(20);
 	}
 }

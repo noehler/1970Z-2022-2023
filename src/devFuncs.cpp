@@ -136,7 +136,7 @@ void flyTuner(Motor flyWheel1, Motor flyWheel2, int loopDelay){
 }
 
 double universalTunerCP(void){
-    return 0;
+    return sensing.robot.turAng;
 }
 
 void universalTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bool doublePID, int length, void* motor){

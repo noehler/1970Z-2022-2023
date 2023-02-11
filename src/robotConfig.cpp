@@ -15,9 +15,6 @@ void SSOSTTT_Wrapper(void* sensing){
     ((sensing_t*) sensing)->SSOSTTT();
 }
 
-void VT_Wrapper(void* sensing){
-    ((sensing_t*) sensing)->visionTracking();
-}
 void GPS_Wrapper(void* sensing){
     ((sensing_t*) sensing)->GPS_tracking();
 }

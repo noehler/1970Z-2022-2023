@@ -40,8 +40,6 @@ class sensing_t{
         Optical opticalSensor;
         Distance distSense;
 
-        Vision turVisionL;
-        //Vision turVisionR;
         Vision discSearch;
 
         GPS GPS_sensor;
@@ -131,10 +129,10 @@ class sensing_t{
         Object goal;
         double goalSpeed = 0;
         
-        sensing_t(void):leftEncoderFB({{16,'E','F'}, true}), rightEncoderFB({{16,'C', 'D'},false }),
-                        encoderLR({{16,'A','B'}}), turretEncoder(12), inertial2(20), upLoaded({22,'E'}),
+        sensing_t(void):leftEncoderFB({{9,'E','F'}, true}), rightEncoderFB({{9,'C', 'D'},true }),
+                        encoderLR({{9,'A','B'}, true}), turretEncoder(8), inertial2(7), upLoaded({22,'E'}),
                         deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(18),
-                        turVisionL(14)/*, turVisionR(14)*/, discSearch(17), distSense(6), GPS_sensor(13){}
+                        discSearch(3), distSense(20), GPS_sensor(12){}
 
         void setUp(void){
             robot.xpos = 0;
@@ -151,7 +149,11 @@ class sensing_t{
             if (!inertialsSet){
                 inertial.reset();
                 inertial2.reset();
+                int startTime = 0;
                 while (inertial.is_calibrating()  || inertial2.is_calibrating()){
+                    if (millis() - startTime > 3000 && master.get_digital(pros::E_CONTROLLER_DIGITAL_B)){
+                        inertialsSet = true;
+                    }
                     delay(40);
                     std::cout << "calibrating\n";
                 }
@@ -159,7 +161,7 @@ class sensing_t{
                 inertialsSet = true;
             }
 
-            GPS_sensor.set_offset(-.1143, 0);
+            GPS_sensor.set_offset(0, 0.1143);
 
             inertial.set_heading(0);
             inertial2.set_heading(0);
@@ -186,7 +188,6 @@ class sensing_t{
         }
 
         void odometry(void){
-            
             while (1){
                 static double odoHeading = 0;
                 static double odomposx = 0;
@@ -198,14 +199,22 @@ class sensing_t{
                 double b = -3.1; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
                 double P1 = (Arc1 - Arc2);
                 double Delta_y, Delta_x;
-                double radRotation = mod(2*M_PI,((-inertial.get_rotation()-inertial2.get_rotation())/2+chaIntAng)*M_PI/180);
-                robot.angle = radRotation*180/M_PI;
-                if (radRotation == PROS_ERR_F)
+                double i1 = inertial.get_rotation();
+                double i2 = inertial2.get_rotation();
+                double radRotation;
+                if (i1 == PROS_ERR_F)
                 {
-                    // JLO - handle error and exit, we can't continue
-                    std::cout<<"chassis inertia malfunction";
-                    return;
+                    radRotation = mod(2*M_PI,((-i2)+chaIntAng)*M_PI/180);
                 }
+                else if (i2 == PROS_ERR_F)
+                {
+                    radRotation = mod(2*M_PI,((-i1)+chaIntAng)*M_PI/180);
+                }
+                else{
+                    radRotation = mod(2*M_PI,((-i1-i2)/2+chaIntAng)*M_PI/180);
+                }
+                robot.angle = radRotation*180/M_PI;
+                
 
                 double angle_error = odoHeading - radRotation;
                 if (angle_error > M_PI){
@@ -264,7 +273,7 @@ class sensing_t{
             robotGoal.dx = goal.xpos - robot.xpos;
             robotGoal.dy = goal.ypos - robot.ypos;
             robotGoal.dz = goal.zpos - robot.zpos;
-            robot.turAng = 360-double(turretEncoder.get_angle())/100 + robot.angle;
+            robot.turAng = double(turretEncoder.get_angle())/100 + robot.angle;
             while (robot.turAng > 360){
                 robot.turAng -= 360;
             }
@@ -277,12 +286,14 @@ class sensing_t{
             }
         }
 
+        bool SSOSTTT_bool = true;
         void SSOSTTT(void){//singSameOldSongTimeTurretTwister       //(itterative Turret Angle calculation)
+            SSOSTTT_bool = true;
             float g = 386.08858267717;
             double a = -pow(g,2)*.25;
             targetAngleOffest = 0;
             chaIntAng = 0;
-            while(!competition::is_disabled()){
+            while(!competition::is_disabled() && SSOSTTT_bool == true){
                 //define quartic equation terms  
                 double c = pow(robot.velX, 2) + pow(robot.velY, 2) - robotGoal.dz * g;
                 double d = -2 * robotGoal.dx * robot.velX - 2 * robotGoal.dy * robot.velY;
@@ -327,39 +338,14 @@ class sensing_t{
                 double turOfCenterOffset = 0; // offcenter offset, not tested yet
                 //outputting calculated values
                 goalAngle = turretPosChoice(-Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset);
+                while (goalAngle > 180){
+                    goalAngle -= 360;
+                }
+                while (goalAngle < -180){
+                    goalAngle += 360;
+                }
                 goalSpeed = V_disk;
                 robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2));
-                delay(optimalDelay);
-            }
-        }
-
-        void visionTracking(void){
-            turVisionL.set_signature(0, &REDGOAL);
-            turVisionL.set_signature(1, &BLUEGOAL);
-
-            while(1){
-                if (turVisionL.get_object_count() > 0){
-                    vision_object_s_t LOBJ;
-                    if (isRed){
-                        LOBJ = turVisionL.get_by_sig(0, 0);
-                    }
-                    else{
-                        LOBJ = turVisionL.get_by_sig(0, 1);
-                    }
-                    if (LOBJ.width > 20){
-                        lv_obj_align(posBtn, NULL, LV_ALIGN_CENTER, LOBJ.x_middle_coord-158, LOBJ.y_middle_coord - 106);
-                        if (fabs(goalAngle - robot.turAng) < 3){
-                            goalAngle = turretPosChoice(robot.turAng + double(LOBJ.x_middle_coord-158)/5.1);
-                        }
-                    }
-                    else{
-                        goalAngle = turretPosChoice(goalAngle);
-                    } 
-                }
-                else{
-                    goalAngle = turretPosChoice(goalAngle);
-                }
-
                 delay(optimalDelay);
             }
         }
@@ -402,7 +388,6 @@ extern void GPS_Wrapper(void* sensing);
 extern void inertial_tracking_Wrapper(void* sensing);
 extern void odometry_Wrapper(void* sensing);
 extern void SSOSTTT_Wrapper(void* sensing);
-extern void VT_Wrapper(void* sensing);
 extern sensing_t sensing;
 
 

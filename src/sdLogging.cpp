@@ -57,7 +57,7 @@ void outValsSDCard(void){
         sprintf(buffer, "/usd/logs/vals_%d.csv", fileNum);
         FILE *usd_file_write = fopen(buffer, "a");
         if (!headerMade){
-            for (int i = 0; i < 40; i++){
+            for (int i = 0; i < 20; i++){
                 if (outVals[i] != 420.69){
                     fprintf(usd_file_write,"%s", outNames[i]);
                 }
@@ -71,12 +71,14 @@ void outValsSDCard(void){
             fprintf(usd_file_write,"\n");
             headerMade = true;
         }
-        for (int i = 0; i < 40; i++){
+        for (int i = 0; i < 20; i++){
             if (outVals[i] != 420.69){
                 fprintf(usd_file_write,"%f", outVals[i]);
-                char buffer[20];
-                sprintf(buffer, "%s: %.4f", outNames[i], outVals[i]);
-                lv_label_set_text(outLabels[i], buffer);
+                if (i < 20){
+                    char buffer[20];
+                    sprintf(buffer, "%s: %.4f", outNames[i], outVals[i]);
+                    lv_label_set_text(outLabels[i], buffer);
+                }
             }
             if (outVals[i+1] != 420.69){
                 fprintf(usd_file_write,",");
@@ -89,7 +91,7 @@ void outValsSDCard(void){
         fclose(usd_file_write);
     }
     else{
-        for (int i = 0; i < 20; i++){
+        for (int i = 0; i < 40; i++){
             if (outVals[i] != 420.69){
                 char buffer[20];
                 sprintf(buffer, "%s: %.4f", outNames[i], outVals[i]);

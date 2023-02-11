@@ -18,11 +18,12 @@ class motorControl_t{
         Motor rbD; 
         Motor flyWheel1;
         Motor flyWheel2;
-        Motor diff1;
-        Motor diff2;
+        Motor turretMotor;
+        Motor intakeMotor;
         ADIDigitalOut boomShackalacka;
-        ADIDigitalOut shootPiston;
-        ADIDigitalOut intakeLiftPiston;
+        ADIDigitalOut shoot3;
+        ADIDigitalOut shoot1;
+        ADIDigitalOut ejectPiston;
         int optimalDelay = 20;
 
         class PID_t{
@@ -216,8 +217,9 @@ class motorControl_t{
             }*/
             
             angdiff = goalAngle - sensing.robot.turAng;
-            logValue("AD", angdiff, 3);
-            logValue("Tang", sensing.robot.turAng, 4);
+            logValue("ad", angdiff, 4);
+		    logValue("GoalAngleAt AD", goalAngle, 5);
+
             
             if (angdiff > 180){
                 angdiff -= 360;
@@ -280,9 +282,9 @@ class motorControl_t{
         int intakeRunning;
         bool spinRoller = 0;
         //Constructor to assign values to the motors and PID values
-        motorControl_t(void): lfD(5, E_MOTOR_GEARSET_06, false), lbD (4, E_MOTOR_GEARSET_06, false), rfD(2, E_MOTOR_GEARSET_06, false), rbD(1, E_MOTOR_GEARSET_06, false), 
-                                                    flyWheel1(15, E_MOTOR_GEARSET_06, false), flyWheel2(14, E_MOTOR_GEARSET_06, true),
-                                                    diff1(9, E_MOTOR_GEARSET_06, true), diff2(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shootPiston({{22,'A'}}), intakeLiftPiston({{22,'B'}}){
+        motorControl_t(void): lfD(5, E_MOTOR_GEARSET_06, true), lbD (4, E_MOTOR_GEARSET_06, false), rfD(2, E_MOTOR_GEARSET_06, false), rbD(1, E_MOTOR_GEARSET_06, true), 
+                                                    flyWheel1(13, E_MOTOR_GEARSET_06, false), flyWheel2(17, E_MOTOR_GEARSET_06, true),
+                                                    turretMotor(6, E_MOTOR_GEARSET_06, true), intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22,'D'}}), shoot3({{22,'A'}}), shoot1({{22,'B'}}), ejectPiston({{22,'C'}}){
             PID.driveFR.p = 2;
             PID.driveFR.i = .5;
             PID.driveFR.d = 1;
@@ -291,9 +293,9 @@ class motorControl_t{
             PID.driveSS.i = .022;
             PID.driveSS.d = 1.15;
 
-            PID.turret.p = 1.5;
-            PID.turret.i = .167;
-            PID.turret.d = -.66492;
+            PID.turret.p = .3;
+            PID.turret.i = .001;
+            PID.turret.d = .02;
 
             PID.turret.p2 = 0.5;
             PID.turret.i2 = 0.0015;
@@ -533,19 +535,6 @@ class motorControl_t{
                 moveI.PIDSpeedR = - moveI.PIDSSFLAT;
                 moveI.PIDSpeedL = moveI.PIDSSFLAT;
 
-                logValue("angDiff", moveI.ets, 0);
-                logValue("Gang", angleTo*180/M_PI, 1);
-                logValue("cHeading", sensing.robot.angle, 2);
-                logValue("LS", moveI.PIDSpeedL, 3);
-                logValue("RS", moveI.PIDSpeedR, 4);
-                logValue("templf", lfD.get_temperature(), 5);
-                logValue("templb", lbD.get_temperature(), 6);
-                logValue("temprf", rfD.get_temperature(), 7);
-                logValue("templb", rbD.get_temperature(), 8);
-                if (usd::is_installed()){
-                    outValsSDCard();
-                }
-
                 if (fabs(moveI.ets)< 2 && lfD.get_actual_velocity() < 40) {
                     resetMoveToSS = true;
                     move.Stop_type = 1;
@@ -581,8 +570,9 @@ class motorControl_t{
         }
 
         void setpistons(void){
-            shootPiston.set_value(false);
-            intakeLiftPiston.set_value(false);
+            shoot3.set_value(false);
+            shoot1.set_value(false);
+            ejectPiston.set_value(false);
             boomShackalacka.set_value(false);
         }
         
@@ -620,9 +610,6 @@ class motorControl_t{
                 rfD.move(rightSpd);
                 rbD.move(rightSpd);
 
-                if (c::usd_is_installed()){
-                    outValsSDCard();
-                }
 
                 delay(optimalDelay);
             }
@@ -644,14 +631,6 @@ class motorControl_t{
                 rfD.move_voltage(rightSpd);
                 rbD.move_voltage(rightSpd);
                 delay(optimalDelay);
-
-                logValue("xpos", sensing.robot.xpos, 0);
-                logValue("ypos", sensing.robot.ypos, 1);
-                logValue("goalAngle", goalAngle, 2);
-
-                if (c::usd_is_installed()){
-                    outValsSDCard();
-                }
             }
             std::cout << "ended drive\n";
         }
@@ -732,29 +711,25 @@ class motorControl_t{
         void turretIntakeController(){
             while(!competition::is_disabled()){
                 if (!competition::is_autonomous()){
-                    intakeLiftPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
+                    ejectPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
                     if (master.get_digital(E_CONTROLLER_DIGITAL_A) && master.get_digital(E_CONTROLLER_DIGITAL_X) && 
                         master.get_digital(E_CONTROLLER_DIGITAL_B) && master.get_digital(E_CONTROLLER_DIGITAL_Y))
                     {
                         boomShackalacka.set_value(true);
-                        shootPiston.set_value(false);
+                        shoot3.set_value(false);
 
                     }
                     else{
                         boomShackalacka.set_value(false);
-                        shootPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
+                        shoot1.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_B));
+                        shoot3.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_A));
+                        ejectPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_X));
                     }
                 }
-                double diffInSpd = intakeControl();
-                double baseSpd = turrControl();
-                if (baseSpd == 127){
-                    baseSpd -= fabs(diffInSpd);
-                }
-                else if (baseSpd == -127){
-                    baseSpd += fabs(diffInSpd);
-                }
-                diff1.move(diffInSpd + baseSpd);
-                diff2.move(-diffInSpd + baseSpd);
+                double intakeSpd = intakeControl();
+                double turrSpd = turrControl();
+                turretMotor.move(turrSpd);
+                intakeMotor.move(intakeSpd);
 
                 delay(optimalDelay);
             }
@@ -762,18 +737,16 @@ class motorControl_t{
         }
         
         void raiseAScore(int times){
-            shootPiston.set_value(true);
+            shoot3.set_value(true);
             delay(500);
-            shootPiston.set_value(false);
+            shoot3.set_value(false);
             if (times > 1){
-                diff1.move(127);
-                diff2.move(-127);
+                intakeMotor.move(-127);
                 delay(3000);
-                diff1.move(0);
-                diff2.move(0);
-                shootPiston.set_value(true);
+                intakeMotor.move(0);
+                shoot3.set_value(true);
                 delay(500);
-                shootPiston.set_value(false);
+                shoot3.set_value(false);
             }
             
         }
@@ -803,9 +776,9 @@ class motorControl_t{
             int startTime = millis();
             while(spinRoller == true && millis() - startTime < 4000){
                 static int pwr = 4000;
-                if (!sensing.rollerIsGood() || fabs(diff1.get_actual_velocity()-60) < 20){
+                if (!sensing.rollerIsGood() || fabs(intakeMotor.get_actual_velocity()-60) < 20){
                     if (sensing.underRoller()){
-                        if (fabs(diff1.get_actual_velocity()) < 60){    
+                        if (fabs(intakeMotor.get_actual_velocity()) < 60){    
                             if (pwr < 12000){
                                 pwr+=50;
                             }
@@ -821,22 +794,12 @@ class motorControl_t{
                                 pwr = 2000;
                             }
                         }
-                        diff1.move_voltage(pwr);
-                        diff2.move_voltage(-pwr);
+                        intakeMotor.move_voltage(pwr);
                     }
                     else{
-                        diff1.move_voltage(12000);
-                        diff2.move_voltage(-12000);
+                        intakeMotor.move_voltage(12000);
                     }
                     
-                    
-                    logValue("templf", lfD.get_temperature(), 0);
-                    logValue("templb", lbD.get_temperature(), 1);
-                    logValue("temprf", rfD.get_temperature(), 2);
-                    logValue("templb", rbD.get_temperature(), 3);
-                    if(usd::is_installed()){
-                        outValsSDCard();
-                    }
                 }
                 else{
                     spinRoller = false;
@@ -844,8 +807,7 @@ class motorControl_t{
 			    delay(20);
             }
             
-            diff1.move_voltage(0);
-            diff2.move_voltage(0);
+            intakeMotor.move_voltage(0);
             driveDist(-3);
 
         }
