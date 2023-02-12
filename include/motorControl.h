@@ -771,6 +771,11 @@ class motorControl_t{
             lbD.move_voltage(4000);
             rfD.move_voltage(4000);
             rbD.move_voltage(4000);
+            
+            intakeMotor.move_voltage(12000);
+            delay(500);
+            intakeMotor.move_voltage(000);
+            /*
             delay(500);
             spinRoller = true;
             int startTime = millis();
@@ -805,10 +810,9 @@ class motorControl_t{
                     spinRoller = false;
                 }
 			    delay(20);
+                
             }
-            
-            intakeMotor.move_voltage(0);
-            driveDist(-3);
+            */
 
         }
 

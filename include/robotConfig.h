@@ -131,7 +131,7 @@ class sensing_t{
         
         sensing_t(void):leftEncoderFB({{9,'E','F'}, true}), rightEncoderFB({{9,'C', 'D'},true }),
                         encoderLR({{9,'A','B'}, true}), turretEncoder(8), inertial2(7), upLoaded({22,'E'}),
-                        deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(18),
+                        deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(14),
                         discSearch(3), distSense(20), GPS_sensor(12){}
 
         void setUp(void){
