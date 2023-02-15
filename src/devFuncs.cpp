@@ -238,6 +238,105 @@ void universalTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bo
     }
 }
 
+void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bool doublePID, int length, void* motor){
+    for (int i = 0; i<length; i++){
+        ((Motor*) motor)->set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+    }
+
+    while (1){
+        static bool baseRan = false;
+        static double blVal = 0;
+        double pVal = 0;
+        int startTime = millis();
+        bool prevGood[6] = {1,1,1, 1,1,1};
+        double moveDir[6][2] = {{1,1},{1,1},{1,1}, {1,1},{1,1},{1,1}};
+        bool add[6] = {1,1,1,1,1,1};
+        int adjustSwitch = 0;
+        while (millis() - startTime < timeToTest){
+            double prop = universalTunerCP() - goal;
+            static double prevProp = prop;
+            static double integ = 0;
+            double deriv = prop - prevProp;
+
+            double RUNPOWER = PIDU.p * prop + PIDU.i * integ + PIDU.d * deriv;
+
+            integ += prop;
+            prevProp = prop;
+
+            if (RUNPOWER > 127){
+                RUNPOWER = 127;
+            }
+            if (RUNPOWER < -127){
+                RUNPOWER = -127;
+            }
+            for (int i = 0; i<length; i++){
+                ((Motor*) motor)->move(RUNPOWER);
+            }
+
+            pVal = fabs(RUNPOWER) + fabs(deriv);
+            delay(delayTiming);
+        }
+        if (baseRan){
+            double diff = (blVal - pVal) / blVal;
+            if (blVal > pVal){
+                std::cout << "\n\nPVal: " << pVal << "\nBVal: " << blVal << "Success!\nAdjusting ";
+                if (adjustSwitch == 0){
+                    std::cout << "P\n";
+                }
+                else if (adjustSwitch == 1){
+                    std::cout << "I\n";
+                }
+                else{
+                    std::cout << "D\n";
+                }
+                std::cout << "P: " << PIDU.p << "\nI: " << PIDU.d << "\nD: " << PIDU.d << "\n";
+                prevGood[adjustSwitch] = 1;
+                blVal = pVal;
+            }
+            else{
+                std::cout << "\n\nPVal: " << pVal << "\nBVal: " << blVal << "Fail\nAdjusting ";
+                if (adjustSwitch == 0){
+                    std::cout << "P\n";
+                }
+                else if (adjustSwitch == 1){
+                    std::cout << "I\n";
+                }
+                else{
+                    std::cout << "D\n";
+                }
+                std::cout << "P: " << PIDU.p << "\nI: " << PIDU.i << "\nD: " << PIDU.d << "\n";
+                if (!prevGood[adjustSwitch]){
+                    moveDir[adjustSwitch][add[adjustSwitch]] *=.5;
+                    add[adjustSwitch] = !add[adjustSwitch];
+                }
+                prevGood[adjustSwitch] = 0;
+            }
+
+            if (adjustSwitch == 0){
+                PIDU.p *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+            }
+            else if (adjustSwitch == 1){
+                PIDU.i *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+            }
+            else{
+                PIDU.d *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+            }
+
+            if (blVal < pVal){
+                adjustSwitch++;
+            }
+            if (adjustSwitch == 3){
+                adjustSwitch = 0;
+            }
+
+        }
+        else{
+            blVal = pVal;
+            baseRan = true;
+        }
+    }
+}
+
 class moveToInfoInternal_t{
 public:
     double moveToxpos, moveToypos, targetHeading, ets, speed_limit=100, errtheta=5;

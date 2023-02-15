@@ -217,9 +217,7 @@ class motorControl_t{
             }*/
             
             angdiff = goalAngle - sensing.robot.turAng;
-            logValue("ad", angdiff, 4);
-		    logValue("GoalAngleAt AD", goalAngle, 5);
-
+            logValue("angleDiff", angdiff,11);
             
             if (angdiff > 180){
                 angdiff -= 360;
@@ -239,6 +237,10 @@ class motorControl_t{
             if (!competition::is_disabled()){
                 IPIDang += angdiff;
                 PIDPosition =(PID.turret.p*angdiff + PID.turret.i*IPIDang + PID.turret.d*(angdiff - previousangdiff));
+                logValue("turrProp", PID.turret.p*angdiff,12);
+                logValue("turretInteg", PID.turret.i*IPIDang,13);
+                logValue("turretDeriv", PID.turret.d*(angdiff - previousangdiff),14);
+
                 previousangdiff = angdiff;
                 double veldiff = gyroScalar*T*(sensing.robot.angAccel)-sensing.robot.wVelocity*chassisScalar + turPredicScalar*sensing.robot.turvelocity+PIDPosition*PIDscalar + 0.025*recoilPrevent*sensing.goalSpeed;
                 IPIDvel += veldiff;
@@ -654,6 +656,12 @@ class motorControl_t{
                 static double prevFWdiffSPD = angularVelocityCalc();
                 static double prevFWdiffSPD2 = angularVelocityCalc();
 
+                logValue("FWDiff1", diffFlyWheelW, 15);
+                logValue("FWDiff2", diffFlyWheelW2, 16);
+                logValue("flyWheelW1", flyWheelW, 17);
+                logValue("flyWheelW2", flyWheelW2, 18);
+                logValue("goalSpeed", angularVelocityCalc(), 19);
+
                 IPIDang += diffFlyWheelW;
                 IPIDang2 += diffFlyWheelW2;
                 double prop = PID.flyWheel.p*diffFlyWheelW;
@@ -726,8 +734,13 @@ class motorControl_t{
                         ejectPiston.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_X));
                     }
                 }
+                
                 double intakeSpd = intakeControl();
                 double turrSpd = turrControl();
+                
+                logValue("turretPower", turrSpd, 20);
+                logValue("intake Power", intakeSpd, 21  );
+
                 turretMotor.move(turrSpd);
                 intakeMotor.move(intakeSpd);
 

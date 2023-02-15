@@ -120,7 +120,7 @@ void autonomous() {
  */
 void opcontrol() {
 
-	chaIntAng = 180;
+	chaIntAng = 0;
 	motorControl_t motorControl;
 	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
@@ -144,13 +144,21 @@ void opcontrol() {
 				started = true;
 			}
 		}
+		logValue("time", millis(),0);
+
+		logValue("xTot", sensing.robot.xpos, 1);
+		logValue("yTot", sensing.robot.ypos, 2);
 		
-		logValue("x", sensing.robot.xpos, 0);
-		logValue("y", sensing.robot.ypos, 1);
-		logValue("GoalAngle", goalAngle, 2);
-		logValue("CurrentAngle", sensing.robot.turAng, 3);
-		//logValue("autoAim", autoAim, 4);
+		logValue("xGPS", sensing.robot.GPSxpos, 3);
+		logValue("yGPS", sensing.robot.GPSypos, 4);
+
+		logValue("xOdom", sensing.robot.odoxpos, 5);
+		logValue("yOdom", sensing.robot.odoypos, 6);
+
+		logValue("robot angle", sensing.robot.angle, 7);
+		logValue("turret angle", sensing.robot.turAng, 8);
 		outValsSDCard();
+
 		delay(20);
 	}
 }

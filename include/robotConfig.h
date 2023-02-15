@@ -17,7 +17,7 @@ extern double getNum(std::string Output);
 
 class Object{
     public:
-        double xpos, ypos,zpos,odoxpos, odoypos,inertialxpos, inertialypos,angle, velX, velY, velW, turvelocity, turAng, wVelocity, angAccel;
+        double xpos, ypos,zpos,odoxpos,GPSxpos, GPSypos, odoypos,inertialxpos, inertialypos,angle, velX, velY, velW, turvelocity, turAng, wVelocity, angAccel;
 };
 
 extern double targetAngleOffest;
@@ -171,8 +171,15 @@ class sensing_t{
         void GPS_tracking(void){
             while (1){
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
-                robot.ypos = 72 - double(temp_status.x)*39.37;
-                robot.xpos = 72 + double(temp_status.y)*39.37;
+                if (GPS_sensor.get_error() < 0.012){
+                    robot.xpos = 72 - double(temp_status.x)*39.37;
+                    robot.ypos = 72 - double(temp_status.y)*39.37;
+                }
+                robot.GPSxpos = 72 - double(temp_status.x)*39.37;
+                robot.GPSypos = 72 - double(temp_status.y)*39.37;
+                
+                logValue("GPSRange", GPS_sensor.get_error(),22);
+                logValue("GPSheading", GPS_sensor.get_heading(),23);
                 delay(20);
             }
         }
@@ -195,12 +202,14 @@ class sensing_t{
                 double Arc1 =distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
                 double Arc2 =distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positiv
                 double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
-                double a = 4.865; //distance between two tracking wheels
-                double b = -3.1; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+                double a = 4.969; //distance between two tracking wheels
+                double b = 3.5625; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
                 double P1 = (Arc1 - Arc2);
                 double Delta_y, Delta_x;
                 double i1 = inertial.get_rotation();
                 double i2 = inertial2.get_rotation();
+                logValue("imu1", i1, 9);
+                logValue("imu2", i2, 10);
                 double radRotation;
                 if (i1 == PROS_ERR_F)
                 {
@@ -214,7 +223,6 @@ class sensing_t{
                     radRotation = mod(2*M_PI,((-i1-i2)/2+chaIntAng)*M_PI/180);
                 }
                 robot.angle = radRotation*180/M_PI;
-                
 
                 double angle_error = odoHeading - radRotation;
                 if (angle_error > M_PI){
@@ -222,8 +230,9 @@ class sensing_t{
                 } else if (angle_error<-M_PI){
                     angle_error +=2*M_PI;
                 }
+                logValue("odoHeading", odoHeading, 23);
                 // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-                if (fabs(angle_error) >= 0.1){
+                if (fabs(angle_error) >= .1){
                     odoHeading = radRotation;
                     std::cout << "\n chassis heading error"<<angle_error;
                 }
