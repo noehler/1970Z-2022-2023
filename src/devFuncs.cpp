@@ -251,6 +251,8 @@ void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, void*
         bool prevGood[6] = {1,1,1, 1,1,1};
         bool add[6] = {1,1,1,1,1,1};
         int adjustSwitch = 0;
+        double integ = 0;
+        double prevProp = 0;
         while (millis() - startTime < timeToTest){
             double prop = goalAngle - sensing.robot.turAng;
             if (prop > 180){
@@ -262,8 +264,6 @@ void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, void*
             if (fabs(prop) < 2){
                 prop = 0;
             }
-            static double prevProp = prop;
-            static double integ = 0;
             double deriv = prop - prevProp;
 
             double RUNPOWER = 1.5*(PIDU.p * prop + PIDU.i * integ + PIDU.d * deriv);
@@ -271,8 +271,8 @@ void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, void*
             logValue("turrProp", 1.5*PIDU.p * prop,0);
             logValue("turretInteg", 1.5*PIDU.i * integ,1);
             logValue("turretDeriv", 1.5*PIDU.d * deriv,2);
-            logValue("total", 1.5*RUNPOWER * deriv,2);
-
+            logValue("total", 1.5*RUNPOWER * deriv,3);
+            outValsSDCard();
 
             integ += prop;
             prevProp = prop;
@@ -283,7 +283,8 @@ void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, void*
             if (RUNPOWER < -127){
                 RUNPOWER = -127;
             }
-            ((Motor*) motor)->move(RUNPOWER);
+            RUNPOWER*=12000.0/127;
+            ((Motor*) motor)->move_voltage(RUNPOWER);
 
             pVal = fabs(RUNPOWER) + fabs(deriv);
             delay(delayTiming);
