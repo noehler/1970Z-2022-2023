@@ -119,6 +119,12 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+	Motor turretMotor(6, E_MOTOR_GEARSET_06, true);
+	PID_t PID;
+	PID.p = 0.1;
+	PID.i = .00001;
+	PID.d = 0.4;
+	turretTuner(135, PID, 10000, 300, (void*) &turretMotor);
 
 	chaIntAng = 0;
 	motorControl_t motorControl;

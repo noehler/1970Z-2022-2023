@@ -5,11 +5,6 @@
 #include "sdLogging.h"
 
 using namespace pros;
-
-class PID_t{
-    public:
-        double p, i, d, p2, i2,d2;
-};
 class tunedSystems_t{
     public:
         PID_t driveFR, driveSS, turret, flyWheel;
@@ -238,27 +233,46 @@ void universalTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bo
     }
 }
 
-void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bool doublePID, int length, void* motor){
-    for (int i = 0; i<length; i++){
-        ((Motor*) motor)->set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-    }
+//goal is the value that is used to calculate the difference between where it is and where it wants to be
+//the PID is the inital values for where PID is set up and where the values are stored
+//timeToTest is the time allotted where values are collected and the motor is controlled
+//delay timing is the time allotted between tests to allow the motor to come to a full stop
+// the motor is the output motor to be selected.
+void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, void* motor){
+    ((Motor*) motor)->set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+    double initGoal = goal;
 
     while (1){
+        
         static bool baseRan = false;
         static double blVal = 0;
         double pVal = 0;
         int startTime = millis();
         bool prevGood[6] = {1,1,1, 1,1,1};
-        double moveDir[6][2] = {{1,1},{1,1},{1,1}, {1,1},{1,1},{1,1}};
         bool add[6] = {1,1,1,1,1,1};
         int adjustSwitch = 0;
         while (millis() - startTime < timeToTest){
-            double prop = universalTunerCP() - goal;
+            double prop = goalAngle - sensing.robot.turAng;
+            if (prop > 180){
+                prop -= 360;
+            }
+            else if( prop < -180){
+                prop += 360;
+            }
+            if (fabs(prop) < 2){
+                prop = 0;
+            }
             static double prevProp = prop;
             static double integ = 0;
             double deriv = prop - prevProp;
 
-            double RUNPOWER = PIDU.p * prop + PIDU.i * integ + PIDU.d * deriv;
+            double RUNPOWER = 1.5*(PIDU.p * prop + PIDU.i * integ + PIDU.d * deriv);
+            
+            logValue("turrProp", 1.5*PIDU.p * prop,0);
+            logValue("turretInteg", 1.5*PIDU.i * integ,1);
+            logValue("turretDeriv", 1.5*PIDU.d * deriv,2);
+            logValue("total", 1.5*RUNPOWER * deriv,2);
+
 
             integ += prop;
             prevProp = prop;
@@ -269,9 +283,7 @@ void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bool 
             if (RUNPOWER < -127){
                 RUNPOWER = -127;
             }
-            for (int i = 0; i<length; i++){
-                ((Motor*) motor)->move(RUNPOWER);
-            }
+            ((Motor*) motor)->move(RUNPOWER);
 
             pVal = fabs(RUNPOWER) + fabs(deriv);
             delay(delayTiming);
@@ -306,20 +318,19 @@ void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bool 
                 }
                 std::cout << "P: " << PIDU.p << "\nI: " << PIDU.i << "\nD: " << PIDU.d << "\n";
                 if (!prevGood[adjustSwitch]){
-                    moveDir[adjustSwitch][add[adjustSwitch]] *=.5;
                     add[adjustSwitch] = !add[adjustSwitch];
                 }
                 prevGood[adjustSwitch] = 0;
             }
 
             if (adjustSwitch == 0){
-                PIDU.p *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+                PIDU.p *= 1.0+diff;
             }
             else if (adjustSwitch == 1){
-                PIDU.i *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+                PIDU.i *= 1.0+diff;
             }
             else{
-                PIDU.d *= 1.0+diff*moveDir[adjustSwitch][add[adjustSwitch]];
+                PIDU.d *= 1.0+diff;
             }
 
             if (blVal < pVal){
@@ -333,6 +344,12 @@ void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bool 
         else{
             blVal = pVal;
             baseRan = true;
+        }
+        if (initGoal != goal){
+            goal = initGoal;
+        }
+        else{
+            goal = 0;
         }
     }
 }
