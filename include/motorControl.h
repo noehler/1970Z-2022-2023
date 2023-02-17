@@ -232,16 +232,16 @@ private:
     }
 
     bool recoilPrevent;
-    double turrControl(void)
+     double turrControl(void)
     {
         static double PIDPosition = 0;
         static double PIDVelocity = 0;
         static double T = 0;
         static double previousT = 0;
-        static double PIDscalar = 1;
-        static double gyroScalar = 21.5833333;
-        static double chassisScalar = 21.5833333;
-        static double turPredicScalar = 21.5833333;
+        static double PIDscalar = 0;
+        static double gyroScalar = 0;
+        static double chassisScalar = 10;
+        static double turPredicScalar = 0;
         double angdiff;
         T = float(millis()) / 1000 - previousT;
         previousT += T;
@@ -276,14 +276,18 @@ private:
             logValue("turrProp", PID.turret.p * angdiff, 12);
             logValue("turretInteg", PID.turret.i * IPIDang, 13);
             logValue("turretDeriv", PID.turret.d * (angdiff - previousangdiff), 14);
-
+            std::cout << "\nvelW:" << sensing.robot.velW;
+            //std::cout << "\nturvelocity         :" << sensing.robot.turvelocity;
+            //std::cout << "\ntposition correction:" << PIDPosition;
+            //std::cout << "\nangAccel         :" << sensing.robot.angAccel;
+            std::cout << "\n";
             previousangdiff = angdiff;
             double veldiff = gyroScalar * T * (sensing.robot.angAccel) 
-            - sensing.robot.wVelocity * chassisScalar 
+            - sensing.robot.velW * chassisScalar 
             + turPredicScalar * sensing.robot.turvelocity 
             + PIDPosition * PIDscalar;
             IPIDvel += veldiff;
-            PIDVelocity = (1 * veldiff + 0.00001 * IPIDvel + 0.0001 * (veldiff - previousveldiff));
+            PIDVelocity = (1 * veldiff + 1 * IPIDvel + 0.0001 * (veldiff - previousveldiff));
             previousveldiff = veldiff;
             if (fabs(angdiff) == 0 || PIDPosition == 0)
             {

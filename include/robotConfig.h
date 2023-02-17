@@ -17,7 +17,13 @@ extern double getNum(std::string Output);
 
 class Object{
     public:
-        double xpos, ypos,zpos,odoxpos,GPSxpos, GPSypos, odoypos,inertialxpos, inertialypos,angle, velX, velY, velW, turvelocity, turAng, wVelocity, angAccel;
+        double xpos, ypos,zpos,
+        odoxpos, odoypos, 
+        GPSxpos, GPSypos, 
+        inertialxpos, inertialypos,
+        angle, turAng,
+        velX, velY, velW, turvelocity ,odovelW , imuvelw, 
+        angAccel, xAccel, yAccel;
 };
 
 extern double targetAngleOffest;
@@ -208,6 +214,7 @@ class sensing_t{
                 double Delta_y, Delta_x;
                 double i1 = inertial.get_rotation();
                 double i2 = inertial2.get_rotation();
+                static double prev_velw =0;
                 logValue("imu1", i1, 9);
                 logValue("imu2", i2, 10);
                 double radRotation;
@@ -232,9 +239,9 @@ class sensing_t{
                 }
                 logValue("odoHeading", odoHeading, 23);
                 // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
-                if (fabs(angle_error) >= .1){
+                if (fabs(angle_error) >= .05){
                     odoHeading = radRotation;
-                    std::cout << "\n chassis heading error"<<angle_error;
+                    //std::cout << "\n chassis heading error"<<angle_error;
                 }
 
                 double Delta_heading = P1 / a; // change of heading
@@ -259,26 +266,31 @@ class sensing_t{
             odoHeading += Delta_heading;
             odoHeading = mod(2*M_PI,odoHeading);
 
-            #if 0
+            
                 //this is off until I can trust odometry again
-                robot.angle = odoHeading*180/M_PI;
-            #endif
+                //robot.angle = odoHeading*180/M_PI;
+            
             
 
             static float T = 0;
             static double previousT =0;
             T = float(millis())/1000 - previousT;
             previousT+=T;
-            robot.velW = Delta_heading/T;
+            robot.odovelW = Delta_heading*180/(M_PI*T);
+            robot.imuvelw = 0.5*(-inertial2.get_gyro_rate().z+inertial.get_gyro_rate().z);
+            robot.velW = 0.5*(robot.imuvelw+robot.odovelW);
             robot.velX = Delta_x/T;
             robot.velY = Delta_y/T;
             //when visOdom is working, change xpos to xposodom && same with ypos
             robot.xpos += Delta_x;
             robot.ypos += Delta_y;
-
+            robot.angAccel = (robot.velW-prev_velw)/T;
+            prev_velw = robot.velW;
             robot.odoxpos += Delta_x;
             robot.odoypos += Delta_y;
-
+            //std::cout << "\n" << -inertial2.get_gyro_rate().z/180*M_PI;
+            //std::cout << "\n" << inertial.get_gyro_rate().z/180*M_PI;
+        
             robotGoal.dx = goal.xpos - robot.xpos;
             robotGoal.dy = goal.ypos - robot.ypos;
             robotGoal.dz = goal.zpos - robot.zpos;
@@ -291,7 +303,7 @@ class sensing_t{
             }
 
             //delay to allow for other tasks to run
-            delay(5);
+            delay(10);
             }
         }
 
