@@ -19,21 +19,22 @@
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
-void initialize() {
+void initialize()
+{
 	setupScreen();
 	motorControl_t mc;
 	mc.setpistons();
 	sensing.setUp();
-	Task odometry_Task(odometry_Wrapper, (void*) &sensing, "Odometry Task");
-	Task gps_Task(GPS_Wrapper, (void*) &sensing, "GPS Task");
+	Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
+	Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
  */
-void disabled() {
-
+void disabled()
+{
 }
 
 /**
@@ -58,24 +59,26 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {	
-	autonType = winPointClose;
-	if (autonType == winPointClose){//close win Point auton
+void autonomous()
+{
+
+	if (autonType == winPointClose)
+	{ // close win Point auton
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
-		Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
+		Task fly_Task(fly_ControllerWrapper, (void *)&motorControl, "My Flywheel Speed Controller Task");
 
 		sensing.goalSpeed = 179;
 		delay(3000);
-		//goalAngle = 0;
+		// goalAngle = 0;
 		motorControl.raiseAScore(1);
-		
-		motorControl.driveToRoller();
-		//fly_Task.suspend();
 
+		motorControl.driveToRoller();
+		// fly_Task.suspend();
 	}
-	else if (autonType == winPointFar){//far win Point auton
+	else if (autonType == winPointFar)
+	{	// far win Point auton
 		/*chaIntAng = 90;
 		motorControl_t motorControl;
 		motorControl.setpistons();
@@ -90,18 +93,19 @@ void autonomous() {
 		motorControl.rotateTo(0);
 
 		motorControl.driveDist(-15);
-		
+
 		motorControl.rotateTo(70);
 		delay(1000);
-		
+
 		motorControl.driveToRoller();
 		*/
 	}
-	else if (autonType == noAuton){
-		
+	else if (autonType == noAuton)
+	{
 	}
-	else {	
-		//skillsAutonomous();
+	else
+	{
+		// skillsAutonomous();
 	}
 }
 
@@ -118,43 +122,42 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
-void opcontrol() {
-	Motor turretMotor(6, E_MOTOR_GEARSET_06, true);
-	PID_t PID;
-	PID.p = 0.1;
-	PID.i = .00001;
-	PID.d = 0.4;
-	turretTuner(135, PID, 10000, 300, (void*) &turretMotor);
-
+void opcontrol()
+{
 	chaIntAng = 0;
 	motorControl_t motorControl;
-	Task drive_Task(drive_ControllerWrapper, (void*) &motorControl, "My Driver Controller Task");
-	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &motorControl, "Intake and Turret Controller Task");
-	Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
-	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
+	Task drive_Task(drive_ControllerWrapper, (void *)&motorControl, "My Driver Controller Task");
+	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl, "Intake and Turret Controller Task");
+	Task fly_Task(fly_ControllerWrapper, (void *)&motorControl, "My Flywheel Speed Controller Task");
+	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
 	
-	while (1){
+	while (1)
+	{
 		static bool started = false;
 		static bool autoAim = false;
-		if (master.get_digital_new_press(DIGITAL_Y)){
+		if (master.get_digital_new_press(DIGITAL_Y))
+		{
 			autoAim = !autoAim;
 		}
-		if (autoAim == false){
+		if (autoAim == false)
+		{
 			sensing.SSOSTTT_bool = false;
-			goalAngle = sensing.robot.angle+180;
+			goalAngle = sensing.robot.angle + 180;
 			sensing.goalSpeed = 180;
 			started = false;
 		}
-		else{
-			if (started == false){
+		else
+		{
+			if (started == false)
+			{
 				started = true;
 			}
 		}
-		logValue("time", millis(),0);
+		logValue("time", millis(), 0);
 
 		logValue("xTot", sensing.robot.xpos, 1);
 		logValue("yTot", sensing.robot.ypos, 2);
-		
+
 		logValue("xGPS", sensing.robot.GPSxpos, 3);
 		logValue("yGPS", sensing.robot.GPSypos, 4);
 

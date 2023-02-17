@@ -139,7 +139,7 @@ class sensing_t{
             robot.ypos = 0;
             robot.zpos = 8.5;
             chaIntAng = 0;
-
+            
             goal.xpos = 124;
             goal.ypos = 20;
             goal.zpos = 30;

@@ -7,5 +7,4 @@ class PID_t{
     public:
         double p, i, d, p2, i2,d2;
 };
-extern void turretTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, void* motor);
 #endif
