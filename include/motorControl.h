@@ -238,10 +238,10 @@ private:
         static double PIDVelocity = 0;
         static double T = 0;
         static double previousT = 0;
-        static double PIDscalar = 0;
-        static double gyroScalar = 0;
-        static double chassisScalar = 10;
-        static double turPredicScalar = 0;
+        static double PIDscalar = 1;
+        static double gyroScalar = 0.1;
+        static double chassisScalar = 0.35;//0.3;
+        static double turPredicScalar = 1;
         double angdiff;
         T = float(millis()) / 1000 - previousT;
         previousT += T;
@@ -270,26 +270,38 @@ private:
         static double IPIDang = 0;
         static double previousangdiff = 0;
         if (!competition::is_disabled())
-        {
+        {   
             IPIDang += angdiff;
             PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDang + PID.turret.d * (angdiff - previousangdiff));
+            if (sensing.robot.turretLock &&fabs(angdiff) < 5){
+                gyroScalar = 0;
+                chassisScalar = 0;//0.3;
+                turPredicScalar =0;
+                
+            }
+            else{
+            gyroScalar = 0.1;
+            chassisScalar = 0.35;//0.3;
+            turPredicScalar = 1;
+            }
             logValue("turrProp", PID.turret.p * angdiff, 12);
             logValue("turretInteg", PID.turret.i * IPIDang, 13);
             logValue("turretDeriv", PID.turret.d * (angdiff - previousangdiff), 14);
-            std::cout << "\nvelW:" << sensing.robot.velW;
-            //std::cout << "\nturvelocity         :" << sensing.robot.turvelocity;
+            //std::cout << "\n" << goalAngle;
+            //std::cout << "\n x:" << sensing.robot.GPSxpos<<" y:"<<sensing.robot.GPSypos << " turretctl:" <<sensing.robot.turvelocity;
             //std::cout << "\ntposition correction:" << PIDPosition;
             //std::cout << "\nangAccel         :" << sensing.robot.angAccel;
-            std::cout << "\n";
+
             previousangdiff = angdiff;
             double veldiff = gyroScalar * T * (sensing.robot.angAccel) 
             - sensing.robot.velW * chassisScalar 
             + turPredicScalar * sensing.robot.turvelocity 
-            + PIDPosition * PIDscalar;
+            + PIDPosition * PIDscalar -sensing.robot.turvelw ;
             IPIDvel += veldiff;
-            PIDVelocity = (1 * veldiff + 1 * IPIDvel + 0.0001 * (veldiff - previousveldiff));
+            //std::cout<<"\n"<<veldiff;
+            PIDVelocity = (1 * veldiff + 0.01 * IPIDvel + 0.1 * (veldiff - previousveldiff));
             previousveldiff = veldiff;
-            if (fabs(angdiff) == 0 || PIDPosition == 0)
+            if (fabs(angdiff) < 1 && PIDPosition == 0 && fabs(veldiff)<1)
             {
                 IPIDang = 0;
             }
@@ -352,11 +364,11 @@ public:
         PID.driveSS.d = 1.15;
 
         PID.turret.p = 0.8;
-        PID.turret.i = .04;
+        PID.turret.i = .02;
         PID.turret.d = 27;
 
-        PID.turret.p2 = 1;
-        PID.turret.i2 = 0.000;
+        PID.turret.p2 = 0.7;
+        PID.turret.i2 = 0.0002;
         PID.turret.d2 = 0;
 
         PID.flyWheel.p = 1.82587;

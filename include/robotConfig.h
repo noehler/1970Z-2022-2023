@@ -21,9 +21,10 @@ class Object{
         odoxpos, odoypos, 
         GPSxpos, GPSypos, 
         inertialxpos, inertialypos,
-        angle, turAng,
+        angle, turAng, turvelw,
         velX, velY, velW, turvelocity ,odovelW , imuvelw, 
         angAccel, xAccel, yAccel;
+        bool turretLock;
 };
 
 extern double targetAngleOffest;
@@ -106,7 +107,7 @@ class sensing_t{
             }
             while(angBetween < 0){
                 angBetween+=360;
-            }
+            }return angBetween;
             double failOut = robot.angle;
             while (failOut > 360){
                 failOut -= 360;
@@ -144,10 +145,10 @@ class sensing_t{
             robot.xpos = 0;
             robot.ypos = 0;
             robot.zpos = 8.5;
-            chaIntAng = 0;
+            chaIntAng = 270;
             
-            goal.xpos = 124;
-            goal.ypos = 20;
+            goal.xpos = 20;
+            goal.ypos = 124;
             goal.zpos = 30;
 
             std::cout << "values set\n";
@@ -175,15 +176,18 @@ class sensing_t{
         }
 
         void GPS_tracking(void){
+            //note: rotation of Gps strip can vary depend on field if true, going to verify on 2/28
             while (1){
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
-                if (GPS_sensor.get_error() < 0.012){
-                    robot.xpos = 72 - double(temp_status.x)*39.37;
-                    robot.ypos = 72 - double(temp_status.y)*39.37;
-                }
-                robot.GPSxpos = 72 - double(temp_status.x)*39.37;
-                robot.GPSypos = 72 - double(temp_status.y)*39.37;
                 
+                if (GPS_sensor.get_error() < 0.012){
+                    robot.ypos = 72 - double(temp_status.x)*39.37;
+                    robot.xpos = 72 + double(temp_status.y)*39.37;
+                }
+                // if red: x direction is correct y is flipped, if blue: x direction is flipped, y is correct.
+                //std::cout<<"\nx:"<<double(temp_status.x)*39.37<<"y"<<double(temp_status.y)*39.37;
+                robot.GPSypos = 72 - double(temp_status.x)*39.37;
+                robot.GPSxpos = 72 + double(temp_status.y)*39.37;
                 logValue("GPSRange", GPS_sensor.get_error(),22);
                 logValue("GPSheading", GPS_sensor.get_heading(),23);
                 delay(20);
@@ -230,7 +234,7 @@ class sensing_t{
                     radRotation = mod(2*M_PI,((-i1-i2)/2+chaIntAng)*M_PI/180);
                 }
                 robot.angle = radRotation*180/M_PI;
-
+                //std::cout<<"\nradRotation"<<radRotation*180/M_PI<<"Initang"<<chaIntAng;
                 double angle_error = odoHeading - radRotation;
                 if (angle_error > M_PI){
                     angle_error -=2*M_PI;
@@ -290,11 +294,12 @@ class sensing_t{
             robot.odoypos += Delta_y;
             //std::cout << "\n" << -inertial2.get_gyro_rate().z/180*M_PI;
             //std::cout << "\n" << inertial.get_gyro_rate().z/180*M_PI;
-        
             robotGoal.dx = goal.xpos - robot.xpos;
             robotGoal.dy = goal.ypos - robot.ypos;
             robotGoal.dz = goal.zpos - robot.zpos;
-            robot.turAng = double(turretEncoder.get_angle())/100 + robot.angle;
+            robot.turvelw = double(turretEncoder.get_velocity())/100;
+            //note:division of one hundred is due to the angle is messured in centideg
+            robot.turAng = double(turretEncoder.get_angle())/100 +180+ robot.angle;
             while (robot.turAng > 360){
                 robot.turAng -= 360;
             }
@@ -313,7 +318,7 @@ class sensing_t{
             float g = 386.08858267717;
             double a = -pow(g,2)*.25;
             targetAngleOffest = 0;
-            chaIntAng = 0;
+            //chaIntAng = 0;
             while(!competition::is_disabled() && SSOSTTT_bool == true){
                 //define quartic equation terms  
                 double c = pow(robot.velX, 2) + pow(robot.velY, 2) - robotGoal.dz * g;
@@ -352,21 +357,21 @@ class sensing_t{
                     Tar_ang = Tar_ang +2*M_PI;
                     }
                 }
-
-                //std::cout<< "\nAngle: " << Tar_ang;
+                //std::cout << "\n x:" << robot.xpos<<" y:"<<robot.ypos << " ang:" <<robot.angle;
+                //std::cout<< "\nAngle: " << Tar_ang*180/M_PI;
                 double P3 = cos(Tar_ang) * 0.707106781187 * T;
                 double V_disk = P2 / P3;
                 double turOfCenterOffset = 0; // offcenter offset, not tested yet
                 //outputting calculated values
-                goalAngle = turretPosChoice(-Tar_ang *180/M_PI + targetAngleOffest+turOfCenterOffset);
+                goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
                 while (goalAngle > 180){
                     goalAngle -= 360;
                 }
                 while (goalAngle < -180){
                     goalAngle += 360;
                 }
-                goalSpeed = V_disk;
-                robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2));
+                //goalSpeed = V_disk;
+                robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2))*180/M_PI;
                 delay(optimalDelay);
             }
         }

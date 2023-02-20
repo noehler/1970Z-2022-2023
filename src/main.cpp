@@ -5,6 +5,7 @@
 #include "pros/motors.hpp"
 #include "robotConfig.h"
 #include "sdLogging.h"
+#include <iostream>
 
 /**
  * A callback function for LLEMU's center button.
@@ -25,6 +26,7 @@ void initialize()
 	motorControl_t mc;
 	mc.setpistons();
 	sensing.setUp();
+	
 	Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
 	Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
 }
@@ -64,6 +66,26 @@ void autonomous()
 
 	if (autonType == winPointClose)
 	{ // close win Point auton
+		if (isRed){ //red initialization
+			sensing.robot.xpos = 6.25+24;
+            sensing.robot.ypos = 24-6;
+            sensing.robot.zpos = 8.5;
+            chaIntAng = 270;
+            
+            sensing.goal.xpos = 20;
+            sensing.goal.ypos = 124;
+            sensing.goal.zpos = 30;
+		}
+		else { // blue initialization
+			sensing.robot.xpos = 144-6.25-24;
+            sensing.robot.ypos = 144-24+6;
+            sensing.robot.zpos = 8.5;
+            chaIntAng = 270-180;
+            
+            sensing.goal.xpos = 144-20;
+            sensing.goal.ypos = 144-124;
+            sensing.goal.zpos = 30;
+		} 
 		motorControl_t motorControl;
 		motorControl.setpistons();
 
@@ -123,31 +145,54 @@ void autonomous()
  * task, not resume it from where it left off.
  */
 void opcontrol()
-{
-	chaIntAng = 0;
+{	
+	if (isRed){ //red initialization
+			sensing.robot.xpos = 6.25+24;
+            sensing.robot.ypos = 24-6;
+            sensing.robot.zpos = 8.5;
+            chaIntAng = 270;
+            
+            sensing.goal.xpos = 20;
+            sensing.goal.ypos = 124;
+            sensing.goal.zpos = 30;
+		}
+		else { // blue initialization
+			sensing.robot.xpos = 144-6.25-24;
+            sensing.robot.ypos = 144-24+6;
+            sensing.robot.zpos = 8.5;
+            chaIntAng = 270-180;
+            
+            sensing.goal.xpos = 144-20;
+            sensing.goal.ypos = 144-124;
+            sensing.goal.zpos = 30;
+		} 
 	motorControl_t motorControl;
+	
 	Task drive_Task(drive_ControllerWrapper, (void *)&motorControl, "My Driver Controller Task");
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void *)&motorControl, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
 	
 	while (1)
-	{
+	{	std::cout<<"\nx"<<sensing.robot.xpos<< "y:"<<sensing.robot.ypos<<"ang:"<<sensing.robot.angle;
+		sensing.SSOSTTT_bool = true;
 		static bool started = false;
 		static bool autoAim = false;
-		if (master.get_digital_new_press(DIGITAL_Y))
+		if (master.get_digital_new_press(DIGITAL_UP))
 		{
 			autoAim = !autoAim;
 		}
 		if (autoAim == false)
-		{
-			sensing.SSOSTTT_bool = false;
+		{	
+			sensing.robot.turretLock = true;
 			goalAngle = sensing.robot.angle + 180;
 			sensing.goalSpeed = 180;
 			started = false;
 		}
 		else
-		{
+		{	goalAngle = goalAngle;
+			sensing.goalSpeed = 180;
+			sensing.robot.turretLock = false;
 			if (started == false)
 			{
 				started = true;
