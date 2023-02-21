@@ -178,16 +178,23 @@ class sensing_t{
         void GPS_tracking(void){
             //note: rotation of Gps strip can vary depend on field if true, going to verify on 2/28
             while (1){
+                static double ydiff = 0, xdiff = 0;//diff from middle/gps origin
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
-                
-                if (GPS_sensor.get_error() < 0.012){
-                    robot.ypos = 72 - double(temp_status.x)*39.37;
-                    robot.xpos = 72 + double(temp_status.y)*39.37;
+                if (isRed){
+                    xdiff = -double(temp_status.y)*39.37;
+                    ydiff = double(temp_status.x)*39.37;
+                } else{
+                    xdiff = double(temp_status.y)*39.37;
+                    ydiff = -double(temp_status.x)*39.37;
                 }
-                // if red: x direction is correct y is flipped, if blue: x direction is flipped, y is correct.
-                //std::cout<<"\nx:"<<double(temp_status.x)*39.37<<"y"<<double(temp_status.y)*39.37;
-                robot.GPSypos = 72 - double(temp_status.x)*39.37;
-                robot.GPSxpos = 72 + double(temp_status.y)*39.37;
+                if (GPS_sensor.get_error() < 0.012){
+                    robot.xpos = 72 + xdiff;
+                    robot.ypos = 72 + ydiff;
+                }
+                // if red: x direction is correct y is flipped, if blue: x direction is flipped, y is correct
+                robot.GPSxpos = 72 + xdiff;
+                robot.GPSypos = 72 + ydiff;
+
                 logValue("GPSRange", GPS_sensor.get_error(),22);
                 logValue("GPSheading", GPS_sensor.get_heading(),23);
                 delay(20);

@@ -54,7 +54,7 @@ private:
         double PIDFWFLAT = 0; // variable used for keeping move forward speed < 100
         double PIDSSFLAT = 0;
         int moveToforwardToggle = 1, Stop_type = 2;
-        double tolerance = 5;
+        double tolerance = 2;
     };
 
     class moveToInfoExternal_t
@@ -379,7 +379,6 @@ public:
         PID.flyWheel.d2 = 1.05928;
     }
     moveToInfoExternal_t move;
-
     void driveDist(double goalDist, int P = -100, int I = -100, int D = -100)
     {
         if (P != -100)
@@ -690,6 +689,144 @@ public:
         shoot1.set_value(false);
         ejectPiston.set_value(false);
         boomShackalacka.set_value(false);
+    }
+
+    void tailGater(int length, double points[100][2]){
+        int current = 0;
+        double IPIDSS = 0;
+        double IPIDfw = 0;
+        double previousets = 0;
+        double previouset = 0;
+        while(current < length){
+            moveToInfoInternal_t moveI;
+            double dist = sqrt(pow(sensing.robot.xpos - points[current][0], 2) + pow(sensing.robot.ypos - points[current][1], 2));
+            while(dist > move.tolerance){
+                /*
+                function logic:
+                find errors of position, turn to target if robot cannot move in a arc to
+                it, than move to target in a arc. tracking center of robot is at the
+                center of two tracking wheels do not recomand using this funciton with
+                SpinTo() function. perferd to have a sperate thread for calculating live
+                position, than just take out codes from line 41 to line 48
+                */
+                double currentheading = sensing.robot.angle / 180 * M_PI;
+                double etx = points[current][0] - sensing.robot.xpos; // change of x
+                double ety = points[current][1] - sensing.robot.ypos; // change of y
+                double distance;
+                if (length - 1 != current){
+                    distance = sqrt(pow(etx, 2) + pow(ety, 2));
+                }
+                else{
+                    distance = 24;
+                }
+                double et = distance * 10;
+
+                move.targetHeading = atan(ety / etx);
+                if (etx < 0)
+                {
+                    move.targetHeading += M_PI;
+                }
+                else if (etx == 0)
+                {
+                    move.targetHeading = M_PI / 2 * (fabs(ety) / ety);
+                }
+                if (move.moveToforwardToggle == -1)
+                {
+                    move.targetHeading += M_PI;
+                }
+                moveI.ets = move.targetHeading - currentheading;
+                if (moveI.ets < -M_PI)
+                {
+                    moveI.ets += 2 * M_PI;
+                }
+                if (moveI.ets > M_PI)
+                {
+                    moveI.ets -= 2 * M_PI;
+                }
+
+                moveI.ets = moveI.ets * 180 / M_PI;
+                IPIDSS += moveI.ets;
+                IPIDfw += et;
+                if (move.moveToforwardToggle == 1)
+                {
+                    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
+                }
+                else
+                {
+                    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS + PID.driveSS.d * (moveI.ets - previousets);
+                }
+
+                if (move.moveToforwardToggle == 1)
+                {
+                    moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
+                }
+                else
+                {
+                    moveI.PIDFW = move.moveToforwardToggle * (PID.driveFR.p * et + PID.driveFR.i * IPIDfw + PID.driveFR.d * (et - previouset));
+                }
+
+                previousets = moveI.ets;
+                previouset = et;
+                moveI.PIDSSFLAT = moveI.PIDSS;
+                moveI.PIDFWFLAT = moveI.PIDFW;
+                if (moveI.PIDFWFLAT >= move.speed_limit)
+                {
+                    moveI.PIDFWFLAT = move.speed_limit;
+                }
+                if (moveI.PIDFWFLAT <= -move.speed_limit)
+                {
+                    moveI.PIDFWFLAT = -move.speed_limit;
+                }
+                if (moveI.PIDSSFLAT >= 2 * move.speed_limit)
+                {
+                    moveI.PIDSSFLAT = 2 * move.speed_limit;
+                }
+                if (moveI.PIDSSFLAT <= -2 * move.speed_limit)
+                {
+                    moveI.PIDSSFLAT = -2 * move.speed_limit;
+                }
+                if (move.moveToforwardToggle)
+                {
+                    moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
+                    moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
+                }
+                else
+                {
+                    moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
+                    moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
+                }
+                if (moveI.PIDSpeedL > 127)
+                {
+                    moveI.PIDSpeedL = 127;
+                }
+                if (moveI.PIDSpeedR > 127)
+                {
+                    moveI.PIDSpeedR = 127;
+                }
+
+                if (moveI.PIDSpeedL < -127)
+                {
+                    moveI.PIDSpeedL = -127;
+                }
+                if (moveI.PIDSpeedR < -127)
+                {
+                    moveI.PIDSpeedR = -127;
+                }
+                dist = sqrt(pow(sensing.robot.xpos - points[current][0], 2) + pow(sensing.robot.ypos - points[current][1], 2));
+                lfD.move(-moveI.PIDSpeedL);
+                lbD.move(-moveI.PIDSpeedL);
+                rfD.move(-moveI.PIDSpeedR);
+                rbD.move(-moveI.PIDSpeedR);
+                delay(20);
+            }
+            current++;
+            delay(20);
+        }
+        
+        lfD.brake();
+        lbD.brake();
+        rfD.brake();
+        rbD.brake();
     }
 
     void waitPosTime(int maxTime)
