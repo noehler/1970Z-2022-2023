@@ -1,5 +1,6 @@
 #include "main.h"
 #include "Autons/autonSetup.h"
+#include "bezierCalculations.h"
 #include "devFuncs.h"
 #include "motorControl.h"
 #include "pros/motors.hpp"
@@ -59,7 +60,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-  /*double points[10][2]{{24, 24}, {24, 48}, {48, 48}, {48, 72}, {72, 72},
+  double points[10][2]{{24, 24}, {24, 48}, {48, 48}, {48, 72}, {72, 72},
                        {72, 84}, {84, 84}, {84, 96}, {96, 96}, {108, 108}};
   motorControl_t mc;
   isRed = false;
@@ -67,7 +68,8 @@ void autonomous() {
   sensing.robot.xpos = 12;
   sensing.robot.xpos = 12;
   mc.move.speed_limit = 30;
-  mc.tailGater(10, points);*/
+  bez_Return_t temp = beziers.generatePath(points, 4, 25);
+  mc.tailGater(temp);
 
   if (autonType == winPointClose) { // close win Point auton
     sensing.robot.xpos = 6.25 + 24;

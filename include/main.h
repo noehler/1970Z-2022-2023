@@ -42,6 +42,7 @@
 #include "Autons/skillsAuton.h"
 #include "robotConfig.h"
 #include "motorControl.h"
+#include "bezierCalculations.h"
 /**
 #include "motorControl.h"
  * You should add more #includes here

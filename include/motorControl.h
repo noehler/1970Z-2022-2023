@@ -7,6 +7,7 @@
 #include "Autons/autonSetup.h"
 #include "robotConfig.h"
 #include "devFuncs.h"
+#include "bezierCalculations.h"
 
 using namespace pros;
 
@@ -691,15 +692,15 @@ public:
         boomShackalacka.set_value(false);
     }
 
-    void tailGater(int length, double points[100][2]){
+    void tailGater(bez_Return_t temp){
         int current = 0;
         double IPIDSS = 0;
         double IPIDfw = 0;
         double previousets = 0;
         double previouset = 0;
-        while(current < length){
+        while(current < temp.length){
             moveToInfoInternal_t moveI;
-            double dist = sqrt(pow(sensing.robot.xpos - points[current][0], 2) + pow(sensing.robot.ypos - points[current][1], 2));
+            double dist = sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0], 2) + pow(sensing.robot.ypos - temp.returnPoints[current][1], 2));
             while(dist > move.tolerance){
                 /*
                 function logic:
@@ -710,10 +711,10 @@ public:
                 position, than just take out codes from line 41 to line 48
                 */
                 double currentheading = sensing.robot.angle / 180 * M_PI;
-                double etx = points[current][0] - sensing.robot.xpos; // change of x
-                double ety = points[current][1] - sensing.robot.ypos; // change of y
+                double etx = temp.returnPoints[current][0] - sensing.robot.xpos; // change of x
+                double ety = temp.returnPoints[current][1] - sensing.robot.ypos; // change of y
                 double distance;
-                if (length - 1 != current){
+                if (temp.length - 1 != current){
                     distance = sqrt(pow(etx, 2) + pow(ety, 2));
                 }
                 else{
@@ -812,7 +813,7 @@ public:
                 {
                     moveI.PIDSpeedR = -127;
                 }
-                dist = sqrt(pow(sensing.robot.xpos - points[current][0], 2) + pow(sensing.robot.ypos - points[current][1], 2));
+                dist = sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0], 2) + pow(sensing.robot.ypos - temp.returnPoints[current][1], 2));
                 lfD.move(-moveI.PIDSpeedL);
                 lbD.move(-moveI.PIDSpeedL);
                 rfD.move(-moveI.PIDSpeedR);
