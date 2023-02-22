@@ -59,17 +59,48 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {
-  double points[10][2]{{24, 24}, {24, 48}, {48, 48}, {48, 72}, {72, 72},
-                       {72, 84}, {84, 84}, {84, 96}, {96, 96}, {108, 108}};
+void tempTest(void){
   motorControl_t mc;
   isRed = false;
-  chaIntAng = 45;
-  sensing.robot.xpos = 12;
-  sensing.robot.xpos = 12;
-  mc.move.speed_limit = 30;
-  bez_Return_t temp = beziers.generatePath(points, 4, 25);
-  mc.tailGater(temp);
+  chaIntAng = 360;
+  sensing.robot.xpos = 72;
+  sensing.robot.ypos = 72;
+  mc.move.speed_limit = 40;
+  while(1){
+    double points[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos + 48, sensing.robot.ypos}, {sensing.robot.xpos+48, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos}};
+    bez_Return_t temp = beziers.generatePath(points, 5, 99);
+    mc.tailGater(temp);
+    delay(400);
+    double points2[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos-48}, {sensing.robot.xpos - 48, sensing.robot.ypos - 48}, {sensing.robot.xpos-48, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos}};
+    temp = beziers.generatePath(points2, 5, 99);
+    mc.tailGater(temp);
+    delay(400);
+  }
+}
+void autonomous() {
+  motorControl_t motorControl;
+
+  Task driveTask(tempTest);
+  Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
+                  "My Flywheel Speed Controller Task");
+  Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl,
+                          "Intake and Turret Controller Task");
+  while (1){
+    if (sensing.robot.xpos > 72){
+      sensing.goalSpeed = 0;
+    }
+    else{
+      sensing.goalSpeed = 300;
+    }
+    if (sensing.robot.ypos > 72){
+      motorControl.intakeRunning = 1;
+    }
+    else{
+      motorControl.intakeRunning = 2;
+    }
+    goalAngle = sensing.robot.angle + 180;
+    delay(20);
+  }
 
   if (autonType == winPointClose) { // close win Point auton
     sensing.robot.xpos = 6.25 + 24;
@@ -176,20 +207,6 @@ void opcontrol() {
         started = true;
       }
     }
-    logValue("time", millis(), 0);
-
-    logValue("xTot", sensing.robot.xpos, 1);
-    logValue("yTot", sensing.robot.ypos, 2);
-
-    logValue("xGPS", sensing.robot.GPSxpos, 3);
-    logValue("yGPS", sensing.robot.GPSypos, 4);
-
-    logValue("xOdom", sensing.robot.odoxpos, 5);
-    logValue("yOdom", sensing.robot.odoypos, 6);
-
-    logValue("robot angle", sensing.robot.angle, 7);
-    logValue("turret angle", sensing.robot.turAng, 8);
-    outValsSDCard();
 
     delay(20);
   }

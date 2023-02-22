@@ -325,13 +325,6 @@ void universalTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bo
         PID.driveSS.p = .5;
         PID.driveSS.i = 0.001;
         PID.driveSS.d = 0.3;
-
-        logValue("FP", PID.driveFR.p, 0);
-        logValue("FI", PID.driveFR.i, 1);
-        logValue("FD", PID.driveFR.d, 2);
-        logValue("SP", PID.driveSS.p, 3);
-        logValue("SI", PID.driveSS.i, 4);
-        logValue("SD", PID.driveSS.d, 5);
         if (usd::is_installed())
         {
             outValsSDCard();
@@ -428,12 +421,6 @@ void universalTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bo
                 {
             SSadjustSwitch = 0;
                 }
-                logValue("FP", PID.driveFR.p, 0);
-                logValue("FI", PID.driveFR.i, 1);
-                logValue("FD", PID.driveFR.d, 2);
-                logValue("FP", PID.driveSS.p, 3);
-                logValue("FI", PID.driveSS.i, 4);
-                logValue("FD", PID.driveSS.d, 5);
                 if (usd::is_installed())
                 {
             outValsSDCard();

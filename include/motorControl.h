@@ -251,7 +251,6 @@ private:
         }*/
 
         angdiff = goalAngle - sensing.robot.turAng;
-        logValue("angleDiff", angdiff, 11);
 
         if (angdiff > 180)
         {
@@ -285,9 +284,6 @@ private:
             chassisScalar = 0.35;//0.3;
             turPredicScalar = 1;
             }
-            logValue("turrProp", PID.turret.p * angdiff, 12);
-            logValue("turretInteg", PID.turret.i * IPIDang, 13);
-            logValue("turretDeriv", PID.turret.d * (angdiff - previousangdiff), 14);
             //std::cout << "\n" << goalAngle;
             //std::cout << "\n x:" << sensing.robot.GPSxpos<<" y:"<<sensing.robot.GPSypos << " turretctl:" <<sensing.robot.turvelocity;
             //std::cout << "\ntposition correction:" << PIDPosition;
@@ -356,13 +352,13 @@ public:
                            flyWheel1(13, E_MOTOR_GEARSET_06, false), flyWheel2(17, E_MOTOR_GEARSET_06, true),
                            turretMotor(6, E_MOTOR_GEARSET_06, true), intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}), shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}})
     {
-        PID.driveFR.p = 2;
-        PID.driveFR.i = .5;
-        PID.driveFR.d = 1;
+        PID.driveFR.p = .7;
+        PID.driveFR.i = 0;
+        PID.driveFR.d = 0;
 
-        PID.driveSS.p = 2;
-        PID.driveSS.i = .022;
-        PID.driveSS.d = 1.15;
+        PID.driveSS.p = .8;
+        PID.driveSS.i = 0;
+        PID.driveSS.d = 0.1;
 
         PID.turret.p = 0.8;
         PID.turret.i = .02;
@@ -713,6 +709,11 @@ public:
                 double currentheading = sensing.robot.angle / 180 * M_PI;
                 double etx = temp.returnPoints[current][0] - sensing.robot.xpos; // change of x
                 double ety = temp.returnPoints[current][1] - sensing.robot.ypos; // change of y
+                std::cout << "dx: " << etx << ", dy: " << ety <<"\n";
+                std::cout << "x: " << sensing.robot.xpos << ", y: " << sensing.robot.ypos <<"\n";
+                //logValue("etx", etx, 7);
+                //logValue("ety", ety, 8);
+                //outValsSDCard();
                 double distance;
                 if (temp.length - 1 != current){
                     distance = sqrt(pow(etx, 2) + pow(ety, 2));
@@ -920,12 +921,6 @@ public:
             static double prevFWdiffSPD = angularVelocityCalc();
             static double prevFWdiffSPD2 = angularVelocityCalc();
 
-            logValue("FWDiff1", diffFlyWheelW, 15);
-            logValue("FWDiff2", diffFlyWheelW2, 16);
-            logValue("flyWheelW1", flyWheelW, 17);
-            logValue("flyWheelW2", flyWheelW2, 18);
-            logValue("goalSpeed", angularVelocityCalc(), 19);
-
             IPIDang += diffFlyWheelW;
             IPIDang2 += diffFlyWheelW2;
             double prop = PID.flyWheel.p * diffFlyWheelW;
@@ -1013,8 +1008,6 @@ public:
 
             double intakeSpd = intakeControl();
             double turrSpd = -turrControl()*12000/127;
-            logValue("turretPower", turrSpd, 20);
-            logValue("intake Power", intakeSpd, 21);
             if (turrSpd == 0)
             {
                 turretMotor.brake();
