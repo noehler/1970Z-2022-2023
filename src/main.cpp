@@ -59,49 +59,9 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void tempTest(void){
-  motorControl_t mc;
-  isRed = false;
-  chaIntAng = 360;
-  sensing.robot.xpos = 72;
-  sensing.robot.ypos = 72;
-  mc.move.speed_limit = 40;
-  while(1){
-    double points[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos + 48, sensing.robot.ypos}, {sensing.robot.xpos+48, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos}};
-    bez_Return_t temp = beziers.generatePath(points, 5, 99);
-    mc.tailGater(temp);
-    delay(400);
-    double points2[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos-48}, {sensing.robot.xpos - 48, sensing.robot.ypos - 48}, {sensing.robot.xpos-48, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos}};
-    temp = beziers.generatePath(points2, 5, 99);
-    mc.tailGater(temp);
-    delay(400);
-  }
-}
+
 void autonomous() {
-  motorControl_t motorControl;
-
-  Task driveTask(tempTest);
-  Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
-                  "My Flywheel Speed Controller Task");
-  Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl,
-                          "Intake and Turret Controller Task");
-  while (1){
-    if (sensing.robot.xpos > 72){
-      sensing.goalSpeed = 0;
-    }
-    else{
-      sensing.goalSpeed = 300;
-    }
-    if (sensing.robot.ypos > 72){
-      motorControl.intakeRunning = 1;
-    }
-    else{
-      motorControl.intakeRunning = 2;
-    }
-    goalAngle = sensing.robot.angle + 180;
-    delay(20);
-  }
-
+  driveTuner();
   if (autonType == winPointClose) { // close win Point auton
     sensing.robot.xpos = 6.25 + 24;
     sensing.robot.ypos = 24 - 6;
@@ -165,6 +125,7 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+
 
 void opcontrol() {
 	isRed = false;

@@ -356,9 +356,9 @@ public:
         PID.driveFR.i = 0;
         PID.driveFR.d = 0;
 
-        PID.driveSS.p = .8;
+        PID.driveSS.p = .00;
         PID.driveSS.i = 0;
-        PID.driveSS.d = 0.1;
+        PID.driveSS.d = 0.0;
 
         PID.turret.p = 0.8;
         PID.turret.i = .02;
@@ -689,6 +689,8 @@ public:
     }
 
     void tailGater(bez_Return_t temp){
+        double radiusDifference = 9.5;
+        double radiusScalar = 1;
         int current = 0;
         double IPIDSS = 0;
         double IPIDfw = 0;
@@ -787,16 +789,32 @@ public:
                 {
                     moveI.PIDSSFLAT = -2 * move.speed_limit;
                 }
-                if (move.moveToforwardToggle)
-                {
-                    moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
-                    moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
+                double radIn;
+                double radOut;
+
+                if (temp.radius[current] != 420.69){
+                    radIn = (temp.radius[current]-radiusDifference)*radiusScalar;
+                    radOut = (temp.radius[current]+radiusDifference)*radiusScalar;
                 }
-                else
-                {
-                    moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
-                    moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
+                else{
+                    radIn = 1;
+                    radOut = 1;
                 }
+
+                if (moveI.PIDFWFLAT*radOut/radIn > 127){
+                    moveI.PIDFWFLAT = moveI.PIDFWFLAT*radIn/radOut;
+                }
+                
+                if (moveI.ets >0){
+                    moveI.PIDSpeedL = moveI.PIDFWFLAT*radIn/radOut;
+                    moveI.PIDSpeedR = moveI.PIDFWFLAT*radOut/radIn;
+                }else{
+                    moveI.PIDSpeedR = moveI.PIDFWFLAT*radIn/radOut;
+                    moveI.PIDSpeedL = moveI.PIDFWFLAT*radOut/radIn;  
+                }
+                moveI.PIDSpeedR += moveI.PIDSSFLAT;
+                moveI.PIDSpeedL -= moveI.PIDSSFLAT;
+
                 if (moveI.PIDSpeedL > 127)
                 {
                     moveI.PIDSpeedL = 127;
@@ -815,10 +833,10 @@ public:
                     moveI.PIDSpeedR = -127;
                 }
                 dist = sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0], 2) + pow(sensing.robot.ypos - temp.returnPoints[current][1], 2));
-                lfD.move(-moveI.PIDSpeedL);
-                lbD.move(-moveI.PIDSpeedL);
-                rfD.move(-moveI.PIDSpeedR);
-                rbD.move(-moveI.PIDSpeedR);
+                lfD.move(moveI.PIDSpeedL);
+                lbD.move(moveI.PIDSpeedL);
+                rfD.move(moveI.PIDSpeedR);
+                rbD.move(moveI.PIDSpeedR);
                 delay(20);
             }
             current++;

@@ -11,6 +11,52 @@ public:
     PID_t driveFR, driveSS, turret, flyWheel;
 } PID;
 
+void bezMake(void){
+
+  motorControl_t mc;
+  isRed = false;
+  chaIntAng = 360;
+  sensing.robot.xpos = 72;
+  sensing.robot.ypos = 72;
+  for (int i = 0; i < 2; i++){
+    double points[6][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos + 48, sensing.robot.ypos}, {sensing.robot.xpos+48, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos}};
+    int startTime = millis();
+    bez_Return_t temp = beziers.generatePath(points, 5, 99);
+    logValue("gt1",millis() - startTime,11);
+    delay(400);
+    double points2[6][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos-48}, {sensing.robot.xpos - 48, sensing.robot.ypos - 48}, {sensing.robot.xpos-48, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos}};
+    temp = beziers.generatePath(points2, 5, 99);
+    logValue("gt2",millis() - startTime,12);
+    outValsSDCard();
+    delay(400);
+  }
+  while (1){
+    delay(2000);
+  }
+}
+
+void driveTuner(void){
+  motorControl_t mc;
+  isRed = false;
+  chaIntAng = 360;
+  sensing.robot.xpos = 72;
+  sensing.robot.ypos = 72;
+  mc.move.speed_limit = 127;
+  while(1){
+    for (int i = 0; i < 2; i++){
+        double points[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos + 48, sensing.robot.ypos}, {sensing.robot.xpos+48, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos}};
+        bez_Return_t temp = beziers.generatePath(points, 5, 99);
+        mc.tailGater(temp);
+        delay(400);
+        double points2[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos-48}, {sensing.robot.xpos - 48, sensing.robot.ypos - 48}, {sensing.robot.xpos-48, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos}};
+        temp = beziers.generatePath(points2, 5, 99);
+        mc.tailGater(temp);
+        delay(400);
+    }
+  }
+  
+}
+
 void flyTuner(Motor flyWheel1, Motor flyWheel2, int loopDelay)
 {
     motorControl_t mc;
