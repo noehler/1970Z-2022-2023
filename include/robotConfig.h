@@ -195,8 +195,6 @@ class sensing_t{
                 robot.GPSxpos = 72 + xdiff;
                 robot.GPSypos = 72 + ydiff;
 
-                logValue("GPSRange", GPS_sensor.get_error(),22);
-                logValue("GPSheading", GPS_sensor.get_heading(),23);
                 delay(20);
             }
         }
@@ -226,8 +224,6 @@ class sensing_t{
                 double i1 = inertial.get_rotation();
                 double i2 = inertial2.get_rotation();
                 static double prev_velw =0;
-                logValue("imu1", i1, 9);
-                logValue("imu2", i2, 10);
                 double radRotation;
                 if (i1 == PROS_ERR_F)
                 {
@@ -248,7 +244,6 @@ class sensing_t{
                 } else if (angle_error<-M_PI){
                     angle_error +=2*M_PI;
                 }
-                logValue("odoHeading", odoHeading, 23);
                 // relying on heading calibrated by odometry in order to reduce noise but also comparing it to inertial to check for drift
                 if (fabs(angle_error) >= .05){
                     odoHeading = radRotation;

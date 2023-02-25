@@ -61,7 +61,9 @@ void competition_initialize() {}
  */
 
 void autonomous() {
-  driveTuner();
+  //motorControl_t mc;
+  //mc.circleFollow();
+  //driveTuner();
   if (autonType == winPointClose) { // close win Point auton
     sensing.robot.xpos = 6.25 + 24;
     sensing.robot.ypos = 24 - 6;

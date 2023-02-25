@@ -11,7 +11,9 @@ class bez_Return_t{
                 returnPoints[i][1] = 0;
             }
         }
+        double basePoints[10][2];
         double returnPoints[100][2];
+        double returnVelocity[100];
         double radius[100];
         int length = 0;
 };
@@ -21,7 +23,7 @@ class beziers_t{
     public:
         //function used to generate more smooth path for auton movement length is used to signify the max length of the string, precision is the amount of points generated between start and finish
         //length will be increased by one to account for robot position different from 1st point
-        bez_Return_t generatePath(double inputPoints[10][2], int length, int precision){            
+        bez_Return_t generatePath(double inputPoints[10][2], int length, int precision){    
             //accounting for robot being away from starting point
             double oneDiff = sqrt(pow(sensing.robot.xpos - inputPoints[0][0],2) + pow(sensing.robot.ypos - inputPoints[0][1],2));
             if (oneDiff > 0){
@@ -36,6 +38,10 @@ class beziers_t{
             }
             
             bez_Return_t temp;
+            for (int i = 0; i< 10; i++){
+                temp.basePoints[i][0] = inputPoints[i][0];
+                temp.basePoints[i][1] = inputPoints[i][1];
+            }
             temp.length = precision;
 
             double vectors[100][2];
@@ -48,10 +54,6 @@ class beziers_t{
                     weight[2] =  3*pow(t,2)-3*pow(t,3);
                     weight[3] = pow(t,3);
                     
-                    logValue("w0", weight[0], 0);
-                    logValue("w1", weight[1], 1);
-                    logValue("w2", weight[2], 2);
-                    logValue("w3", weight[3], 3);
                 }
                 else if (length == 5){
                     weight[0] = 1-4*t + 6*pow(t,2) - 4*pow(t,3) + pow(t,4);
@@ -59,11 +61,6 @@ class beziers_t{
                     weight[2] =  6*pow(t,2)-12*pow(t,3)+6*pow(t,4);
                     weight[3] = -4*pow(t,4)+4*pow(t,3);
                     weight[4] = pow(t,4);
-                    logValue("w0", weight[0], 0);
-                    logValue("w1", weight[1], 1);
-                    logValue("w2", weight[2], 2);
-                    logValue("w3", weight[3], 3);
-                    logValue("w4", weight[4], 4);;
                 }
                 else if (length == 6){
                     weight[0] = 1 - 5*t + 10*pow(t,2) - 10*pow(t,3) + 5*pow(t,4) - pow(t,5);
@@ -72,12 +69,6 @@ class beziers_t{
                     weight[3] = 10*pow(t,3) - 20*pow(t,4) + 10*pow(t,5);
                     weight[4] = 5*pow(t,4) - 5*pow(t,5);
                     weight[5] = pow(t,5);
-                    logValue("w0", weight[0], 0);
-                    logValue("w1", weight[1], 1);
-                    logValue("w2", weight[2], 2);
-                    logValue("w3", weight[3], 3);
-                    logValue("w4", weight[4], 4);
-                    logValue("w5", weight[5], 5);
                 }
                 else if (length == 7){
                     weight[0] = 1 - 6*t + 15*pow(t,2) - 20*pow(t,3) + 15*pow(t,4) - 6*pow(t,5) + pow(t,6);
@@ -88,13 +79,6 @@ class beziers_t{
                     weight[5] = 6*pow(t,5) - 6*pow(t,6);
                     weight[6] = pow(t,6);
                     
-                    logValue("w0", weight[0], 0);
-                    logValue("w1", weight[1], 1);
-                    logValue("w2", weight[2], 2);
-                    logValue("w3", weight[3], 3);
-                    logValue("w4", weight[4], 4);
-                    logValue("w5", weight[5], 5);
-                    logValue("w6", weight[6], 6);
                 }
                 else{
                     for (int i = 0; i < 40; i++){
@@ -113,14 +97,14 @@ class beziers_t{
                     double dx = temp.returnPoints[i][0] - temp.returnPoints[i-1][0];
                     double dy = temp.returnPoints[i][1] - temp.returnPoints[i-1][1];
                     double dS = sqrt(pow(dx, 2) + pow(dy, 2));
-                    double velocity = dS*(precision);
+                    temp.returnVelocity[i] = dS*(precision);
             
-                    vectors[i][0] = dx*precision/velocity;
-                    vectors[i][1] = dy*precision/velocity;
+                    vectors[i][0] = dx*precision/temp.returnVelocity[i];
+                    vectors[i][1] = dy*precision/temp.returnVelocity[i];
 
                     if (i == 1){
-                        vectors[0][0] = dx*precision/velocity;
-                        vectors[0][1] = dy*precision/velocity;
+                        vectors[0][0] = dx*precision/temp.returnVelocity[i];
+                        vectors[0][1] = dy*precision/temp.returnVelocity[i];
                     }
                     
                     double dVectorX = (vectors[i][0] - vectors[i-1][0])/dS;
@@ -129,14 +113,16 @@ class beziers_t{
                     temp.radius[i] = 1/sqrt(pow(dVectorX, 2) + pow(dVectorY, 2));
 
                     if (isnanf(temp.radius[i])){
-                        temp.radius[i] = 420.69;
+                        temp.radius[i] = 1000000;
+                    }
+                    if (isnanf(temp.returnVelocity[i])){
+                        temp.returnVelocity[i] = 100;
                     }
                 }
                 
 
-                logValue("x", temp.returnPoints[i][0], 7);
-                logValue("y", temp.returnPoints[i][1], 8);
-                logValue("time", millis(), 9);
+                logValue("x", temp.returnPoints[i][0], 0);
+                logValue("y", temp.returnPoints[i][1], 1);
                 outValsSDCard();
                 
             }
