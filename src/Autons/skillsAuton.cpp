@@ -6,7 +6,7 @@
 
 void skillsAutonomous(void){
     motorControl_t mc;
-    chaIntAng = 180;
+    chaIntAng = 270;
 
     //starting controller threads
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
@@ -14,30 +14,118 @@ void skillsAutonomous(void){
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
 
-    //getting discs from dump
-    while(1){
-        mc.move.moveToxpos = 72;
-        mc.move.moveToypos = 5;
-        mc.move.speed_limit = 50;
-        mc.move.moveToforwardToggle = -1;
+    //first roller
+    mc.move.moveToxpos = 30;
+    mc.move.moveToypos = 12;
+    mc.waitPosTime(4000);
 
+    mc.move.moveToforwardToggle = -1;
+    mc.move.moveToxpos = 30;
+    mc.move.moveToypos = 30;
+    mc.waitPosTime(4000);
 
-        mc.intakeRunning = 1;
+    //second roller
+    mc.move.moveToforwardToggle = 1;
+    mc.move.moveToxpos = 12;
+    mc.move.moveToypos = 30;
+    mc.waitPosTime(4000);
 
-        mc.waitPosTime(4000);
+    mc.move.moveToforwardToggle = -1;
+    mc.move.moveToxpos = 30;
+    mc.move.moveToypos = 30;
+    mc.waitPosTime(4000);
 
-        mc.move.moveToxpos = 72;
-        mc.move.moveToypos = 40;
-        mc.move.speed_limit = 80;
-        mc.move.moveToforwardToggle = -1;
+    //first shot
+    mc.move.moveToforwardToggle = 1;
+    mc.move.moveToxpos = 24;
+    mc.move.moveToypos = 48;
+    mc.waitPosTime(4000);
+    mc.raiseAScore(1);
 
-        mc.intakeRunning = 0;
-        delay(200);
-
-        mc.raiseAScore(1);
-
-        mc.waitPosTime(2000);
-    }
+    //collect discs
+    mc.move.moveToxpos = 72;
+    mc.move.moveToypos = 96;
+    mc.intakeRunning = 1;
+    mc.waitPosTime(4000);
     
+    //second shot
+    delay(2000);
+    mc.intakeRunning = 0;
+    mc.raiseAScore(1);
+
+    //collect discs
+    mc.intakeRunning = 1;
+    mc.move.moveToxpos = 96;
+    mc.move.moveToypos = 120;
+    mc.waitPosTime(4000);
+    
+    //third shot
+    delay(2000);
+    mc.intakeRunning = 0;
+    mc.raiseAScore(1);
+
+    //third roller
+    mc.move.moveToxpos = 114;
+    mc.move.moveToypos = 132;
+    mc.waitPosTime(4000);
+
+    mc.move.moveToforwardToggle = -1;
+    mc.move.moveToxpos = 114;
+    mc.move.moveToypos = 114;
+    mc.waitPosTime(4000);
+    
+    //fourth roller
+    mc.move.moveToforwardToggle = 1;
+    mc.move.moveToxpos = 114;
+    mc.move.moveToypos = 132;
+    mc.waitPosTime(4000);
+
+    mc.move.moveToforwardToggle = -1;
+    mc.move.moveToxpos = 114;
+    mc.move.moveToypos = 114;
+    mc.waitPosTime(4000);
+
+    //collecting discs  
+    mc.move.moveToforwardToggle = 1;
+    mc.move.moveToxpos = 120;
+    mc.move.moveToypos = 96;
+    mc.waitPosTime(4000);
+    
+    mc.intakeRunning = 1;
+    mc.move.moveToxpos = 72;
+    mc.move.moveToypos = 48;
+    mc.waitPosTime(4000);
+
+    //fourth shot
+    delay(2000);
+    mc.intakeRunning = 0;
+    mc.raiseAScore(1);
+
+    
+    //collecting discs
+    mc.intakeRunning = 1;
+    mc.move.moveToxpos = 48;
+    mc.move.moveToypos = 24;
+    mc.waitPosTime(4000);
+
+    //fifth shot
+    delay(2000);
+    mc.intakeRunning = 0;
+    mc.raiseAScore(1);
+
+    //expanding
+    mc.move.moveToxpos = 24;
+    mc.move.moveToypos = 24;
+    
+    sensing.goal.xpos = 72;
+    sensing.goal.ypos = 124;
+    sensing.goal.zpos = 72;  
+    mc.waitPosTime(4000);
+
+    mc.explode();
+
+    while(1){
+        delay(200);
+    }
 
 }

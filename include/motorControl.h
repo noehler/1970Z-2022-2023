@@ -740,7 +740,7 @@ public:
         rfD.move(PIDSpeedR);
         rbD.move(PIDSpeedR);
         logValue("sp", ets*PID.driveSS.p, 8);
-        logValue("si", integralSS*PID.driveSS.i, 9);
+        logValue("si", integralSS*PID.driveSS.i, 9  );
         logValue("fp", et*PID.driveFR.p, 3);
         logValue("fi", integralFW*PID.driveFR.i, 4);
         logValue("x", sensing.robot.xpos, 6);

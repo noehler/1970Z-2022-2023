@@ -28,7 +28,7 @@ void initialize() {
   sensing.setUp();
 
   Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
-  //Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
+  Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
