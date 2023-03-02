@@ -26,6 +26,7 @@ class beziers_t{
         bez_Return_t generatePath(double inputPoints[10][2], int length, int precision){    
             //accounting for robot being away from starting point
             double oneDiff = sqrt(pow(sensing.robot.xpos - inputPoints[0][0],2) + pow(sensing.robot.ypos - inputPoints[0][1],2));
+            oneDiff = 0;
             if (oneDiff > 0){
                 for (int i = length; i > 5; i--){
                     inputPoints[i][0] = inputPoints[i-1][0];
@@ -121,8 +122,8 @@ class beziers_t{
                 }
                 
 
-                logValue("x", temp.returnPoints[i][0], 0);
-                logValue("y", temp.returnPoints[i][1], 1);
+                logValue("xG", temp.returnPoints[i][0], 0);
+                logValue("yG", temp.returnPoints[i][1], 1);
                 outValsSDCard();
                 
             }

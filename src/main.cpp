@@ -28,7 +28,7 @@ void initialize() {
   sensing.setUp();
 
   Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
-  Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
+  //Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -63,7 +63,7 @@ void competition_initialize() {}
 void autonomous() {
   //motorControl_t mc;
   //mc.circleFollow();
-  //driveTuner();
+  driveTuner();
   if (autonType == winPointClose) { // close win Point auton
     sensing.robot.xpos = 6.25 + 24;
     sensing.robot.ypos = 24 - 6;
@@ -78,36 +78,45 @@ void autonomous() {
 
     Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
                   "My Flywheel Speed Controller Task");
+    Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
+    Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl,
+                          "Intake and Turret Controller Task");
+    sensing.robot.turretLock = false;
 
-    sensing.goalSpeed = 179;
+    sensing.goalSpeed = 184;
     delay(3000);
     // goalAngle = 0;
     motorControl.raiseAScore(1);
+    motorControl.runTurretIntake = false;
 
     motorControl.driveToRoller();
     // fly_Task.suspend();
   } else if (autonType == winPointFar) { // far win Point auton
-                                         /*chaIntAng = 90;
-                                         motorControl_t motorControl;
-                                         motorControl.setpistons();
-                                     
-                                         Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel
-                                         Speed Controller Task");
-                                     
-                                         sensing.goalSpeed = 200;
-                                         goalAngle = 0;
-                                         delay(5000);
-                                         motorControl.raiseAScore(1);
-                                     
-                                         motorControl.rotateTo(0);
-                                     
-                                         motorControl.driveDist(-15);
-                                     
-                                         motorControl.rotateTo(70);
-                                         delay(1000);
-                                     
-                                         motorControl.driveToRoller();
-                                         */
+    chaIntAng = 90;
+    motorControl_t motorControl;
+    motorControl.setpistons();
+
+    Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
+    Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
+    Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl,
+                          "Intake and Turret Controller Task");
+    sensing.robot.turretLock = false;
+
+    sensing.goalSpeed = 190;
+    goalAngle = 0;
+    delay(5000);
+    motorControl.raiseAScore(1);
+
+    motorControl.runTurretIntake = false;
+
+    motorControl.driveDist(15);
+    
+
+    motorControl.rotateTo(0);
+    delay(1000);
+
+    motorControl.driveToRoller();
+                                         
   } else if (autonType == noAuton) {
   } else {
     // skillsAutonomous();
@@ -154,6 +163,7 @@ void opcontrol() {
     sensing.SSOSTTT_bool = true;
     static bool started = false;
     static bool autoAim = false;
+    bool aimMiddle = false;
     if (master.get_digital_new_press(DIGITAL_UP)) {
       autoAim = !autoAim;
     }
@@ -171,6 +181,22 @@ void opcontrol() {
       }
     }
 
+    if (master.get_digital_new_press(DIGITAL_DOWN) &&master.get_digital_new_press(DIGITAL_LEFT) ) {
+      aimMiddle = !aimMiddle;
+      if(aimMiddle){
+        
+        sensing.goal.xpos = 72;
+        sensing.goal.ypos = 124;
+        sensing.goal.zpos = 72;
+      }
+      else{
+        
+        sensing.goal.xpos = 20;
+        sensing.goal.ypos = 124;
+        sensing.goal.zpos = 30;
+      }
+    }
+    
     delay(20);
   }
 }

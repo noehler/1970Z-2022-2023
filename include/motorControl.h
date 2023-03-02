@@ -213,7 +213,7 @@ private:
     static double PIDscalar = 1;
     static double gyroScalar = 0.1;
     static double chassisScalar = 0.35; // 0.3;
-    static double turPredicScalar = 1;
+    static double turPredicScalar = .7;
     double angdiff;
     T = float(millis()) / 1000 - previousT;
     previousT += T;
@@ -236,11 +236,12 @@ private:
     static double previousveldiff = 0;
     static double IPIDang = 0;
     static double previousangdiff = 0;
+    
     if (!competition::is_disabled()) {
       IPIDang += angdiff;
       PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDang +
                      PID.turret.d * (angdiff - previousangdiff));
-      if (sensing.robot.turretLock && fabs(angdiff) < 5) {
+      if (sensing.robot.turretLock && fabs(angdiff) < 50) {
         gyroScalar = 0;
         chassisScalar = 0; // 0.3;
         turPredicScalar = 0;
@@ -261,7 +262,7 @@ private:
       double veldiff = gyroScalar * T * (sensing.robot.angAccel) -
                        sensing.robot.velW * chassisScalar +
                        turPredicScalar * sensing.robot.turvelocity +
-                       PIDPosition * PIDscalar - sensing.robot.turvelw;
+                       PIDPosition * PIDscalar ;
       IPIDvel += veldiff;
       // std::cout<<"\n"<<veldiff;
       PIDVelocity =
@@ -314,17 +315,17 @@ public:
         turretMotor(6, E_MOTOR_GEARSET_06, true),
         intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
-    PID.driveFR.p = .7;
-    PID.driveFR.i = 0;
-    PID.driveFR.d = 0;
+    PID.driveFR.p = .1;
+    PID.driveFR.i = .01;
+    PID.driveFR.d = 0.1;
 
-    PID.driveSS.p = 2;
-    PID.driveSS.i = .022;
-    PID.driveSS.d = 1.15;
+    PID.driveSS.p = 160;
+    PID.driveSS.i = 20;
+    PID.driveSS.d = 1200;
 
-    PID.turret.p = 0.8;
-    PID.turret.i = .02;
-    PID.turret.d = 27;
+    PID.turret.p = 1.2;
+    PID.turret.i = .05;
+    PID.turret.d = 1.9;
 
     PID.turret.p2 = 0.7;
     PID.turret.i2 = 0.0002;
@@ -606,260 +607,147 @@ public:
     boomShackalacka.set_value(false);
   }
 
-  void circleFollow(void) {
-    while (1) {
-      double radiusDifference = 9.45 / 2;
-      double radiusScalar = 1.2;
-      double speed = 60;
-      double speedR;
-      double speedL;
-
-      double radius = 20;
-
-      double radIn = (radius * radiusScalar - radiusDifference);
-      double radOut = (radius * radiusScalar + radiusDifference);
-      if (speed * radOut / radIn > 127) {
-        speed = speed * radIn / radOut;
-      }
-
-      speedL = speed * radIn / radOut;
-      speedR = speed * radOut / radIn;
-
-      if (speedL > 127) {
-        speedL = 127;
-      }
-      if (speedR > 127) {
-        speedR = 127;
-      }
-
-      if (speedL < -127) {
-        speedL = -127;
-      }
-      if (speedR < -127) {
-        speedR = -127;
-      }
-      lfD.move(speedL);
-      lbD.move(speedL);
-      rfD.move(speedR);
-      rbD.move(speedR);
-
-      logValue("x", sensing.robot.xpos, 0);
-      logValue("y", sensing.robot.ypos, 1);
-      logValue("lS", speedL, 2);
-      logValue("rS", speedR, 3);
-      logValue("lVel", lfD.get_actual_velocity(), 4);
-      logValue("rVel", rfD.get_actual_velocity(), 5);
-      outValsSDCard();
-      delay(20);
-    }
-  }
-
   void tailGater(bez_Return_t temp) {
-    double errorCurveMult = .1;
-    double etsWeight = .1;
-    rotateTo(atan((temp.basePoints[1][1] - temp.basePoints[0][1]) /
-                  (temp.basePoints[1][0] - temp.basePoints[0][0])) *
-             180 / M_PI);
-    double radiusDifference = 9.45 / 2;
-    double radiusScalar = 1;
+    rotateTo(atan((temp.returnPoints[0][1] - temp.returnPoints[1][1])/(temp.returnPoints[0][0] - temp.returnPoints[1][0]))*180/M_PI);
+    bool finished = false;
     int current = 0;
-    double IPIDSS = 0;
+    
     double errorCurveInteg = 0;
-    double IPIDfw = 0;
-    double previousets = 0;
-    double previouset = 0;
-    while (current < temp.length) {
-      moveToInfoInternal_t moveI;
-      double dist =
-          sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0], 2) +
-               pow(sensing.robot.ypos - temp.returnPoints[current][1], 2));
-      while (dist > move.tolerance) {
-        /*
-        function logic:
-        find errors of position, turn to target if robot cannot move in a arc to
-        it, than move to target in a arc. tracking center of robot is at the
-        center of two tracking wheels do not recomand using this funciton with
-        SpinTo() function. perferd to have a sperate thread for calculating live
-        position, than just take out codes from line 41 to line 48
-        */
-        double currentheading = sensing.robot.angle / 180 * M_PI;
-        double etx =
-            temp.returnPoints[current][0] - sensing.robot.xpos; // change of x
-        double ety =
-            temp.returnPoints[current][1] - sensing.robot.ypos; // change of y
 
-        double etxPrev = temp.returnPoints[current - 1][0] -
-                         sensing.robot.xpos; // change of x
-        double etyPrev = temp.returnPoints[current - 1][1] -
-                         sensing.robot.ypos; // change of y
-        double distToPrev = sqrt(pow(etxPrev, 2) + pow(etyPrev, 2));
-        double distance;
-        if (temp.length - 1 != current) {
-          distance = sqrt(pow(etx, 2) + pow(ety, 2));
-        } else {
-          distance = 24;
+    double radiusScalar = 0;
+    double radiusDifference = 9.45 / 2;
+
+    //setting starting to nan so they get set to 0 by if statements
+    double integralSS = NAN;
+    double integralFW = NAN;
+    double prevET = NAN;
+    double prevETS = NAN;
+    while (finished == false){
+      while(1){
+        double et = sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0],2) + pow(sensing.robot.ypos - temp.returnPoints[current][1],2));
+
+        if (et < move.tolerance){
+          current++;
+          if(current == temp.length+1){
+            finished = true;
+          }
+          break;
         }
-        double et =
-            temp.returnVelocity[current] * .4 -
-            sqrt(pow(sensing.robot.velX, 2) + pow(sensing.robot.velY, 2));
-
-        if (distToPrev < move.tolerance) {
-          if (current < temp.length) {
-            move.targetHeading = atan((temp.returnPoints[current + 1][1] -
-                                       temp.returnPoints[current][1]) /
-                                      (temp.returnPoints[current + 1][0] -
-                                       temp.returnPoints[current][0]));
-            if ((temp.returnPoints[current][0] -
-                 temp.returnPoints[current - 1][0]) < 0) {
-              move.targetHeading += M_PI;
-            } else if ((temp.returnPoints[current][0] -
-                        temp.returnPoints[current - 1][0]) == 0) {
-              move.targetHeading = M_PI / 2 * (fabs(ety) / ety);
+        //checking if closer to other point
+        /*if (et > 6){
+          double bET = et;
+          for (int i = current; i<temp.length; i++){
+            double tempet = sqrt(pow(sensing.robot.xpos - temp.returnPoints[i][0],2) + pow(sensing.robot.ypos - temp.returnPoints[i][1],2));
+            if (tempet < et){
+              current = i;
+              et = tempet;
             }
+          }
+          if (bET != et){
+            integralSS = 0;
+            integralFW = 0;
+          }
+        }   */   
 
+        delay(10);
+
+        //calculating dist left
+        for (int i = current;i <temp.length-3; i +=3){
+          et += sqrt(pow(temp.returnPoints[i+3][0] - temp.returnPoints[i][0],2) + pow(temp.returnPoints[i+3][1] - temp.returnPoints[i][1],2));
+        }
+
+        //calculating dist between
+        //code to calculate distance and determine if negative or positive
+        double ets;
+        if (current !=0){
+          double m = (temp.returnPoints[current][1] - temp.returnPoints[current-1][1])/(temp.returnPoints[current][0] - temp.returnPoints[current-1][0]);
+          double lineAngle = atan(m);
+          if ((temp.returnPoints[current][0] - temp.returnPoints[current-1][0]) < 0){
+            lineAngle = lineAngle + M_PI;
           } else {
-            move.targetHeading = currentheading;
+            lineAngle = lineAngle +2*M_PI;
           }
 
-        } else {
-          move.targetHeading =
-              atan((temp.returnPoints[current][1] - sensing.robot.ypos) /
-                   (temp.returnPoints[current][0] - sensing.robot.xpos));
-            if ((temp.returnPoints[current][0] - sensing.robot.xpos) < 0) {
-              move.targetHeading += M_PI;
-            } else if ((temp.returnPoints[current][0] - sensing.robot.xpos) == 0) {
-              move.targetHeading = M_PI / 2 * (fabs(ety) / ety);
-            }
+          double robotToPoint = atan((temp.returnPoints[current][1] - temp.returnPoints[current-1][1])/(temp.returnPoints[current][0] - temp.returnPoints[current-1][0]));
+          if ((temp.returnPoints[current][0] - temp.returnPoints[current-1][0]) < 0){
+            robotToPoint = robotToPoint + M_PI;
+          } else {
+            robotToPoint = robotToPoint +2*M_PI;
+          }
+
+          double angleDiff = lineAngle - robotToPoint;
+          int multiplier = fabs(angleDiff)/angleDiff;
+
+          ets= fabs(-m*sensing.robot.xpos + sensing.robot.ypos + m*temp.returnPoints[current][0] - temp.returnPoints[current][1])/sqrt(pow(temp.returnPoints[current][1],2)+1);
+        }
+        else{
+          ets = 0;
         }
 
-        moveI.ets = move.targetHeading - currentheading;
-        if (moveI.ets < -M_PI) {
-          moveI.ets += 2 * M_PI;
+        //checking if NANs
+        if (isnanf(prevET)){
+          prevET = et;
         }
-        if (moveI.ets > M_PI) {
-          moveI.ets -= 2 * M_PI;
+        if (isnanf(prevETS)){
+          prevETS = ets;
         }
-
-        moveI.ets = moveI.ets * 180 / M_PI;
-        IPIDSS += moveI.ets;
-        IPIDfw += et;
-        if (move.moveToforwardToggle == 1) {
-          moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
-                        PID.driveSS.d * (moveI.ets - previousets);
-        } else {
-          moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
-                        PID.driveSS.d * (moveI.ets - previousets);
+        if (isnanf(integralFW)){
+          integralFW = 0;
+        }
+        if (isnanf(integralSS)){
+          integralSS = 0;
         }
 
-        if (move.moveToforwardToggle == 1) {
-          moveI.PIDFW = move.moveToforwardToggle *
-                        (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
-                         PID.driveFR.d * (et - previouset));
-        } else {
-          moveI.PIDFW = move.moveToforwardToggle *
-                        (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
-                         PID.driveFR.d * (et - previouset));
-        }
+        //calculating forward speed and updating integrals/derivatives
+        double FWVal = et*PID.driveFR.p + integralFW*PID.driveFR.i + (et-prevET)*PID.driveFR.d;
+        integralFW += et;
+        logValue("sd", (ets-prevETS)*PID.driveSS.d, 2);
+        prevET = et;
 
-        previousets = moveI.ets;
-        previouset = et;
-        moveI.PIDSSFLAT = moveI.PIDSS;
-        moveI.PIDFWFLAT = moveI.PIDFW;
-        if (moveI.PIDFWFLAT >= move.speed_limit) {
-          moveI.PIDFWFLAT = move.speed_limit;
-        }
-        if (moveI.PIDFWFLAT <= -move.speed_limit) {
-          moveI.PIDFWFLAT = -move.speed_limit;
-        }
-        if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
-          moveI.PIDSSFLAT = 2 * move.speed_limit;
-        }
-        if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
-          moveI.PIDSSFLAT = -2 * move.speed_limit;
-        }
         double radIn;
         double radOut;
+        radIn = (temp.radius[current] * radiusScalar - radiusDifference);
+        radOut = (temp.radius[current] * radiusScalar + radiusDifference);
 
-        if (temp.radius[current] != 420.69) {
-          radIn = (temp.radius[current] * radiusScalar - radiusDifference);
-          radOut = (temp.radius[current] * radiusScalar + radiusDifference);
+        if (FWVal * radOut / radIn > 127) {
+          FWVal = FWVal * radIn / radOut;
+        }
+
+        //calculating side speed and updating integrals/derivatives
+        double SSVal = ets*PID.driveSS.p + integralSS*PID.driveSS.i + (ets-prevETS)*PID.driveSS.d;
+        integralSS += ets;
+        logValue("fd", (et-prevET)*PID.driveFR.d, 5);
+        prevETS = ets;
+
+        if (fabs(FWVal) + fabs(SSVal)>127){
+          FWVal = (fabs(FWVal) - fabs(SSVal))*FWVal/fabs(FWVal);
+        }
+
+        double PIDSpeedL = FWVal-SSVal;
+        double PIDSpeedR = FWVal+SSVal;
+
+        
+        if (ets > 0) {
+          PIDSpeedL = PIDSpeedL * fabs(radIn / radOut);
+          PIDSpeedR = PIDSpeedR * fabs(radOut / radIn);
         } else {
-          radIn = 1;
-          radOut = 1;
+          PIDSpeedR = PIDSpeedR * fabs(radIn / radOut);
+          PIDSpeedL = PIDSpeedL * fabs(radOut / radIn);
         }
-
-        /*if (moveI.ets>10){
-            radIn = radOut;
-        }*/
-
-        if (moveI.PIDFWFLAT * radOut / radIn > 127) {
-          moveI.PIDFWFLAT = moveI.PIDFWFLAT * radIn / radOut;
-        }
-
-        if (moveI.ets > 0) {
-          moveI.PIDSpeedL = moveI.PIDFWFLAT * radIn / radOut;
-          moveI.PIDSpeedR = moveI.PIDFWFLAT * radOut / radIn;
-        } else {
-          moveI.PIDSpeedR = moveI.PIDFWFLAT * radIn / radOut;
-          moveI.PIDSpeedL = moveI.PIDFWFLAT * radOut / radIn;
-        }
-
-        // speed of left wheel = linear speed * (radius-a)/(radius+a) *
-        // (1-integral of error on radius*weightint) * (1-ets*weighets); speed
-        // of right wheel = linear speed * (radius+a)/(radius-a)* (1+integral of
-        // error on radius*weightint) * (1+ets*weightets);
-        if (distToPrev < move.tolerance) {
-          moveI.PIDSpeedL += moveI.PIDSSFLAT * (1 - errorCurveInteg) *
-                             errorCurveMult * (1 - moveI.ets * etsWeight);
-          moveI.PIDSpeedR += moveI.PIDSSFLAT * (1 + errorCurveInteg) *
-                             errorCurveMult * (1 + moveI.ets * etsWeight);
-        } else {
-          moveI.PIDSpeedL += moveI.ets;
-          moveI.PIDSpeedR += moveI.ets;
-        }
-
-        if (moveI.PIDSpeedL > 127) {
-          moveI.PIDSpeedL = 127;
-        }
-        if (moveI.PIDSpeedR > 127) {
-          moveI.PIDSpeedR = 127;
-        }
-
-        if (moveI.PIDSpeedL < -127) {
-          moveI.PIDSpeedL = -127;
-        }
-        if (moveI.PIDSpeedR < -127) {
-          moveI.PIDSpeedR = -127;
-        }
-        dist = sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0], 2) +
-                    pow(sensing.robot.ypos - temp.returnPoints[current][1], 2));
-        lfD.move(moveI.PIDSpeedL);
-        lbD.move(moveI.PIDSpeedL);
-        rfD.move(moveI.PIDSpeedR);
-        rbD.move(moveI.PIDSpeedR);
-        logValue("x", sensing.robot.xpos, 2);
-        logValue("y", sensing.robot.ypos, 3);
-        logValue("lS", moveI.PIDSpeedL, 4);
-        logValue("rS", moveI.PIDSpeedR, 5);
-        logValue("lVel", lfD.get_actual_velocity(), 6);
-        logValue("rVel", rfD.get_actual_velocity(), 7);
-        logValue("liveRad",
-                 (lfD.get_actual_velocity() * radiusDifference +
-                  lfD.get_actual_velocity() * radiusDifference) /
-                     (rfD.get_actual_velocity() - lfD.get_actual_velocity()),
-                 7);
-        logValue("preRad", temp.radius[current], 8);
-        double liveRad =
-            (lfD.get_actual_velocity() * radiusDifference +
-             lfD.get_actual_velocity() * radiusDifference) /
-            (rfD.get_actual_velocity() - lfD.get_actual_velocity());
-        errorCurveInteg +=
-            liveRad * (moveI.ets / fabs(moveI.ets)) - temp.radius[current];
+        
+        lfD.move(PIDSpeedL);
+        lbD.move(PIDSpeedL);
+        rfD.move(PIDSpeedR);
+        rbD.move(PIDSpeedR);
+        logValue("sp", ets*PID.driveSS.p, 8);
+        logValue("si", integralSS*PID.driveSS.i, 9);
+        logValue("fp", et*PID.driveFR.p, 3);
+        logValue("fi", integralFW*PID.driveFR.i, 4);
+        logValue("x", sensing.robot.xpos, 6);
+        logValue("y", sensing.robot.ypos, 7);
         outValsSDCard();
         delay(20);
       }
-      current++;
-      delay(20);
     }
 
     lfD.brake();
@@ -1000,8 +888,10 @@ public:
   }
 
   // power controller for differential motors between intake and turret
+  bool runTurretIntake = true;
   void turretIntakeController() {
-    while (!competition::is_disabled()) {
+    runTurretIntake = true;
+    while (!competition::is_disabled() && runTurretIntake == true) {
 
       turretMotor.set_brake_mode(E_MOTOR_BRAKE_HOLD);
       if (!competition::is_autonomous()) {
@@ -1034,6 +924,9 @@ public:
 
       delay(optimalDelay);
     }
+    turretMotor.brake();
+    intakeMotor.brake();
+
     std::cout << "ended turret\n";
   }
 
@@ -1071,7 +964,7 @@ public:
     rbD.move_voltage(4000);
 
     intakeMotor.move_voltage(12000);
-    delay(500);
+    delay(1000);
     intakeMotor.move_voltage(000);
     /*
     delay(500);

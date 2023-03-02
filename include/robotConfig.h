@@ -24,7 +24,7 @@ class Object{
         angle, turAng, turvelw,
         velX, velY, velW, turvelocity ,odovelW , imuvelw, 
         angAccel, xAccel, yAccel;
-        bool turretLock;
+        bool turretLock = false;
 };
 
 extern double targetAngleOffest;
@@ -158,15 +158,22 @@ class sensing_t{
                 inertial2.reset();
                 int startTime = 0;
                 while (inertial.is_calibrating()  || inertial2.is_calibrating()){
-                    if (millis() - startTime > 3000 && master.get_digital(pros::E_CONTROLLER_DIGITAL_B)){
-                        inertialsSet = true;
+                    if (millis() - startTime > 3000){
+                        master.clear_line(2);
+                        delay(50);
+                        master.print(2, 0, "CalibrationFailing");
                     }
-                    delay(40);
+                    if (millis() - startTime > 3000 && master.get_digital(E_CONTROLLER_DIGITAL_B)){
+                        break;
+                    }
+                    delay(50);
                     std::cout << "calibrating\n";
                 }
                 std::cout << "calibrated\n";
                 inertialsSet = true;
             }
+                master.print(2, 0, "Calibration Done");
+
 
             GPS_sensor.set_offset(0, 0.1143);
 
@@ -365,7 +372,9 @@ class sensing_t{
                 double V_disk = P2 / P3;
                 double turOfCenterOffset = 0; // offcenter offset, not tested yet
                 //outputting calculated values
-                goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
+                if (!robot.turretLock){
+                    goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
+                }
                 while (goalAngle > 180){
                     goalAngle -= 360;
                 }

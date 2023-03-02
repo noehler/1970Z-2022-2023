@@ -21,14 +21,16 @@ void driveTuner(void){
   delay(1000);
   while(1){
     for (int i = 0; i < 2; i++){
-        double points[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos + 48, sensing.robot.ypos}, {sensing.robot.xpos+72, sensing.robot.ypos+24}, {sensing.robot.xpos+96, sensing.robot.ypos+48}, {sensing.robot.xpos+96, sensing.robot.ypos+96}};
+        //double points[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos + 48, sensing.robot.ypos}, {sensing.robot.xpos+72, sensing.robot.ypos+24}, {sensing.robot.xpos+96, sensing.robot.ypos+48}, {sensing.robot.xpos+96, sensing.robot.ypos+96}};
+        double points[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos+48, sensing.robot.ypos}, {sensing.robot.xpos + 48, sensing.robot.ypos + 48}, {sensing.robot.xpos, sensing.robot.ypos+48}, {sensing.robot.xpos, sensing.robot.ypos}};
+        
         bez_Return_t temp = beziers.generatePath(points, 5, 99);
         mc.tailGater(temp);
         delay(400);
-        /*double points2[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos-48}, {sensing.robot.xpos - 48, sensing.robot.ypos - 48}, {sensing.robot.xpos-48, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos}};
+        double points2[5][2]{{sensing.robot.xpos, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos-48}, {sensing.robot.xpos - 48, sensing.robot.ypos - 48}, {sensing.robot.xpos-48, sensing.robot.ypos}, {sensing.robot.xpos, sensing.robot.ypos}};
         temp = beziers.generatePath(points2, 5, 99);
         mc.tailGater(temp);
-        delay(400);*/
+        delay(400);
     }
   }
   
