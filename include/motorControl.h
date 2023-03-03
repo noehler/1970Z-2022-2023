@@ -311,21 +311,22 @@ public:
       : lfD(5, E_MOTOR_GEARSET_06, true), lbD(4, E_MOTOR_GEARSET_06, false),
         rfD(2, E_MOTOR_GEARSET_06, false), rbD(1, E_MOTOR_GEARSET_06, true),
         flyWheel1(13, E_MOTOR_GEARSET_06, false),
-        flyWheel2(17, E_MOTOR_GEARSET_06, true),
+        flyWheel2(16, E_MOTOR_GEARSET_06, true),
         turretMotor(6, E_MOTOR_GEARSET_06, true),
         intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
-    PID.driveFR.p = .1;
-    PID.driveFR.i = .01;
-    PID.driveFR.d = 0.1;
+    
+    PID.driveFR.p = 2;
+    PID.driveFR.i = .5;
+    PID.driveFR.d = 1;
 
-    PID.driveSS.p = 160;
-    PID.driveSS.i = 20;
-    PID.driveSS.d = 1200;
+    PID.driveSS.p = 1.8;
+    PID.driveSS.i = .03;
+    PID.driveSS.d = 1.15;
 
     PID.turret.p = 1.2;
-    PID.turret.i = .05;
-    PID.turret.d = 1.9;
+    PID.turret.i = .03;
+    PID.turret.d = 2.1;
 
     PID.turret.p2 = 0.7;
     PID.turret.i2 = 0.0002;
@@ -932,7 +933,7 @@ public:
 
   void raiseAScore(int times) {
     shoot3.set_value(true);
-    delay(500);
+    delay(1000);
     shoot3.set_value(false);
     if (times > 1) {
       intakeMotor.move(-127);

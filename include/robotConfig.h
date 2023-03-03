@@ -107,15 +107,15 @@ class sensing_t{
             }
             while(angBetween < 0){
                 angBetween+=360;
-            }return angBetween;
-            double failOut = robot.angle;
+            }
+            double failOut  = robot.angle + 180;
             while (failOut > 360){
                 failOut -= 360;
             }
             while (failOut < 0){
                 failOut += 360;
             }
-            if (distSense.get() < 70 && !master.get_digital(E_CONTROLLER_DIGITAL_X)){
+            if (distSense.get() < 40 && !master.get_digital(E_CONTROLLER_DIGITAL_X)){
                 if (millis() - prevBadTime > 500){
                     return angBetween;
                 }
@@ -188,11 +188,11 @@ class sensing_t{
                 static double ydiff = 0, xdiff = 0;//diff from middle/gps origin
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
                 if (isRed){
-                    xdiff = -double(temp_status.y)*39.37;
-                    ydiff = double(temp_status.x)*39.37;
-                } else{
                     xdiff = double(temp_status.y)*39.37;
                     ydiff = -double(temp_status.x)*39.37;
+                } else{
+                    xdiff = -double(temp_status.y)*39.37;
+                    ydiff = double(temp_status.x)*39.37;
                 }
                 if (GPS_sensor.get_error() < 0.012){
                     robot.xpos = 72 + xdiff;
@@ -381,7 +381,7 @@ class sensing_t{
                 while (goalAngle < -180){
                     goalAngle += 360;
                 }
-                //goalSpeed = V_disk;
+                goalSpeed = V_disk;
                 robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2))*180/M_PI;
                 delay(optimalDelay);
             }

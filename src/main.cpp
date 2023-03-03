@@ -63,7 +63,9 @@ void competition_initialize() {}
 void autonomous() {
   //motorControl_t mc;
   //mc.circleFollow();
-  driveTuner();
+  //driveTuner();
+  autonType = skillsAuton;
+  isRed = true;
   if (autonType == winPointClose) { // close win Point auton
     sensing.robot.xpos = 6.25 + 24;
     sensing.robot.ypos = 24 - 6;
@@ -119,7 +121,7 @@ void autonomous() {
                                          
   } else if (autonType == noAuton) {
   } else {
-    // skillsAutonomous();
+    skillsAutonomous();
   }
 }
 
