@@ -9,7 +9,6 @@
 #include "robotConfig.h"
 #include "sdLogging.h"
 
-
 using namespace pros;
 
 class motorControl_t {
@@ -28,6 +27,10 @@ private:
   ADIDigitalOut ejectPiston;
   int optimalDelay = 20;
 
+  int drivePowerR;
+  int drivePowerL;
+  int intakePower;
+
   class PID_t {
   public:
     double p, i, d, p2, i2, d2;
@@ -39,8 +42,7 @@ private:
 
   class moveToInfoInternal_t {
   public:
-    double moveToxpos, moveToypos, targetHeading, ets, speed_limit = 100,
-                                                       errtheta = 5;
+    double moveToxpos, moveToypos, targetHeading, ets, speed_limit = 100;
     double dist = 0;      // change of position
     double distR = 0;     // chagne of right postion
     double distL = 0;     // change of left position
@@ -52,6 +54,7 @@ private:
     double prevPIDSS = 0; // PID turning speed at t = -1
     double PIDFWFLAT = 0; // variable used for keeping move forward speed < 100
     double PIDSSFLAT = 0;
+    double errtheta = 5;
     int moveToforwardToggle = 1, Stop_type = 2;
     double tolerance = 2;
   };
@@ -72,6 +75,7 @@ private:
     static double previousets = 0;
     static double IPIDfw = 0;
     static double previouset = 0;
+    double turnOrMoveMult = 1;
     if (move.resetMoveTo) {
       IPIDSS = 0;
       previousets = 0;
@@ -110,7 +114,6 @@ private:
     double dist = sqrt(pow(etx, 2) + pow(ety, 2));
     double et = dist * 10;
 
-    // std::cout << "\n Hi5";
     move.targetHeading = atan(ety / etx);
     if (etx < 0) {
       move.targetHeading += M_PI;
@@ -138,7 +141,13 @@ private:
       moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                     PID.driveSS.d * (moveI.ets - previousets);
     }
-    if (fabs(moveI.ets) < 10) {
+
+
+    if (fabs(moveI.ets) < move.errtheta*turnOrMoveMult) {
+      if (fabs(moveI.ets - previousets) < 4) {
+        IPIDSS = 0;
+        turnOrMoveMult = 1;
+      }
       if (move.moveToforwardToggle == 1) {
         moveI.PIDFW = move.moveToforwardToggle *
                       (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
@@ -149,11 +158,12 @@ private:
                        PID.driveFR.d * (et - previouset));
       }
     } else {
+      turnOrMoveMult = .2;
       moveI.PIDFW = 0;
     }
     previousets = moveI.ets;
     previouset = et;
-    moveI.PIDSSFLAT = moveI.PIDSS;
+    moveI.PIDSSFLAT = moveI.PIDSS * move.speed_limit / 127;
     moveI.PIDFWFLAT = moveI.PIDFW;
     if (moveI.PIDFWFLAT >= move.speed_limit) {
       moveI.PIDFWFLAT = move.speed_limit;
@@ -199,11 +209,20 @@ private:
     }
   }
 
-  double angularVelocityCalc(void) {
+  double angularVelocityCalc(int number) {
     // return master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + 250;
-    return sensing.goalSpeed * 1.56;
+    if (number ==3){
+      return sensing.goalSpeed*1.42+38;
+    }
+    else if(number == 2){
+      return sensing.goalSpeed*1.255+38.05;
+    }
+    else{
+      return sensing.goalSpeed*1.183+38.57;
+    }
   }
 
+  double angdiff;
   bool recoilPrevent;
   double turrControl(void) {
     static double PIDPosition = 0;
@@ -214,7 +233,6 @@ private:
     static double gyroScalar = 0.1;
     static double chassisScalar = 0.35; // 0.3;
     static double turPredicScalar = .7;
-    double angdiff;
     T = float(millis()) / 1000 - previousT;
     previousT += T;
     /*if (!competition::is_disabled() && !competition::is_autonomous()){
@@ -236,7 +254,7 @@ private:
     static double previousveldiff = 0;
     static double IPIDang = 0;
     static double previousangdiff = 0;
-    
+
     if (!competition::is_disabled()) {
       IPIDang += angdiff;
       PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDang +
@@ -251,20 +269,13 @@ private:
         chassisScalar = 0.35; // 0.3;
         turPredicScalar = 1;
       }
-      // std::cout << "\n" << goalAngle;
-      // std::cout << "\n x:" << sensing.robot.GPSxpos<<"
-      // y:"<<sensing.robot.GPSypos << " turretctl:"
-      // <<sensing.robot.turvelocity; std::cout << "\ntposition correction:" <<
-      // PIDPosition; std::cout << "\nangAccel         :" <<
-      // sensing.robot.angAccel;
 
       previousangdiff = angdiff;
       double veldiff = gyroScalar * T * (sensing.robot.angAccel) -
                        sensing.robot.velW * chassisScalar +
                        turPredicScalar * sensing.robot.turvelocity +
-                       PIDPosition * PIDscalar ;
+                       PIDPosition * PIDscalar;
       IPIDvel += veldiff;
-      // std::cout<<"\n"<<veldiff;
       PIDVelocity =
           (1 * veldiff + 0.01 * IPIDvel + 0.1 * (veldiff - previousveldiff));
       previousveldiff = veldiff;
@@ -290,22 +301,31 @@ private:
   }
 
   double intakeControl(void) {
-    int baseSPD;
-    if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) {
-      baseSPD = 127;
-    } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) ||
-               intakeRunning == 2) {
-      baseSPD = -127;
-    } else {
-      baseSPD = 0;
-    }
 
-    return baseSPD;
+    if (externalOverRide == false){
+      int baseSPD;
+      if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) {
+        baseSPD = 127;
+      } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) ||
+                intakeRunning == 2) {
+        baseSPD = -127;
+      } else {
+        baseSPD = 0;
+      }
+      return baseSPD;
+    }
+    else{
+      return intakePower;
+    }
+    
   }
+  
+  double diffFlyWheelW;
+  double diffFlyWheelW2;
 
 public:
   int intakeRunning;
-  bool spinRoller = 0;
+  bool externalOverRide = 0;
   // Constructor to assign values to the motors and PID values
   motorControl_t(void)
       : lfD(5, E_MOTOR_GEARSET_06, true), lbD(4, E_MOTOR_GEARSET_06, false),
@@ -315,14 +335,14 @@ public:
         turretMotor(6, E_MOTOR_GEARSET_06, true),
         intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
-    
+
     PID.driveFR.p = 2;
     PID.driveFR.i = .5;
     PID.driveFR.d = 1;
 
-    PID.driveSS.p = 1.8;
-    PID.driveSS.i = .03;
-    PID.driveSS.d = 1.15;
+    PID.driveSS.p = 1.3;
+    PID.driveSS.i = .035;
+    PID.driveSS.d = 15;
 
     PID.turret.p = 1.2;
     PID.turret.i = .03;
@@ -341,6 +361,7 @@ public:
   }
   moveToInfoExternal_t move;
   void driveDist(double goalDist, int P = -100, int I = -100, int D = -100) {
+    externalOverRide = true;
     if (P != -100) {
       PID.driveFR.p = P;
       PID.driveFR.i = I;
@@ -446,28 +467,11 @@ public:
       if (fabs(dist) < move.tolerance) {
         move.resetMoveTo = true;
         move.Stop_type = 1;
-        if (move.Stop_type == 1) {
-          // motor stop (hold)
-          lfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-          rfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-          lbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-          rbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-        } else {
-          // motor stop (coast)
-          lfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
-          rfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
-          lbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
-          rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
-        }
-        lfD.brake();
-        rfD.brake();
-        lbD.brake();
-        rbD.brake();
-      } else {
-        lfD.move(-moveI.PIDSpeedL);
-        rfD.move(-moveI.PIDSpeedR);
-        lbD.move(-moveI.PIDSpeedL);
-        rbD.move(-moveI.PIDSpeedR);
+        drivePowerL = 0;
+        drivePowerR = 0;
+      } else {        
+        drivePowerL = -moveI.PIDSpeedL;
+        drivePowerR = -moveI.PIDSpeedR;
       }
       distTraveled += double(lfD.get_position() + lbD.get_position() +
                              rfD.get_position() + rbD.get_position()) /
@@ -478,13 +482,14 @@ public:
       rbD.tare_position();
       delay(20);
     }
-    lfD.brake();
-    rfD.brake();
-    lbD.brake();
-    rbD.brake();
+    drivePowerL = 0;
+    drivePowerR = 0;
+
+    externalOverRide = false;
   }
 
   void rotateTo(double angleTo, int P = -100, int I = -100, int D = -100) {
+    externalOverRide = 1;
     if (P != -100) {
       PID.driveSS.p = P;
       PID.driveSS.i = I;
@@ -566,7 +571,6 @@ public:
 
       moveI.PIDSpeedR = -moveI.PIDSSFLAT;
       moveI.PIDSpeedL = moveI.PIDSSFLAT;
-      std::cout << "hi" << angleTo << "\n ";
       if (fabs(moveI.ets) < 2 &&
           fabs(lfD.get_actual_velocity()) + fabs(rfD.get_actual_velocity()) <
               40) {
@@ -575,30 +579,23 @@ public:
             1; ///////////////////////////////////////hey hey hey hey hey hey
         if (move.Stop_type == 1) {
           // motor stop (hold)
-          lfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-          rfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-          lbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-          rbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+          drivePowerL = 0;
+          drivePowerR = 0;
         } else {
           // motor stop (coast)
-          lfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
-          rfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
-          lbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
-          rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+          drivePowerL = 0;
+          drivePowerR = 0;
         }
 
       } else {
-        lfD.move_voltage(-moveI.PIDSpeedL * 12000 / 127);
-        rfD.move_voltage(-moveI.PIDSpeedR * 12000 / 127);
-        lbD.move_voltage(-moveI.PIDSpeedL * 12000 / 127);
-        rbD.move_voltage(-moveI.PIDSpeedR * 12000 / 127);
+        drivePowerL = -moveI.PIDSpeedL * 12000 / 127;
+        drivePowerR = -moveI.PIDSpeedR * 12000 / 127;
       }
       delay(20);
     }
-    lfD.brake();
-    rfD.brake();
-    lbD.brake();
-    rbD.brake();
+    drivePowerL = 0;
+    drivePowerR = 0;
+    externalOverRide = 0;
   }
 
   void setpistons(void) {
@@ -609,100 +606,116 @@ public:
   }
 
   void tailGater(bez_Return_t temp) {
-    rotateTo(atan((temp.returnPoints[0][1] - temp.returnPoints[1][1])/(temp.returnPoints[0][0] - temp.returnPoints[1][0]))*180/M_PI);
+    rotateTo(atan((temp.returnPoints[0][1] - temp.returnPoints[1][1]) /
+                  (temp.returnPoints[0][0] - temp.returnPoints[1][0])) *
+             180 / M_PI);
     bool finished = false;
     int current = 0;
-    
+
     double errorCurveInteg = 0;
 
     double radiusScalar = 0;
     double radiusDifference = 9.45 / 2;
 
-    //setting starting to nan so they get set to 0 by if statements
+    // setting starting to nan so they get set to 0 by if statements
     double integralSS = NAN;
     double integralFW = NAN;
     double prevET = NAN;
     double prevETS = NAN;
-    while (finished == false){
-      while(1){
-        double et = sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0],2) + pow(sensing.robot.ypos - temp.returnPoints[current][1],2));
+    while (finished == false) {
+      while (1) {
+        double et =
+            sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0], 2) +
+                 pow(sensing.robot.ypos - temp.returnPoints[current][1], 2));
 
-        if (et < move.tolerance){
+        if (et < move.tolerance) {
           current++;
-          if(current == temp.length+1){
+          if (current == temp.length + 1) {
             finished = true;
           }
           break;
         }
-        //checking if closer to other point
+        // checking if closer to other point
         /*if (et > 6){
           double bET = et;
           for (int i = current; i<temp.length; i++){
-            double tempet = sqrt(pow(sensing.robot.xpos - temp.returnPoints[i][0],2) + pow(sensing.robot.ypos - temp.returnPoints[i][1],2));
-            if (tempet < et){
-              current = i;
-              et = tempet;
+            double tempet = sqrt(pow(sensing.robot.xpos -
+        temp.returnPoints[i][0],2) + pow(sensing.robot.ypos -
+        temp.returnPoints[i][1],2)); if (tempet < et){ current = i; et = tempet;
             }
           }
           if (bET != et){
             integralSS = 0;
             integralFW = 0;
           }
-        }   */   
+        }   */
 
         delay(10);
 
-        //calculating dist left
-        for (int i = current;i <temp.length-3; i +=3){
-          et += sqrt(pow(temp.returnPoints[i+3][0] - temp.returnPoints[i][0],2) + pow(temp.returnPoints[i+3][1] - temp.returnPoints[i][1],2));
+        // calculating dist left
+        for (int i = current; i < temp.length - 3; i += 3) {
+          et += sqrt(
+              pow(temp.returnPoints[i + 3][0] - temp.returnPoints[i][0], 2) +
+              pow(temp.returnPoints[i + 3][1] - temp.returnPoints[i][1], 2));
         }
 
-        //calculating dist between
-        //code to calculate distance and determine if negative or positive
+        // calculating dist between
+        // code to calculate distance and determine if negative or positive
         double ets;
-        if (current !=0){
-          double m = (temp.returnPoints[current][1] - temp.returnPoints[current-1][1])/(temp.returnPoints[current][0] - temp.returnPoints[current-1][0]);
+        if (current != 0) {
+          double m = (temp.returnPoints[current][1] -
+                      temp.returnPoints[current - 1][1]) /
+                     (temp.returnPoints[current][0] -
+                      temp.returnPoints[current - 1][0]);
           double lineAngle = atan(m);
-          if ((temp.returnPoints[current][0] - temp.returnPoints[current-1][0]) < 0){
+          if ((temp.returnPoints[current][0] -
+               temp.returnPoints[current - 1][0]) < 0) {
             lineAngle = lineAngle + M_PI;
           } else {
-            lineAngle = lineAngle +2*M_PI;
+            lineAngle = lineAngle + 2 * M_PI;
           }
 
-          double robotToPoint = atan((temp.returnPoints[current][1] - temp.returnPoints[current-1][1])/(temp.returnPoints[current][0] - temp.returnPoints[current-1][0]));
-          if ((temp.returnPoints[current][0] - temp.returnPoints[current-1][0]) < 0){
+          double robotToPoint = atan((temp.returnPoints[current][1] -
+                                      temp.returnPoints[current - 1][1]) /
+                                     (temp.returnPoints[current][0] -
+                                      temp.returnPoints[current - 1][0]));
+          if ((temp.returnPoints[current][0] -
+               temp.returnPoints[current - 1][0]) < 0) {
             robotToPoint = robotToPoint + M_PI;
           } else {
-            robotToPoint = robotToPoint +2*M_PI;
+            robotToPoint = robotToPoint + 2 * M_PI;
           }
 
           double angleDiff = lineAngle - robotToPoint;
-          int multiplier = fabs(angleDiff)/angleDiff;
+          int multiplier = fabs(angleDiff) / angleDiff;
 
-          ets= fabs(-m*sensing.robot.xpos + sensing.robot.ypos + m*temp.returnPoints[current][0] - temp.returnPoints[current][1])/sqrt(pow(temp.returnPoints[current][1],2)+1);
-        }
-        else{
+          ets = fabs(-m * sensing.robot.xpos + sensing.robot.ypos +
+                     m * temp.returnPoints[current][0] -
+                     temp.returnPoints[current][1]) /
+                sqrt(pow(temp.returnPoints[current][1], 2) + 1);
+        } else {
           ets = 0;
         }
 
-        //checking if NANs
-        if (isnanf(prevET)){
+        // checking if NANs
+        if (isnanf(prevET)) {
           prevET = et;
         }
-        if (isnanf(prevETS)){
+        if (isnanf(prevETS)) {
           prevETS = ets;
         }
-        if (isnanf(integralFW)){
+        if (isnanf(integralFW)) {
           integralFW = 0;
         }
-        if (isnanf(integralSS)){
+        if (isnanf(integralSS)) {
           integralSS = 0;
         }
 
-        //calculating forward speed and updating integrals/derivatives
-        double FWVal = et*PID.driveFR.p + integralFW*PID.driveFR.i + (et-prevET)*PID.driveFR.d;
+        // calculating forward speed and updating integrals/derivatives
+        double FWVal = et * PID.driveFR.p + integralFW * PID.driveFR.i +
+                       (et - prevET) * PID.driveFR.d;
         integralFW += et;
-        logValue("sd", (ets-prevETS)*PID.driveSS.d, 2);
+        logValue("sd", (ets - prevETS) * PID.driveSS.d, 2);
         prevET = et;
 
         double radIn;
@@ -714,20 +727,20 @@ public:
           FWVal = FWVal * radIn / radOut;
         }
 
-        //calculating side speed and updating integrals/derivatives
-        double SSVal = ets*PID.driveSS.p + integralSS*PID.driveSS.i + (ets-prevETS)*PID.driveSS.d;
+        // calculating side speed and updating integrals/derivatives
+        double SSVal = ets * PID.driveSS.p + integralSS * PID.driveSS.i +
+                       (ets - prevETS) * PID.driveSS.d;
         integralSS += ets;
-        logValue("fd", (et-prevET)*PID.driveFR.d, 5);
+        logValue("fd", (et - prevET) * PID.driveFR.d, 5);
         prevETS = ets;
 
-        if (fabs(FWVal) + fabs(SSVal)>127){
-          FWVal = (fabs(FWVal) - fabs(SSVal))*FWVal/fabs(FWVal);
+        if (fabs(FWVal) + fabs(SSVal) > 127) {
+          FWVal = (fabs(FWVal) - fabs(SSVal)) * FWVal / fabs(FWVal);
         }
 
-        double PIDSpeedL = FWVal-SSVal;
-        double PIDSpeedR = FWVal+SSVal;
+        double PIDSpeedL = FWVal - SSVal;
+        double PIDSpeedR = FWVal + SSVal;
 
-        
         if (ets > 0) {
           PIDSpeedL = PIDSpeedL * fabs(radIn / radOut);
           PIDSpeedR = PIDSpeedR * fabs(radOut / radIn);
@@ -735,15 +748,15 @@ public:
           PIDSpeedR = PIDSpeedR * fabs(radIn / radOut);
           PIDSpeedL = PIDSpeedL * fabs(radOut / radIn);
         }
-        
+
         lfD.move(PIDSpeedL);
         lbD.move(PIDSpeedL);
         rfD.move(PIDSpeedR);
         rbD.move(PIDSpeedR);
-        logValue("sp", ets*PID.driveSS.p, 8);
-        logValue("si", integralSS*PID.driveSS.i, 9  );
-        logValue("fp", et*PID.driveFR.p, 3);
-        logValue("fi", integralFW*PID.driveFR.i, 4);
+        logValue("sp", ets * PID.driveSS.p, 8);
+        logValue("si", integralSS * PID.driveSS.i, 9);
+        logValue("fp", et * PID.driveFR.p, 3);
+        logValue("fi", integralFW * PID.driveFR.i, 4);
         logValue("x", sensing.robot.xpos, 6);
         logValue("y", sensing.robot.ypos, 7);
         outValsSDCard();
@@ -765,8 +778,11 @@ public:
     }
   }
 
+  bool autoDriveRun = true;
   void autonDriveController(void) {
-    while (!competition::is_disabled() && competition::is_autonomous()) {
+    autoDriveRun = true;
+    while (!competition::is_disabled() && competition::is_autonomous() &&
+           autoDriveRun == true) {
 
       static double leftSpd = 0;
       static double rightSpd = 0;
@@ -785,19 +801,29 @@ public:
       if (rightSpd < -127) {
         rightSpd = -127;
       }
-
-      lfD.move(leftSpd);
-      lbD.move(leftSpd);
-      rfD.move(rightSpd);
-      rbD.move(rightSpd);
+      if (externalOverRide == false) {
+        lfD.move(leftSpd);
+        lbD.move(leftSpd);
+        rfD.move(rightSpd);
+        rbD.move(rightSpd);
+      }
+      else{
+        lfD.move_voltage(drivePowerL);
+        lbD.move_voltage(drivePowerL);
+        rfD.move_voltage(drivePowerR);
+        rbD.move_voltage(drivePowerR);
+      }
 
       delay(optimalDelay);
     }
+    lfD.brake();
+    lbD.brake();
+    rfD.brake();
+    rbD.brake();
   }
 
   void driveController() {
     while (!competition::is_disabled()) {
-      // std::cout << "drive\n";
       double leftSpd;
       double rightSpd;
       double leftSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) +
@@ -814,13 +840,11 @@ public:
       rbD.move_voltage(rightSpd);
       delay(optimalDelay);
     }
-    std::cout << "ended drive\n";
   }
 
   // voltage controller for flywheel motors
   void flyController() {
     while (!competition::is_disabled()) {
-      // std::cout << "fly\n";
       static double IPIDang = 0;
       static double IPIDang2 = 0;
       if (competition::is_disabled()) {
@@ -831,10 +855,10 @@ public:
       double flyWVolt2;
       double flyWheelW = flyWheel1.get_actual_velocity();
       double flyWheelW2 = flyWheel2.get_actual_velocity();
-      double diffFlyWheelW = angularVelocityCalc() - flyWheelW;
-      double diffFlyWheelW2 = angularVelocityCalc() - flyWheelW2;
-      static double prevFWdiffSPD = angularVelocityCalc();
-      static double prevFWdiffSPD2 = angularVelocityCalc();
+      diffFlyWheelW = angularVelocityCalc(sensing.robot.magFullness) - flyWheelW;
+      diffFlyWheelW2 = angularVelocityCalc(sensing.robot.magFullness) - flyWheelW2;
+      static double prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
+      static double prevFWdiffSPD2 = angularVelocityCalc(sensing.robot.magFullness);
 
       IPIDang += diffFlyWheelW;
       IPIDang2 += diffFlyWheelW2;
@@ -871,12 +895,12 @@ public:
 
       if (isnanf(flyWVolt)) {
         flyWVolt = 0;
-        prevFWdiffSPD = angularVelocityCalc();
+        prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
         IPIDang = 0;
       }
       if (isnanf(flyWVolt2)) {
         flyWVolt2 = 0;
-        prevFWdiffSPD2 = angularVelocityCalc();
+        prevFWdiffSPD2 = angularVelocityCalc(sensing.robot.magFullness);
         IPIDang2 = 0;
       }
 
@@ -885,7 +909,6 @@ public:
 
       delay(optimalDelay);
     }
-    std::cout << "ended fly\n";
   }
 
   // power controller for differential motors between intake and turret
@@ -928,20 +951,32 @@ public:
     turretMotor.brake();
     intakeMotor.brake();
 
-    std::cout << "ended turret\n";
   }
 
-  void raiseAScore(int times) {
-    shoot3.set_value(true);
-    delay(1000);
-    shoot3.set_value(false);
-    if (times > 1) {
-      intakeMotor.move(-127);
-      delay(3000);
-      intakeMotor.move(0);
-      shoot3.set_value(true);
-      delay(500);
-      shoot3.set_value(false);
+  void raiseAScore(int number) {
+    for (int i = 0; i<3; i++)
+    {
+      if(sensing.magFull){
+        while(fabs(angdiff)>3 && (fabs(diffFlyWheelW) + fabs(diffFlyWheelW2))/2 < 30){
+        delay(20);
+        }
+        if(number == 3){
+          shoot3.set_value(true);
+          delay(300);
+          shoot3.set_value(false);
+        }
+        else{
+          shoot1.set_value(true);
+          delay(300);
+          shoot1.set_value(false);
+        }
+        break;
+      }
+      else{
+        intakeRunning = 1;
+        delay(3000);
+        intakeRunning = 0;
+      }
     }
   }
 
@@ -958,53 +993,56 @@ public:
       sensing.goalSpeed = 312;
     }
   }
-  void driveToRoller(void) {
-    lfD.move_voltage(4000);
-    lbD.move_voltage(4000);
-    rfD.move_voltage(4000);
-    rbD.move_voltage(4000);
 
-    intakeMotor.move_voltage(12000);
-    delay(1000);
-    intakeMotor.move_voltage(000);
-    /*
-    delay(500);
-    spinRoller = true;
-    int startTime = millis();
-    while(spinRoller == true && millis() - startTime < 4000){
-        static int pwr = 4000;
-        if (!sensing.rollerIsGood() ||
-    fabs(intakeMotor.get_actual_velocity()-60) < 20){ if
-    (sensing.underRoller()){ if (fabs(intakeMotor.get_actual_velocity()) < 60){
-                    if (pwr < 12000){
-                        pwr+=50;
-                    }
-                    else{
-                        pwr=12000;
-                    }
-                }
-                else{
-                    if (pwr > 2000){
-                        pwr-=10;
-                    }
-                    else{
-                        pwr = 2000;
-                    }
-                }
-                intakeMotor.move_voltage(pwr);
-            }
-            else{
-                intakeMotor.move_voltage(12000);
-            }
+  void driveToRoller(double time) {
+    externalOverRide = true;
+    bool finished = false;
 
-        }
-        else{
-            spinRoller = false;
-        }
-        delay(20);
-
+    while(!sensing.underRoller()){
+      drivePowerL = 12000;
+      drivePowerR = 12000;
+      delay(20);
     }
-    */
+
+    
+    drivePowerL = 2000;
+    drivePowerR = 2000;
+    int startTime = millis();
+    while (finished == false && millis() - startTime < time) {
+      static int pwr = 8000;
+      if (!sensing.rollerIsGood() ||
+          fabs(fabs(intakeMotor.get_actual_velocity()) - 180) < 20) {
+        if (sensing.underRoller()) {
+          if (fabs(intakeMotor.get_actual_velocity()) < 60) {
+            if (pwr < 12000) {
+              pwr += 50;
+            } else {
+              pwr = 12000;
+            }
+          } else {
+            if (pwr > 2000) {
+              pwr -= 10;
+            } else {
+              pwr = 2000;
+            }
+          }
+          intakePower = pwr;
+        } else {
+          intakePower = 12000;
+        }
+
+      } else {
+        finished = true;
+      
+      }
+      delay(20);
+    }
+    drivePowerL = -2000;
+    drivePowerR = -2000;
+    intakePower = 12000;
+    delay(250);
+    
+    externalOverRide = false;
   }
 
   void explode(void) { boomShackalacka.set_value(true); }

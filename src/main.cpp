@@ -3,7 +3,9 @@
 #include "bezierCalculations.h"
 #include "devFuncs.h"
 #include "motorControl.h"
+#include "pros/misc.h"
 #include "pros/motors.hpp"
+#include "pros/rtos.h"
 #include "robotConfig.h"
 #include "sdLogging.h"
 #include <iostream>
@@ -61,11 +63,9 @@ void competition_initialize() {}
  */
 
 void autonomous() {
-  //motorControl_t mc;
-  //mc.circleFollow();
-  //driveTuner();
   autonType = skillsAuton;
-  isRed = true;
+  isRed = false;
+  
   if (autonType == winPointClose) { // close win Point auton
     sensing.robot.xpos = 6.25 + 24;
     sensing.robot.ypos = 24 - 6;
@@ -85,13 +85,13 @@ void autonomous() {
                           "Intake and Turret Controller Task");
     sensing.robot.turretLock = false;
 
-    sensing.goalSpeed = 184;
+    sensing.goalSpeed = 200;
     delay(3000);
     // goalAngle = 0;
-    motorControl.raiseAScore(1);
+    motorControl.raiseAScore(3);
     motorControl.runTurretIntake = false;
 
-    motorControl.driveToRoller();
+    motorControl.driveToRoller(10000);
     // fly_Task.suspend();
   } else if (autonType == winPointFar) { // far win Point auton
     chaIntAng = 90;
@@ -104,10 +104,10 @@ void autonomous() {
                           "Intake and Turret Controller Task");
     sensing.robot.turretLock = false;
 
-    sensing.goalSpeed = 190;
+    sensing.goalSpeed = 200;
     goalAngle = 0;
     delay(5000);
-    motorControl.raiseAScore(1);
+    motorControl.raiseAScore(3);
 
     motorControl.runTurretIntake = false;
 
@@ -117,7 +117,7 @@ void autonomous() {
     motorControl.rotateTo(0);
     delay(1000);
 
-    motorControl.driveToRoller();
+    motorControl.driveToRoller(100000);
                                          
   } else if (autonType == noAuton) {
   } else {
@@ -139,14 +139,8 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 
-
 void opcontrol() {
-	isRed = false;
-  sensing.robot.xpos = 6.25 + 24;
-  sensing.robot.ypos = 24 - 6;
-  sensing.robot.zpos = 8.5;
   chaIntAng = 270;
-
   sensing.goal.xpos = 20;
   sensing.goal.ypos = 124;
   sensing.goal.zpos = 30;
@@ -160,10 +154,12 @@ void opcontrol() {
                 "My Flywheel Speed Controller Task");
   Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
 
-  while (1) {  std::cout<<"\nx"<<sensing.robot.xpos<<
-              "y:"<<sensing.robot.ypos<<"ang:"<<sensing.robot.angle;
+  while (1) {  
+    logValue("x", sensing.robot.xpos,0);
+    logValue("y", sensing.robot.ypos,1);
+    outValsSDCard();
+
     sensing.SSOSTTT_bool = true;
-    static bool started = false;
     static bool autoAim = false;
     bool aimMiddle = false;
     if (master.get_digital_new_press(DIGITAL_UP)) {
@@ -172,15 +168,9 @@ void opcontrol() {
     if (autoAim == false) {
       sensing.robot.turretLock = true;
       goalAngle = sensing.robot.angle + 180;
-      sensing.goalSpeed = 180;
-      started = false;
+      sensing.goalSpeed = 200;
     } else {
-      goalAngle = goalAngle;
-      sensing.goalSpeed = 180;
       sensing.robot.turretLock = false;
-      if (started == false) {
-        started = true;
-      }
     }
 
     if (master.get_digital_new_press(DIGITAL_DOWN) &&master.get_digital_new_press(DIGITAL_LEFT) ) {
@@ -188,7 +178,7 @@ void opcontrol() {
       if(aimMiddle){
         
         sensing.goal.xpos = 72;
-        sensing.goal.ypos = 124;
+        sensing.goal.ypos = 72;
         sensing.goal.zpos = 72;
       }
       else{

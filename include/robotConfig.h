@@ -25,6 +25,7 @@ class Object{
         velX, velY, velW, turvelocity ,odovelW , imuvelw, 
         angAccel, xAccel, yAccel;
         bool turretLock = false;
+        int magFullness;
 };
 
 extern double targetAngleOffest;
@@ -102,6 +103,21 @@ class sensing_t{
 
         double turretPosChoice(double angBetween){
             static int prevBadTime = c::millis();
+            double dist = distSense.get();
+            if (dist == PROS_ERR){
+                master.print(2, 0, "DistFailed");
+                robot.magFullness = 3;
+            }
+            else if (dist < 40){
+                robot.magFullness = 3;
+            }
+            else if (dist < 80){
+                robot.magFullness = 2;
+            }
+            else{
+                robot.magFullness = 1;
+            }
+
             while(angBetween > 360){
                 angBetween-=360;
             }
@@ -115,11 +131,13 @@ class sensing_t{
             while (failOut < 0){
                 failOut += 360;
             }
-            if (distSense.get() < 40 && !master.get_digital(E_CONTROLLER_DIGITAL_X)){
+            if ((distSense.get() < 40|| !competition::is_autonomous()) && !master.get_digital(E_CONTROLLER_DIGITAL_X)){
                 if (millis() - prevBadTime > 500){
+                    magFull = 1;
                     return angBetween;
                 }
                 else{
+                    magFull = 0;
                     return failOut;
                 }
             }
@@ -135,6 +153,7 @@ class sensing_t{
         Object robot;
         Object goal;
         double goalSpeed = 0;
+        bool magFull;
         
         sensing_t(void):leftEncoderFB({{9,'E','F'}, true}), rightEncoderFB({{9,'C', 'D'},true }),
                         encoderLR({{9,'A','B'}, true}), turretEncoder(8), inertial2(7), upLoaded({22,'E'}),
@@ -188,11 +207,11 @@ class sensing_t{
                 static double ydiff = 0, xdiff = 0;//diff from middle/gps origin
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
                 if (isRed){
-                    xdiff = double(temp_status.y)*39.37;
-                    ydiff = -double(temp_status.x)*39.37;
-                } else{
                     xdiff = -double(temp_status.y)*39.37;
                     ydiff = double(temp_status.x)*39.37;
+                } else{
+                    xdiff = double(temp_status.y)*39.37;
+                    ydiff = -double(temp_status.x)*39.37;
                 }
                 if (GPS_sensor.get_error() < 0.012){
                     robot.xpos = 72 + xdiff;
@@ -366,22 +385,24 @@ class sensing_t{
                     Tar_ang = Tar_ang +2*M_PI;
                     }
                 }
-                //std::cout << "\n x:" << robot.xpos<<" y:"<<robot.ypos << " ang:" <<robot.angle;
-                //std::cout<< "\nAngle: " << Tar_ang*180/M_PI;
                 double P3 = cos(Tar_ang) * 0.707106781187 * T;
                 double V_disk = P2 / P3;
                 double turOfCenterOffset = 0; // offcenter offset, not tested yet
                 //outputting calculated values
                 if (!robot.turretLock){
                     goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
+                    goalSpeed = V_disk;
                 }
+                else{
+                    goalAngle = robot.angle + 180;
+                }
+
                 while (goalAngle > 180){
                     goalAngle -= 360;
                 }
                 while (goalAngle < -180){
                     goalAngle += 360;
                 }
-                goalSpeed = V_disk;
                 robot.turvelocity = (robot.velX*P1-robot.velY*P2)/(pow(P1,2)+pow(P2,2))*180/M_PI;
                 delay(optimalDelay);
             }
@@ -399,8 +420,12 @@ class sensing_t{
         bool rollerIsGood(void){
             c::optical_rgb_s color = opticalSensor.get_rgb();
             static int startTime = millis();
+
+            logValue("red",color.red,0);
+            logValue("blue",color.blue,2);
+            outValsSDCard();
             
-            if (((color.red >  500 && color.blue < 400 && isRed == false) || (color.red < 300 && color.blue > 200 && isRed == true)) && underRoller()){
+            if (((color.red >  1500 && color.blue < 1000 && isRed == false) || (color.red < 1000 && color.blue > 1000 && isRed == true)) && underRoller()){
                 return 1;
             }
             else{
