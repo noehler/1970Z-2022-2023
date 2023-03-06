@@ -131,7 +131,7 @@ class sensing_t{
             while (failOut < 0){
                 failOut += 360;
             }
-            if ((distSense.get() < 40|| !competition::is_autonomous()) && !master.get_digital(E_CONTROLLER_DIGITAL_X)){
+            if (0/*(distSense.get() < 40 || !competition::is_autonomous()) && !master.get_digital(E_CONTROLLER_DIGITAL_X)*/){
                 if (millis() - prevBadTime > 500){
                     magFull = 1;
                     return angBetween;
@@ -160,15 +160,7 @@ class sensing_t{
                         deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(14),
                         discSearch(3), distSense(20), GPS_sensor(12){}
 
-        void setUp(void){
-            robot.xpos = 0;
-            robot.ypos = 0;
-            robot.zpos = 8.5;
-            chaIntAng = 270;
-            
-            goal.xpos = 20;
-            goal.ypos = 124;
-            goal.zpos = 30;
+        void Init(void){
 
             std::cout << "values set\n";
             static bool inertialsSet = false;
@@ -191,14 +183,27 @@ class sensing_t{
                 std::cout << "calibrated\n";
                 inertialsSet = true;
             }
-                master.print(2, 0, "Calibration Done");
-
-
             GPS_sensor.set_offset(0, 0.1143);
 
             inertial.set_heading(0);
             inertial2.set_heading(0);
-            opticalSensor.set_led_pwm(100);
+
+            master.print(2, 0, "Calibration Done");
+            //sensor failure output here.
+        }
+        //color = true > red. color = false > blue.
+        void set_status (double xpos, double ypos, double heading ,double color_sensor_luminance , bool color){
+            opticalSensor.set_led_pwm(color_sensor_luminance);
+            robot.xpos = xpos;
+            robot.ypos = ypos;
+            robot.odoxpos = xpos;
+            robot.odoypos = ypos;
+            robot.zpos = 8.5;
+            chaIntAng = heading;
+            isRed = color; 
+            goal.xpos = 20;
+            goal.ypos = 124;
+            goal.zpos = 30;
         }
 
         void GPS_tracking(void){
@@ -213,9 +218,13 @@ class sensing_t{
                     xdiff = double(temp_status.y)*39.37;
                     ydiff = -double(temp_status.x)*39.37;
                 }
-                if (GPS_sensor.get_error() < 0.012){
-                    robot.xpos = 72 + xdiff;
-                    robot.ypos = 72 + ydiff;
+                if (GPS_sensor.get_error() < 0.012 && sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 10 && robot.xpos >36 && robot.xpos < 108 && robot.ypos >36 && robot.ypos < 108 ){
+                    robot.xpos = robot.GPSxpos;
+                    robot.ypos = robot.GPSypos;
+                }
+                else{
+                    robot.xpos = robot.odoxpos;
+                    robot.ypos = robot.odoypos;
                 }
                 // if red: x direction is correct y is flipped, if blue: x direction is flipped, y is correct
                 robot.GPSxpos = 72 + xdiff;
@@ -224,17 +233,6 @@ class sensing_t{
                 delay(20);
             }
         }
-
-        
-
-        void inertial_tracking(void){
-            //John can you please put the inertial sensor position calculation here
-            while (1){
-                //robot.inertialxpos;
-                //robot.inertialypos;
-            }
-        }
-
         void odometry(void){
             while (1){
                 static double odoHeading = 0;
@@ -297,13 +295,8 @@ class sensing_t{
             }
             odoHeading += Delta_heading;
             odoHeading = mod(2*M_PI,odoHeading);
-
-            
                 //this is off until I can trust odometry again
                 //robot.angle = odoHeading*180/M_PI;
-            
-            
-
             static float T = 0;
             static double previousT =0;
             T = float(millis())/1000 - previousT;
@@ -322,9 +315,6 @@ class sensing_t{
             robot.odoypos += Delta_y;
             //std::cout << "\n" << -inertial2.get_gyro_rate().z/180*M_PI;
             //std::cout << "\n" << inertial.get_gyro_rate().z/180*M_PI;
-            robotGoal.dx = goal.xpos - robot.xpos;
-            robotGoal.dy = goal.ypos - robot.ypos;
-            robotGoal.dz = goal.zpos - robot.zpos;
             robot.turvelw = double(turretEncoder.get_velocity())/100;
             //note:division of one hundred is due to the angle is messured in centideg
             robot.turAng = double(turretEncoder.get_angle())/100 +180+ robot.angle;
@@ -349,6 +339,10 @@ class sensing_t{
             //chaIntAng = 0;
             while(!competition::is_disabled() && SSOSTTT_bool == true){
                 //define quartic equation terms  
+                
+                robotGoal.dx = goal.xpos - robot.xpos;
+                robotGoal.dy = goal.ypos - robot.ypos;
+                robotGoal.dz = goal.zpos - robot.zpos;
                 double c = pow(robot.velX, 2) + pow(robot.velY, 2) - robotGoal.dz * g;
                 double d = -2 * robotGoal.dx * robot.velX - 2 * robotGoal.dy * robot.velY;
                 double e = pow(robotGoal.dx, 2) + pow(robotGoal.dy, 2) - pow(robotGoal.dz, 2);
@@ -391,7 +385,9 @@ class sensing_t{
                 //outputting calculated values
                 if (!robot.turretLock){
                     goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
-                    goalSpeed = V_disk;
+                    if (T > 5){
+                        goalSpeed = V_disk;
+                    }
                 }
                 else{
                     goalAngle = robot.angle + 180;
@@ -420,12 +416,8 @@ class sensing_t{
         bool rollerIsGood(void){
             c::optical_rgb_s color = opticalSensor.get_rgb();
             static int startTime = millis();
-
-            logValue("red",color.red,0);
-            logValue("blue",color.blue,2);
-            outValsSDCard();
             
-            if (((color.red >  1500 && color.blue < 1000 && isRed == false) || (color.red < 1000 && color.blue > 1000 && isRed == true)) && underRoller()){
+            if (((color.red > 3000 && color.blue < 1700 && isRed == false) || (color.red < 1600 && color.blue > 1800 && isRed == true)) && underRoller()){
                 return 1;
             }
             else{
@@ -434,20 +426,12 @@ class sensing_t{
         }
 
         //useful for setting initial position because several sensors need data to be updated
-        void setPos(double xpos, double ypos){
-            robot.xpos = xpos;
-            robot.ypos = ypos;
-            robot.odoxpos = xpos;
-            robot.odoypos = ypos;
-            robot.inertialxpos = xpos;
-            robot.inertialypos = ypos;
-        }
+      
 
 };
 
 extern void odometry_Wrapper(void* sensing);
 extern void GPS_Wrapper(void* sensing);
-extern void inertial_tracking_Wrapper(void* sensing);
 extern void odometry_Wrapper(void* sensing);
 extern void SSOSTTT_Wrapper(void* sensing);
 extern sensing_t sensing;

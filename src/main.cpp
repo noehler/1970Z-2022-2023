@@ -27,7 +27,7 @@ void initialize() {
   setupScreen();
   motorControl_t mc;
   mc.setpistons();
-  sensing.setUp();
+  sensing.Init();
 
   Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
   Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");

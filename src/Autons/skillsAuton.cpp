@@ -6,9 +6,10 @@
 
 void skillsAutonomous(void){
     motorControl_t mc;
-    chaIntAng = 270;
-    sensing.robot.xpos = 36;
-    sensing.robot.ypos = 12;
+    sensing.set_status(30,12,270,100, 0);
+    mc.move.tolerance = 5;
+    mc.move.errtheta = 10;
+    sensing.robot.turretLock = true;
 
     //starting controller threads
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
@@ -23,43 +24,51 @@ void skillsAutonomous(void){
     mc.move.moveToforwardToggle = -1;
     mc.move.moveToxpos = 42;
     mc.move.moveToypos = 24;
-    mc.waitPosTime(2000);
+    mc.waitPosTime(4000);
 
-    //second roller
+    //collecting discs
+    mc.move.errtheta = 10;
+    mc.move.tolerance = 2;
     mc.move.moveToforwardToggle = 1;
     mc.intakeRunning = 1;
     mc.move.speed_limit = 50;
-    mc.move.errtheta = 5;
     mc.move.moveToxpos = 24;
     mc.move.moveToypos = 24;
-    mc.waitPosTime(4000);
-
-    mc.move.moveToxpos = 18;
-    mc.move.moveToypos = 30;
     mc.waitPosTime(6000);
-    mc.intakeRunning = 0;
-
-    mc.rotateTo(180);
 
     mc.move.errtheta = 10;
-    mc.driveToRoller(5000);    
+    mc.move.moveToxpos = 18;
+    mc.move.moveToypos = 29;
+    mc.waitPosTime(7000);
+    mc.intakeRunning = 0;
+
+    //hitting roller
+    mc.move.errtheta = 10;
+    mc.move.tolerance = 5;
+    mc.rotateTo(180);
+
+    mc.driveToRoller(5000);  
+    sensing.robot.turretLock = false;
     mc.raiseAScore(3);
+    sensing.robot.turretLock = true;
     mc.move.speed_limit = 127;
     mc.move.moveToforwardToggle = -1;
     
     mc.waitPosTime(10000);
-
-    mc.move.tolerance = 5;
 
     //first shot
     mc.move.moveToforwardToggle = 1;
     mc.move.moveToxpos = 24;
     mc.move.moveToypos = 43;
     mc.waitPosTime(10000);
+    sensing.robot.turretLock = false;
     mc.raiseAScore(3);
+    sensing.robot.turretLock = true;
     delay(2000);
 
     //collect discs
+    mc.move.errtheta = 5;
+    mc.move.tolerance = 2;
     mc.move.moveToxpos = 36;
     mc.move.moveToypos = 52;
     mc.waitPosTime(4000);
@@ -79,8 +88,9 @@ void skillsAutonomous(void){
     //second shot
     mc.move.speed_limit = 127;
     delay(2000);
-    mc.intakeRunning = 0;
+    sensing.robot.turretLock = false;
     mc.raiseAScore(3);
+    sensing.robot.turretLock = true;
     delay(2000);
 
     //collect discs
@@ -95,8 +105,12 @@ void skillsAutonomous(void){
     //third shot
     delay(4000);
     mc.intakeRunning = 0;
+    sensing.robot.turretLock = false;
     mc.raiseAScore(3);
-    delay(2000);
+    sensing.robot.turretLock = true;
+    delay(1000);
+    mc.move.tolerance = 5;
+    mc.move.errtheta = 10;
 
     //third roller
     mc.move.moveToxpos = 114;
@@ -136,9 +150,11 @@ void skillsAutonomous(void){
     mc.waitPosTime(10000);
 
     //fourth shot
-    delay(2000);
+    delay(1000);
     mc.intakeRunning = 0;
+    sensing.robot.turretLock = false;
     mc.raiseAScore(3);
+    sensing.robot.turretLock = true;
     delay(2000);
     
     //collecting discs
@@ -150,10 +166,12 @@ void skillsAutonomous(void){
     mc.move.speed_limit = 127;
 
     //fifth shot
-    delay(2000);
     mc.intakeRunning = 0;
+    delay(1000);
+    sensing.robot.turretLock = false;
     mc.raiseAScore(3);
-    delay(2000);
+    sensing.robot.turretLock = true;
+    delay(1000);
 
     //expanding
     mc.move.moveToxpos = 24;

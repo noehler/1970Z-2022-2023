@@ -212,7 +212,7 @@ private:
   double angularVelocityCalc(int number) {
     // return master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + 250;
     if (number ==3){
-      return sensing.goalSpeed*1.42+38;
+      return sensing.goalSpeed*1.549+87.42;
     }
     else if(number == 2){
       return sensing.goalSpeed*1.255+38.05;
@@ -715,7 +715,6 @@ public:
         double FWVal = et * PID.driveFR.p + integralFW * PID.driveFR.i +
                        (et - prevET) * PID.driveFR.d;
         integralFW += et;
-        logValue("sd", (ets - prevETS) * PID.driveSS.d, 2);
         prevET = et;
 
         double radIn;
@@ -731,7 +730,6 @@ public:
         double SSVal = ets * PID.driveSS.p + integralSS * PID.driveSS.i +
                        (ets - prevETS) * PID.driveSS.d;
         integralSS += ets;
-        logValue("fd", (et - prevET) * PID.driveFR.d, 5);
         prevETS = ets;
 
         if (fabs(FWVal) + fabs(SSVal) > 127) {
@@ -753,13 +751,6 @@ public:
         lbD.move(PIDSpeedL);
         rfD.move(PIDSpeedR);
         rbD.move(PIDSpeedR);
-        logValue("sp", ets * PID.driveSS.p, 8);
-        logValue("si", integralSS * PID.driveSS.i, 9);
-        logValue("fp", et * PID.driveFR.p, 3);
-        logValue("fi", integralFW * PID.driveFR.i, 4);
-        logValue("x", sensing.robot.xpos, 6);
-        logValue("y", sensing.robot.ypos, 7);
-        outValsSDCard();
         delay(20);
       }
     }
@@ -815,6 +806,16 @@ public:
       }
 
       delay(optimalDelay);
+      logValue("x", sensing.robot.xpos, 0);
+      logValue("y", sensing.robot.ypos, 1);
+      logValue("Ox", sensing.robot.odoxpos, 2);
+      logValue("Oy", sensing.robot.odoypos, 3);
+      logValue("Gx", sensing.robot.GPSxpos, 4);
+      logValue("Gy", sensing.robot.GPSypos, 5);
+      logValue("xTo", move.moveToxpos, 6);
+      logValue("yTo", move.moveToypos, 7);
+      logValue("Heading", sensing.robot.angle, 8);
+      outValsSDCard();
     }
     lfD.brake();
     lbD.brake();
@@ -1040,7 +1041,7 @@ public:
     drivePowerL = -2000;
     drivePowerR = -2000;
     intakePower = 12000;
-    delay(250);
+    delay(600);
     
     externalOverRide = false;
   }

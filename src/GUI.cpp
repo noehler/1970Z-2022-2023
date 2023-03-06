@@ -115,32 +115,6 @@ lv_res_t colorSwitchClick(lv_obj_t * btn){
     return LV_RES_OK;
 }
 
-lv_res_t calibrateClick(lv_obj_t * btn){
-    uint8_t id = lv_obj_get_free_num(btn); //id useful when there are multiple buttons
-    preMatchCheck();
-
-    if(id == 2)
-    {
-        
-        setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(200, 200, 200), LV_COLOR_MAKE(200, 200, 200), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), CalibrateBtn), CalibrateBtn);
-        sensing.setUp();
-        setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), CalibrateBtn), CalibrateBtn);
-        
-        if (autonType == winPointFar){
-            sensing.setPos(80, 128);
-            chaIntAng = 0;
-        }
-        if (autonType == winPointClose || skillsAuton){
-            sensing.setPos(80, 128);
-            chaIntAng = 0;
-        }
-        sensing.robot.angle = chaIntAng;
-
-    }
-
-    return LV_RES_OK;
-}
-
 lv_res_t autonSwitchClick(lv_obj_t * btn){
     uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
     //std::cout << id;
@@ -168,11 +142,6 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
                 autonType = winPointClose;
                 lv_label_set_text(autonTypeLabel, "winPoint near auton selected"); //sets label text
                 break;
-        }
-        if (!autonSet){
-            CalibrateBtn = createBtn(tab1, 10,-20,120,30,2,"Calibrate");
-            setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(180, 180, 80), LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), CalibrateBtn), CalibrateBtn);
-            lv_btn_set_action(CalibrateBtn, LV_BTN_ACTION_CLICK, calibrateClick);
         }
     }
     autonSet = true;
