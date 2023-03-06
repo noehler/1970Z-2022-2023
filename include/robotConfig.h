@@ -144,6 +144,7 @@ class sensing_t{
         Imu inertial;
 
         Optical opticalSensor;
+        Optical opticalSensor2;
         Distance distSense;
 
         Vision discSearch;
@@ -157,7 +158,7 @@ class sensing_t{
         
         sensing_t(void):leftEncoderFB({{9,'E','F'}, true}), rightEncoderFB({{9,'C', 'D'},true }),
                         encoderLR({{9,'A','B'}, true}), turretEncoder(8), inertial2(7), upLoaded({22,'E'}),
-                        deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(14),
+                        deckLoaded({22,'C'}), holeLoaded({22,'G'}), inertial(21), opticalSensor(14), opticalSensor2(11),
                         discSearch(3), distSense(20), GPS_sensor(12){}
 
         void Init(void){
@@ -411,25 +412,52 @@ class sensing_t{
             }
         }
 
-        bool underRoller(void){
-            if (opticalSensor.get_proximity() > 180){
-                return 1;
+        bool underRoller(int sensorNum){
+            if (sensorNum == 1){
+                if (opticalSensor.get_proximity() > 180){
+                    return 1;
+                }
+                else{
+                    return 0;
+                }
             }
             else{
-                return 0;
+                if (opticalSensor2.get_proximity() > 180){
+                    return 1;
+                }
+                else{
+                    return 0;
+                }
             }
+            
         }
 
         bool rollerIsGood(void){
-            c::optical_rgb_s color = opticalSensor.get_rgb();
-            static int startTime = millis();
-            
-            if (((color.red > 3000 && color.blue < 1700 && isRed == false) || (color.red < 1600 && color.blue > 1800 && isRed == true)) && underRoller()){
-                return 1;
+            if(underRoller(1)){
+                c::optical_rgb_s color = opticalSensor.get_rgb();
+                static int startTime = millis();
+                
+                if (((color.red > 3000 && color.blue < 1700 && isRed == false) || (color.red < 1600 && color.blue > 1800 && isRed == true)) && underRoller(1)){
+                    return 1;
+                }
+                else{
+                    return 0;
+                }
+            }else if(underRoller(2)){
+                c::optical_rgb_s color = opticalSensor2.get_rgb();
+                static int startTime = millis();
+                
+                if (((color.red > 3000 && color.blue < 1700 && isRed == false) || (color.red < 1600 && color.blue > 1800 && isRed == true)) && underRoller(2)){
+                    return 1;
+                }
+                else{
+                    return 0;
+                }
             }
             else{
                 return 0;
             }
+            
         }
 };
 

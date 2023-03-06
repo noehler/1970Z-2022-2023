@@ -325,7 +325,7 @@ public:
   ADIDigitalOut shoot3;
   ADIDigitalOut shoot1;
   ADIDigitalOut ejectPiston;
-  
+
   int intakeRunning;
   bool externalOverRide = 0;
   // Constructor to assign values to the motors and PID values
@@ -1001,7 +1001,7 @@ public:
     externalOverRide = true;
     bool finished = false;
 
-    while(!sensing.underRoller()){
+    while(!sensing.underRoller(1) || !sensing.underRoller(2)){
       drivePowerL = 12000;
       drivePowerR = 12000;
       delay(20);
@@ -1015,7 +1015,7 @@ public:
       static int pwr = 8000;
       if (!sensing.rollerIsGood() ||
           fabs(fabs(intakeMotor.get_actual_velocity()) - 180) < 20) {
-        if (sensing.underRoller()) {
+        if (sensing.underRoller(1) || sensing.underRoller(2)) {
           if (fabs(intakeMotor.get_actual_velocity()) < 60) {
             if (pwr < 12000) {
               pwr += 50;
