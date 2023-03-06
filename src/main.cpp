@@ -31,6 +31,7 @@ void initialize() {
 
   Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
   Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
+
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -63,7 +64,7 @@ void competition_initialize() {}
  */
 
 void autonomous() {
-  driveTuner();  
+  autonType = skillsAuton;
   if (autonType == winPointClose) { // close win Point auton
     sensing.robot.xpos = 6.25 + 24;
     sensing.robot.ypos = 24 - 6;
@@ -138,10 +139,7 @@ void autonomous() {
  */
 
 void opcontrol() {
-  chaIntAng = 270;
-  sensing.goal.xpos = 20;
-  sensing.goal.ypos = 124;
-  sensing.goal.zpos = 30;
+  sensing.set_status(24, 24, 90, 0, 0);
   motorControl_t motorControl;
 
   Task drive_Task(drive_ControllerWrapper, (void *)&motorControl,
@@ -153,9 +151,6 @@ void opcontrol() {
   Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
 
   while (1) {  
-    logValue("x", sensing.robot.xpos,0);
-    logValue("y", sensing.robot.ypos,1);
-    outValsSDCard();
 
     sensing.SSOSTTT_bool = true;
     static bool autoAim = false;

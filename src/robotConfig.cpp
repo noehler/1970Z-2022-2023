@@ -19,6 +19,7 @@ void GPS_Wrapper(void* sensing){
     ((sensing_t*) sensing)->GPS_tracking();
 }
 
+
 double getNum(std::string Output){
   std::string tempDist;
   double realNum;

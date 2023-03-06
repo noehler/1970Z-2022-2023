@@ -5,8 +5,20 @@
 #include "sdLogging.h"
 
 void skillsAutonomous(void){
+    sensing.set_status(30,16,270,100, 0);
     motorControl_t mc;
-    sensing.set_status(30,12,270,100, 0);
+    double totalX = 0;
+    double totalY = 0;
+    int startTime = millis();
+    int loops = 0;
+    while (millis() - startTime < 1000){
+        totalX+=sensing.robot.GPSxpos;
+        totalY+=sensing.robot.GPSypos;
+        loops++;
+        delay(10);
+    }
+
+    sensing.set_status(totalX/loops,totalY/loops,270,100, 0);
     mc.move.tolerance = 5;
     mc.move.errtheta = 10;
     sensing.robot.turretLock = true;
@@ -24,7 +36,7 @@ void skillsAutonomous(void){
     mc.move.moveToforwardToggle = -1;
     mc.move.moveToxpos = 42;
     mc.move.moveToypos = 24;
-    mc.waitPosTime(4000);
+    mc.waitPosTime(10000);
 
     //collecting discs
     mc.move.errtheta = 10;
@@ -34,12 +46,12 @@ void skillsAutonomous(void){
     mc.move.speed_limit = 50;
     mc.move.moveToxpos = 24;
     mc.move.moveToypos = 24;
-    mc.waitPosTime(6000);
+    mc.waitPosTime(10000);
 
-    mc.move.errtheta = 10;
+    mc.move.errtheta = 15;
     mc.move.moveToxpos = 18;
-    mc.move.moveToypos = 29;
-    mc.waitPosTime(7000);
+    mc.move.moveToypos = 32;
+    mc.waitPosTime(10000);
     mc.intakeRunning = 0;
 
     //hitting roller
@@ -67,23 +79,13 @@ void skillsAutonomous(void){
     delay(2000);
 
     //collect discs
+    mc.move.speed_limit = 30;
     mc.move.errtheta = 5;
-    mc.move.tolerance = 2;
-    mc.move.moveToxpos = 36;
-    mc.move.moveToypos = 52;
-    mc.waitPosTime(4000);
-    mc.move.moveToxpos = 48;
-    mc.move.moveToypos = 64;
-    mc.intakeRunning = 1;
-    mc.waitPosTime(4000);
-    mc.move.moveToxpos = 60;
-    mc.move.moveToypos = 76;
-    mc.intakeRunning = 1;
-    mc.waitPosTime(4000);
+    mc.move.tolerance = 3;
     mc.move.moveToxpos = 72;
     mc.move.moveToypos = 96;
     mc.intakeRunning = 1;
-    mc.waitPosTime(4000);
+    mc.waitPosTime(12000);
     
     //second shot
     mc.move.speed_limit = 127;

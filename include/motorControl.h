@@ -13,18 +13,6 @@ using namespace pros;
 
 class motorControl_t {
 private:
-  Motor lfD;
-  Motor lbD;
-  Motor rfD;
-  Motor rbD;
-  Motor flyWheel1;
-  Motor flyWheel2;
-  Motor turretMotor;
-  Motor intakeMotor;
-  ADIDigitalOut boomShackalacka;
-  ADIDigitalOut shoot3;
-  ADIDigitalOut shoot1;
-  ADIDigitalOut ejectPiston;
   int optimalDelay = 20;
 
   int drivePowerR;
@@ -324,6 +312,20 @@ private:
   double diffFlyWheelW2;
 
 public:
+
+  Motor lfD;
+  Motor lbD;
+  Motor rfD;
+  Motor rbD;
+  Motor flyWheel1;
+  Motor flyWheel2;
+  Motor turretMotor;
+  Motor intakeMotor;
+  ADIDigitalOut boomShackalacka;
+  ADIDigitalOut shoot3;
+  ADIDigitalOut shoot1;
+  ADIDigitalOut ejectPiston;
+  
   int intakeRunning;
   bool externalOverRide = 0;
   // Constructor to assign values to the motors and PID values
@@ -340,9 +342,9 @@ public:
     PID.driveFR.i = .5;
     PID.driveFR.d = 1;
 
-    PID.driveSS.p = 1.3;
-    PID.driveSS.i = .035;
-    PID.driveSS.d = 15;
+    PID.driveSS.p = 1.2;
+    PID.driveSS.i = .030;
+    PID.driveSS.d = 18;
 
     PID.turret.p = 1.2;
     PID.turret.i = .03;
@@ -571,7 +573,7 @@ public:
 
       moveI.PIDSpeedR = -moveI.PIDSSFLAT;
       moveI.PIDSpeedL = moveI.PIDSSFLAT;
-      if (fabs(moveI.ets) < 2 &&
+      if (fabs(moveI.ets) < 3 &&
           fabs(lfD.get_actual_velocity()) + fabs(rfD.get_actual_velocity()) <
               40) {
         resetMoveToSS = true;
@@ -797,17 +799,16 @@ public:
         rbD.move_voltage(drivePowerR);
       }
 
-      delay(optimalDelay);
+
       logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
       logValue("Ox", sensing.robot.odoxpos, 2);
       logValue("Oy", sensing.robot.odoypos, 3);
       logValue("Gx", sensing.robot.GPSxpos, 4);
       logValue("Gy", sensing.robot.GPSypos, 5);
-      logValue("xTo", move.moveToxpos, 6);
-      logValue("yTo", move.moveToypos, 7);
-      logValue("Heading", sensing.robot.angle, 8);
+      logValue("Heading", sensing.robot.angle, 6);
       outValsSDCard();
+      delay(optimalDelay);
     }
     lfD.brake();
     lbD.brake();
@@ -831,6 +832,15 @@ public:
       lbD.move_voltage(leftSpd);
       rfD.move_voltage(rightSpd);
       rbD.move_voltage(rightSpd);
+
+      logValue("x", sensing.robot.xpos, 0);
+      logValue("y", sensing.robot.ypos, 1);
+      logValue("Ox", sensing.robot.odoxpos, 2);
+      logValue("Oy", sensing.robot.odoypos, 3);
+      logValue("Gx", sensing.robot.GPSxpos, 4);
+      logValue("Gy", sensing.robot.GPSypos, 5);
+      logValue("Heading", sensing.robot.angle, 6);
+      outValsSDCard();
       delay(optimalDelay);
     }
   }
@@ -967,7 +977,7 @@ public:
       }
       else{
         intakeRunning = 1;
-        delay(3000);
+        delay(500);
         intakeRunning = 0;
       }
     }

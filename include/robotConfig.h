@@ -33,25 +33,6 @@ extern double chaIntAng;
 extern double goalAngle;
 class sensing_t{
     private:
-        ADIEncoder leftEncoderFB;
-        ADIEncoder rightEncoderFB;
-        ADIEncoder encoderLR;
-        Rotation turretEncoder;
-        Imu inertial2;
-
-        ADIAnalogIn upLoaded;
-        ADIAnalogIn deckLoaded;
-        ADIAnalogIn holeLoaded;
-
-        Imu inertial;
-
-        Optical opticalSensor;
-        Distance distSense;
-
-        Vision discSearch;
-
-        GPS GPS_sensor;
-
         //JOHN: When calibrating make sure that the id(first arguement) is 1
         vision_signature_s_t REDGOAL = Vision::signature_from_utility(1, 4499, 8193, 6346, -1589, -429, -1009, 2.5, 0);
         //JOHN: When calibrating make sure that the id(first arguement) is 2
@@ -150,6 +131,25 @@ class sensing_t{
         int optimalDelay = 20;
     public:
     
+        ADIEncoder leftEncoderFB;
+        ADIEncoder rightEncoderFB;
+        ADIEncoder encoderLR;
+        Rotation turretEncoder;
+        Imu inertial2;
+
+        ADIAnalogIn upLoaded;
+        ADIAnalogIn deckLoaded;
+        ADIAnalogIn holeLoaded;
+
+        Imu inertial;
+
+        Optical opticalSensor;
+        Distance distSense;
+
+        Vision discSearch;
+
+        GPS GPS_sensor;
+    
         Object robot;
         Object goal;
         double goalSpeed = 0;
@@ -183,7 +183,7 @@ class sensing_t{
                 std::cout << "calibrated\n";
                 inertialsSet = true;
             }
-            GPS_sensor.set_offset(0, 0.1143);
+            GPS_sensor.set_offset(0, 0);
 
             inertial.set_heading(0);
             inertial2.set_heading(0);
@@ -208,6 +208,7 @@ class sensing_t{
 
         void GPS_tracking(void){
             //note: rotation of Gps strip can vary depend on field if true, going to verify on 2/28
+            bool sensorFail = false;
             while (1){
                 static double ydiff = 0, xdiff = 0;//diff from middle/gps origin
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
@@ -218,7 +219,9 @@ class sensing_t{
                     xdiff = double(temp_status.y)*39.37;
                     ydiff = -double(temp_status.x)*39.37;
                 }
-                if (GPS_sensor.get_error() < 0.012 && sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 1 && robot.xpos >36 && robot.xpos < 108 && robot.ypos >36 && robot.ypos < 108 ){
+                logValue("Heading", GPS_sensor.get_error(), 7);
+
+                if (GPS_sensor.get_error() < 0.012 && sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 1 && robot.xpos >36 && robot.xpos < 108 && robot.ypos >36 && robot.ypos < 108 && !sensorFail){
                     robot.xpos = robot.GPSxpos;
                     robot.ypos = robot.GPSypos;
                 }
@@ -227,8 +230,14 @@ class sensing_t{
                     robot.ypos = robot.odoypos;
                 }
                 // if red: x direction is correct y is flipped, if blue: x direction is flipped, y is correct
-                robot.GPSxpos = 72 + xdiff;
-                robot.GPSypos = 72 + ydiff;
+                if (robot.GPSxpos - (72 + xdiff) == 0 && !sensorFail){
+                    sensorFail = true;
+                    master.clear_line(2);
+                    delay(50);
+                    master.print(2, 0, "GPS Fail");
+                }
+                robot.GPSxpos = 72 + xdiff - cos(robot.turAng*M_PI/180)*4.5;
+                robot.GPSypos = 72 + ydiff - sin(robot.turAng*M_PI/180)*4.5;
 
                 delay(20);
             }
@@ -385,9 +394,7 @@ class sensing_t{
                 //outputting calculated values
                 if (!robot.turretLock){
                     goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
-                    if (T > 5){
-                        goalSpeed = V_disk;
-                    }
+                    goalSpeed = V_disk;
                 }
                 else{
                     goalAngle = robot.angle + 180;
@@ -424,10 +431,6 @@ class sensing_t{
                 return 0;
             }
         }
-
-        //useful for setting initial position because several sensors need data to be updated
-      
-
 };
 
 extern void odometry_Wrapper(void* sensing);
