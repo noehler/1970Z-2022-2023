@@ -14,9 +14,7 @@ public:
 void driveTuner(void){
   motorControl_t mc;
   isRed = false;
-  chaIntAng = 360;
-  sensing.robot.xpos = 24;
-  sensing.robot.ypos = 24;
+  sensing.set_status(72, 72, 0, 0, 1);
   mc.move.speed_limit = 127;
   delay(1000);
   while(1){

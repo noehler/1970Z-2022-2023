@@ -218,7 +218,7 @@ class sensing_t{
                     xdiff = double(temp_status.y)*39.37;
                     ydiff = -double(temp_status.x)*39.37;
                 }
-                if (GPS_sensor.get_error() < 0.012 && sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 10 && robot.xpos >36 && robot.xpos < 108 && robot.ypos >36 && robot.ypos < 108 ){
+                if (GPS_sensor.get_error() < 0.012 && sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 1 && robot.xpos >36 && robot.xpos < 108 && robot.ypos >36 && robot.ypos < 108 ){
                     robot.xpos = robot.GPSxpos;
                     robot.ypos = robot.GPSypos;
                 }

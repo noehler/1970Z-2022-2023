@@ -606,14 +606,10 @@ public:
   }
 
   void tailGater(bez_Return_t temp) {
-    rotateTo(atan((temp.returnPoints[0][1] - temp.returnPoints[1][1]) /
-                  (temp.returnPoints[0][0] - temp.returnPoints[1][0])) *
-             180 / M_PI);
+    //rotateTo(atan((temp.returnPoints[0][1] - temp.returnPoints[1][1]) / (temp.returnPoints[0][0] - temp.returnPoints[1][0])) * 180 / M_PI);
     bool finished = false;
     int current = 0;
-
     double errorCurveInteg = 0;
-
     double radiusScalar = 0;
     double radiusDifference = 9.45 / 2;
 
@@ -628,12 +624,12 @@ public:
             sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0], 2) +
                  pow(sensing.robot.ypos - temp.returnPoints[current][1], 2));
 
-        if (et < move.tolerance) {
+        if (et < 3/*move.tolerance*/) { ///////////////land mine
           current++;
           if (current == temp.length + 1) {
             finished = true;
           }
-          break;
+          break; // path finished exit
         }
         // checking if closer to other point
         /*if (et > 6){
@@ -663,10 +659,8 @@ public:
         // code to calculate distance and determine if negative or positive
         double ets;
         if (current != 0) {
-          double m = (temp.returnPoints[current][1] -
-                      temp.returnPoints[current - 1][1]) /
-                     (temp.returnPoints[current][0] -
-                      temp.returnPoints[current - 1][0]);
+          double m = (temp.returnPoints[current][1] - temp.returnPoints[current - 1][1]) /
+                     (temp.returnPoints[current][0] - temp.returnPoints[current - 1][0]);
           double lineAngle = atan(m);
           if ((temp.returnPoints[current][0] -
                temp.returnPoints[current - 1][0]) < 0) {
@@ -675,10 +669,8 @@ public:
             lineAngle = lineAngle + 2 * M_PI;
           }
 
-          double robotToPoint = atan((temp.returnPoints[current][1] -
-                                      temp.returnPoints[current - 1][1]) /
-                                     (temp.returnPoints[current][0] -
-                                      temp.returnPoints[current - 1][0]));
+          double robotToPoint = atan((temp.returnPoints[current][1] - temp.returnPoints[current - 1][1]) /
+                                     (temp.returnPoints[current][0] - temp.returnPoints[current - 1][0]));
           if ((temp.returnPoints[current][0] -
                temp.returnPoints[current - 1][0]) < 0) {
             robotToPoint = robotToPoint + M_PI;
