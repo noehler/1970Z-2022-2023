@@ -143,14 +143,22 @@ private:
 
     return PIDVelocity;
   }
-
+  
   double intakeControl(void) {
-    int baseSPD;
+    static int baseSPD;
     if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) {
-      baseSPD = 127;
+      baseSPD = 12000;
     } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) ||
               intakeRunning == 2) {
-      baseSPD = -127;
+      baseSPD = -12000;
+    } else if (intakeRunning == 3){
+      if (intakeMotor.get_actual_velocity()<intakespdTar && baseSPD < 12000){
+        baseSPD +=100;
+      } else if (intakeMotor.get_actual_velocity()>intakespdTar && baseSPD > -12000){
+        baseSPD -=100;
+      } else {
+        baseSPD =baseSPD;
+      }
     } else {
       baseSPD = 0;
     }
@@ -175,7 +183,7 @@ public:
   ADIDigitalOut shoot3;
   ADIDigitalOut shoot1;
   ADIDigitalOut ejectPiston;
-
+  double intakespdTar =0;
   int intakeRunning;
   // Constructor to assign values to the motors and PID values
   motorControl_t(void)
@@ -188,12 +196,12 @@ public:
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
 
     PID.driveFR.p = 1;
-    PID.driveFR.i = 0;
+    PID.driveFR.i = 0.1;
     PID.driveFR.d = 1;
 
-    PID.driveSS.p = 0.5;
-    PID.driveSS.i = 0;
-    PID.driveSS.d = 1;
+    PID.driveSS.p = 1;
+    PID.driveSS.i = 0.1;
+    PID.driveSS.d = 10;
 
     PID.turret.p = 1.2;
     PID.turret.i = .03;
@@ -380,8 +388,6 @@ void rotateTo() {
       }
       moveI.PIDSpeedR = moveI.PIDSSFLAT;
       moveI.PIDSpeedL = -moveI.PIDSSFLAT;
-    std::cout<<"moveI.PIDss:"<<moveI.PIDSSFLAT<<"\n";
-    std::cout<<"ets:"<<moveI.ets<<"\n";
       if (fabs(moveI.ets) < move.errtheta && fabs(lfD.get_actual_velocity()) + fabs(rfD.get_actual_velocity()) < 40) {
             resetMoveToSS = true;
             leftSpd = 0;
@@ -495,8 +501,8 @@ void moveTo() {
     if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
       moveI.PIDSSFLAT = -2 * move.speed_limit;
     }
-    rightSpd = (moveI.PIDFWFLAT - 0*moveI.PIDSSFLAT) * 12000 / 127;
-    leftSpd = (moveI.PIDFWFLAT + 0*moveI.PIDSSFLAT) * 12000 / 127;
+    rightSpd = (moveI.PIDFWFLAT + moveI.PIDSSFLAT) * 12000 / 127;
+    leftSpd = (moveI.PIDFWFLAT - moveI.PIDSSFLAT) * 12000 / 127;
     if (dist < move.tolerance) {
         move.resetMoveTo = true;
         leftSpd = 0;
@@ -737,6 +743,7 @@ void autonDriveController(void) {
       logValue("Gx", sensing.robot.GPSxpos, 4);
       logValue("Gy", sensing.robot.GPSypos, 5);
       logValue("Heading", sensing.robot.angle, 6);
+      logValue("dt", driveType, 8);
       outValsSDCard();
       delay(optimalDelay);
     }
@@ -868,7 +875,7 @@ void autonDriveController(void) {
               master.get_digital(pros::E_CONTROLLER_DIGITAL_X));
         }
       }
-
+      
       double intakeSpd = intakeControl();
       double turrSpd = -turrControl() * 12000 / 127;
       if (turrSpd == 0) {
@@ -877,7 +884,7 @@ void autonDriveController(void) {
         turretMotor.move_voltage(turrSpd);
       }
 
-      intakeMotor.move(intakeSpd);
+      intakeMotor.move_voltage(intakeSpd);
 
       delay(optimalDelay);
     }
@@ -916,39 +923,27 @@ void autonDriveController(void) {
     bool finished = false;
     driveType = 3;
     int startTime = millis();
-    while(!sensing.underRoller(1) || !sensing.underRoller(2) && millis() - startTime < time&& millis() - startTime < time){
+    while(!sensing.underRoller(1) && !sensing.underRoller(2) && millis() - startTime < time){
       leftSpd = 12000;
       rightSpd = 12000;
       delay(20);
     }
     leftSpd = 2000;
     rightSpd = 2000;
+    intakeRunning = 3;
+    intakespdTar=180;
     while (finished == false && millis() - startTime < time) {
       static int pwr = 8000;
-      if (!sensing.rollerIsGood() || fabs(fabs(intakeMotor.get_actual_velocity()) - 180) < 20) {
-        if (sensing.underRoller(1) || sensing.underRoller(2)) {
-          if (fabs(intakeMotor.get_actual_velocity()) < 60) {
-            if (pwr < 12000) {
-              pwr += 50;
-            } else {
-              pwr = 12000;
-            }
-          } else {
-            if (pwr > 2000) {
-              pwr -= 10;
-            } else {
-              pwr = 2000;
-            }
-          }
-          intakePower = pwr;
-        } else {
-          intakePower = 12000;
-        }
-      } else {
+      if (sensing.rollerIsGood()) {
         finished = true;
+        break;
       }
       delay(20);
     }
+    leftSpd = -6000;
+    rightSpd = -6000;
+    delay(200);
+    intakeRunning = 0;
   }
 
   void explode(void) { boomShackalacka.set_value(true); }

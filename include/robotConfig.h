@@ -98,6 +98,7 @@ class sensing_t{
             else{
                 robot.magFullness = 1;
             }
+            return angBetween;
 
             while(angBetween > 360){
                 angBetween-=360;
@@ -105,27 +106,7 @@ class sensing_t{
             while(angBetween < 0){
                 angBetween+=360;
             }
-            double failOut  = robot.angle + 180;
-            while (failOut > 360){
-                failOut -= 360;
-            }
-            while (failOut < 0){
-                failOut += 360;
-            }
-            if (0/*(distSense.get() < 40 || !competition::is_autonomous()) && !master.get_digital(E_CONTROLLER_DIGITAL_X)*/){
-                if (millis() - prevBadTime > 500){
-                    magFull = 1;
-                    return angBetween;
-                }
-                else{
-                    magFull = 0;
-                    return failOut;
-                }
-            }
-            else{
-                prevBadTime = c::millis();
-                return failOut;
-            }
+            return angBetween;
         }
 
         int optimalDelay = 20;
@@ -221,9 +202,12 @@ class sensing_t{
                     xdiff = double(temp_status.y)*39.37;
                     ydiff = -double(temp_status.x)*39.37;
                 }
-                logValue("Heading", GPS_sensor.get_error(), 7);
+                logValue("RTS", GPS_sensor.get_error(), 7);
 
-                if (GPS_sensor.get_error() < 0.012 && sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 1 && robot.xpos >36 && robot.xpos < 108 && robot.ypos >36 && robot.ypos < 108 && !sensorFail){
+                if (GPS_sensor.get_error() < 0.012 && 
+                    sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 1 && 
+                    robot.xpos >36 && robot.xpos < 108 && robot.ypos >36 && robot.ypos < 108 && !sensorFail)
+                {
                     robot.xpos = robot.GPSxpos;
                     robot.ypos = robot.GPSypos;
                 }
@@ -231,12 +215,20 @@ class sensing_t{
                     robot.xpos = robot.odoxpos;
                     robot.ypos = robot.odoypos;
                 }
+                static bool firstFail = true;
                 // if red: x direction is correct y is flipped, if blue: x direction is flipped, y is correct
                 if (robot.GPSxpos - (72 + xdiff) == 0 && !sensorFail){
                     sensorFail = true;
-                    master.clear_line(2);
-                    delay(50);
-                    master.print(2, 0, "GPS Fail");
+
+                    if (firstFail){
+                        master.clear_line(2);
+                        delay(50);
+                        master.print(2, 0, "GPS Fail");
+                        firstFail = false;
+                    }
+                }
+                else{
+                    sensorFail = false;
                 }
                 robot.GPSxpos = 72 + xdiff - cos(robot.turAng*M_PI/180)*4.5;
                 robot.GPSypos = 72 + ydiff - sin(robot.turAng*M_PI/180)*4.5;
@@ -249,11 +241,14 @@ class sensing_t{
                 static double odoHeading = 0;
                 static double odomposx = 0;
                 static double odomposy = 0;
-                double Arc1 =distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
-                double Arc2 =distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positiv
+                double Arc1 = distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
+                double Arc2 = distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positiv
                 double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
-                double a = 4.969; //distance between two tracking wheels
-                double b = 3.5625; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+                std::cout<<"R"<<Arc1<<"\n";
+                std::cout<<"L"<<Arc2<<"\n";
+                std::cout<<"S"<<Arc3<<"\n";
+                double a = 4.8125; //distance between two tracking wheels
+                double b = 3.625; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
                 double P1 = (Arc1 - Arc2);
                 double Delta_y, Delta_x;
                 double i1 = inertial.get_rotation();
@@ -438,7 +433,7 @@ class sensing_t{
                 c::optical_rgb_s color = opticalSensor.get_rgb();
                 static int startTime = millis();
                 
-                if (((color.red > 3000 && color.blue < 1700 && isRed == false) || (color.red < 1600 && color.blue > 1800 && isRed == true)) && underRoller(1)){
+                if (((color.red > 3000 && color.blue < 1800 && isRed == false) || (color.red < 2000 && color.blue > 2500 && isRed == true)) && underRoller(1)){
                     return 1;
                 }
                 else{
@@ -448,7 +443,7 @@ class sensing_t{
                 c::optical_rgb_s color = opticalSensor2.get_rgb();
                 static int startTime = millis();
                 
-                if (((color.red > 3000 && color.blue < 1700 && isRed == false) || (color.red < 1600 && color.blue > 1800 && isRed == true)) && underRoller(2)){
+                if (((color.red > 2000 && color.blue < 1000 && isRed == false) || (color.red < 700 && color.blue > 1000 && isRed == true)) && underRoller(2)){
                     return 1;
                 }
                 else{

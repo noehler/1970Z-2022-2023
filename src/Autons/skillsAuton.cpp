@@ -3,20 +3,17 @@
 #include "pros/misc.hpp"
 #include "robotConfig.h"
 #include "sdLogging.h"
- 
+ double distto (double x, double y){
+    return sqrt(pow(x,2)+pow(y,2));
+ }
 void skillsAutonomous(void){
+    sensing.robot.turretLock = false;
+    double startTime = millis();
     sensing.set_status(36,18,270,100, 0);
+    delay(50);
     motorControl_t mc;
-    double totalX = 0;
-    double totalY = 0;
-    int startTime = millis();
-    int loops = 0;
-    /*while (millis() - startTime < 1000){
-        totalX+=sensing.robot.GPSxpos;
-        totalY+=sensing.robot.GPSypos;
-        loops++;
-        delay(10);
-    }*/
+
+
     //sensing.set_status(totalX/loops,totalY/loops,270,100, 0);
     mc.move.tolerance = 5;
     mc.move.errtheta = 10;
@@ -27,21 +24,7 @@ void skillsAutonomous(void){
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &mc, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
-    
-    
-    mc.driveType = 1;
-    mc.HeadingTarget = 180; 
 
-
-
-
-
-
-
-
-
-
-    delay(10000000);
     //first roller
     mc.move.moveToxpos = 36;
     mc.move.moveToypos = -10;
@@ -51,16 +34,27 @@ void skillsAutonomous(void){
     mc.driveType = 1;
     mc.HeadingTarget = 270; 
     mc.rotateTo();
-    while (fabs(sensing.robot.angle)-fabs(mc.HeadingTarget)>mc.move.errtheta){
+    while (fabs(sensing.robot.angle)-fabs(mc.HeadingTarget)>mc.move.errtheta &&millis() - startTime <500){
         delay(10);
     }
     mc.driveType = 3;
     mc.driveToRoller(5000);
     
+    mc.driveType = 0;
+    mc.move.moveToxpos = 36;
+    mc.move.moveToypos = 40;
+    mc.move.moveToforwardToggle = -1;
     
+    startTime = millis();
+    while(sensing.robot.ypos<16 &&millis() - startTime <500){
+        delay(10);
+    }
     mc.move.moveToxpos = 42;
     mc.move.moveToypos = 24;
+    mc.move.tolerance = 1;
+    mc.move.errtheta = 3;
 
+    mc.move.moveToforwardToggle = -1;
     mc.move.errtheta = 10;
     mc.move.moveToforwardToggle = -1;
     mc.move.moveToxpos = 42;
