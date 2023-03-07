@@ -187,13 +187,13 @@ public:
         intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
 
-    PID.driveFR.p = 2;
-    PID.driveFR.i = .5;
+    PID.driveFR.p = 1;
+    PID.driveFR.i = 0;
     PID.driveFR.d = 1;
 
-    PID.driveSS.p = 1.2;
-    PID.driveSS.i = .030;
-    PID.driveSS.d = 18;
+    PID.driveSS.p = 0.5;
+    PID.driveSS.i = 0;
+    PID.driveSS.d = 1;
 
     PID.turret.p = 1.2;
     PID.turret.i = .03;
@@ -335,7 +335,6 @@ void rotateTo() {
     moveI.PIDSSFLAT = 0;
     bool finished = false;
     bool resetMoveToSS = false;
-    HeadingTarget = HeadingTarget * M_PI / 180;
       /*
       function logic:
       find errors of position, turn to target if robot cannot move in a arc to
@@ -351,21 +350,16 @@ void rotateTo() {
         IPIDSS = 0;
         moveI.ets = 0;
      }
-      currentheading = sensing.robot.angle * M_PI / 180;
+      currentheading = sensing.robot.angle;
       moveI.ets = HeadingTarget - currentheading;
-      if (moveI.ets < -M_PI) {
-        moveI.ets += 2 * M_PI;
+      while (moveI.ets < -180) {
+        moveI.ets += 360;
       }
-      if (moveI.ets > M_PI) {
-        moveI.ets -= 2 * M_PI;
+      while (moveI.ets > 180) {
+        moveI.ets -= 360;
       }
-
-      moveI.ets = moveI.ets * 180 / M_PI;
       IPIDSS += moveI.ets;
 
-      if (moveI.ets > 180) {
-        moveI.PIDSS *= -1;
-      }
       moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                     PID.driveSS.d * (moveI.ets - previousets);
 
@@ -384,15 +378,17 @@ void rotateTo() {
       if (moveI.PIDSSFLAT < -127) {
         moveI.PIDSSFLAT = -127;
       }
-      moveI.PIDSpeedR = -moveI.PIDSSFLAT;
-      moveI.PIDSpeedL = moveI.PIDSSFLAT;
+      moveI.PIDSpeedR = moveI.PIDSSFLAT;
+      moveI.PIDSpeedL = -moveI.PIDSSFLAT;
+    std::cout<<"moveI.PIDss:"<<moveI.PIDSSFLAT<<"\n";
+    std::cout<<"ets:"<<moveI.ets<<"\n";
       if (fabs(moveI.ets) < move.errtheta && fabs(lfD.get_actual_velocity()) + fabs(rfD.get_actual_velocity()) < 40) {
             resetMoveToSS = true;
             leftSpd = 0;
             rightSpd = 0;
       } else {
-        leftSpd = -moveI.PIDSpeedL * 12000 / 127;
-        rightSpd = -moveI.PIDSpeedR * 12000 / 127;
+        leftSpd = moveI.PIDSpeedL * 12000 / 127;
+        rightSpd = moveI.PIDSpeedR * 12000 / 127;
       }
   }
 
@@ -485,8 +481,8 @@ void moveTo() {
     }
     previousets = moveI.ets;
     previouset = et;
-    moveI.PIDSSFLAT = moveI.PIDSS * move.speed_limit / 127;
-    moveI.PIDFWFLAT = moveI.PIDFW;
+    moveI.PIDSSFLAT = moveI.PIDSS * move.speed_limit / 100;
+    moveI.PIDFWFLAT = moveI.PIDFW * move.speed_limit / 100;
     if (moveI.PIDFWFLAT >= move.speed_limit) {
       moveI.PIDFWFLAT = move.speed_limit;
     }
@@ -499,9 +495,8 @@ void moveTo() {
     if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
       moveI.PIDSSFLAT = -2 * move.speed_limit;
     }
-    rightSpd = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
-    leftSpd = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
-    
+    rightSpd = (moveI.PIDFWFLAT - 0*moveI.PIDSSFLAT) * 12000 / 127;
+    leftSpd = (moveI.PIDFWFLAT + 0*moveI.PIDSSFLAT) * 12000 / 127;
     if (dist < move.tolerance) {
         move.resetMoveTo = true;
         leftSpd = 0;

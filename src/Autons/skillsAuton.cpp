@@ -27,6 +27,21 @@ void skillsAutonomous(void){
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &mc, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
+    
+    
+    mc.driveType = 1;
+    mc.HeadingTarget = 180; 
+
+
+
+
+
+
+
+
+
+
+    delay(10000000);
     //first roller
     mc.move.moveToxpos = 36;
     mc.move.moveToypos = -10;
