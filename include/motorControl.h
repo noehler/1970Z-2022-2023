@@ -919,15 +919,15 @@ void autonDriveController(void) {
 
   void driveToRoller(double time) { // changing to let move to take over the initial moveto
     bool finished = false;
-
-    while(!sensing.underRoller(1) || !sensing.underRoller(2)){
+    driveType = 3;
+    int startTime = millis();
+    while(!sensing.underRoller(1) || !sensing.underRoller(2) && millis() - startTime < time&& millis() - startTime < time){
       leftSpd = 12000;
       rightSpd = 12000;
       delay(20);
     }
     leftSpd = 2000;
     rightSpd = 2000;
-    int startTime = millis();
     while (finished == false && millis() - startTime < time) {
       static int pwr = 8000;
       if (!sensing.rollerIsGood() || fabs(fabs(intakeMotor.get_actual_velocity()) - 180) < 20) {

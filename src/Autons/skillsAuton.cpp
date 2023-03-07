@@ -3,36 +3,48 @@
 #include "pros/misc.hpp"
 #include "robotConfig.h"
 #include "sdLogging.h"
-
+ 
 void skillsAutonomous(void){
-    sensing.set_status(30,16,270,100, 0);
+    sensing.set_status(36,18,270,100, 0);
     motorControl_t mc;
     double totalX = 0;
     double totalY = 0;
     int startTime = millis();
     int loops = 0;
-    while (millis() - startTime < 1000){
+    /*while (millis() - startTime < 1000){
         totalX+=sensing.robot.GPSxpos;
         totalY+=sensing.robot.GPSypos;
         loops++;
         delay(10);
-    }
-
-    sensing.set_status(totalX/loops,totalY/loops,270,100, 0);
+    }*/
+    //sensing.set_status(totalX/loops,totalY/loops,270,100, 0);
     mc.move.tolerance = 5;
     mc.move.errtheta = 10;
     sensing.robot.turretLock = true;
 
-    mc.leftSpd = 0;
-    mc.rightSpd = 0;
     //starting controller threads
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &mc, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
-
     //first roller
+    mc.move.moveToxpos = 36;
+    mc.move.moveToypos = -10;
+    while (sensing.robot.ypos >=16){
+        delay(10);
+    }
+    mc.driveType = 1;
+    mc.HeadingTarget = 270; 
+    mc.rotateTo();
+    while (fabs(sensing.robot.angle)-fabs(mc.HeadingTarget)>mc.move.errtheta){
+        delay(10);
+    }
+    mc.driveType = 3;
     mc.driveToRoller(5000);
+    
+    
+    mc.move.moveToxpos = 42;
+    mc.move.moveToypos = 24;
 
     mc.move.errtheta = 10;
     mc.move.moveToforwardToggle = -1;
