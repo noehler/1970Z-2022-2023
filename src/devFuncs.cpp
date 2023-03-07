@@ -363,8 +363,8 @@ void universalTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bo
             double startTime = millis();
             motorControl_t mc;
             double currentheading = sensing.robot.angle * M_PI / 180;
-
-            mc.driveDist(30, PID.driveFR.p, PID.driveFR.i, PID.driveFR.d);
+            mc.DistToTravel = 10;
+            mc.driveDist();
             delay(2000);
             FRPVAL = millis() - startTime + lfD.get_position();
             startTime = millis();
@@ -379,8 +379,8 @@ void universalTuner(double goal, PID_t PIDU, int timeToTest, int delayTiming, bo
             {
                 angleTo = 0;
             }
-
-            mc.rotateTo(angleTo, PID.driveSS.p, PID.driveSS.i, PID.driveSS.d);
+            mc.HeadingTarget = 0;
+            mc.rotateTo();
             delay(2000);
             currentheading = sensing.robot.angle * M_PI / 180;
             double ets = angleTo - currentheading;

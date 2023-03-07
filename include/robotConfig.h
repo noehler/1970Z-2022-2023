@@ -195,6 +195,7 @@ class sensing_t{
         //color = true > red. color = false > blue.
         void set_status (double xpos, double ypos, double heading ,double color_sensor_luminance , bool color){
             opticalSensor.set_led_pwm(color_sensor_luminance);
+            opticalSensor2.set_led_pwm(color_sensor_luminance);
             robot.xpos = xpos;
             robot.ypos = ypos;
             robot.odoxpos = xpos;

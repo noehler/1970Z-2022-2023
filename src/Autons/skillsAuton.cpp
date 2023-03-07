@@ -23,6 +23,8 @@ void skillsAutonomous(void){
     mc.move.errtheta = 10;
     sensing.robot.turretLock = true;
 
+    mc.leftSpd = 0;
+    mc.rightSpd = 0;
     //starting controller threads
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &mc, "Intake and Turret Controller Task");
@@ -57,7 +59,7 @@ void skillsAutonomous(void){
     //hitting roller
     mc.move.errtheta = 10;
     mc.move.tolerance = 5;
-    mc.rotateTo(180);
+    mc.rotateTo();
 
     mc.driveToRoller(5000);  
     sensing.robot.turretLock = false;
@@ -118,7 +120,7 @@ void skillsAutonomous(void){
     mc.move.moveToxpos = 114;
     mc.move.moveToypos = 132;
     mc.waitPosTime(10000);
-    mc.rotateTo(90);
+    mc.rotateTo();
     mc.driveToRoller(4000);
 
     mc.move.moveToforwardToggle = -1;
@@ -131,7 +133,7 @@ void skillsAutonomous(void){
     mc.move.moveToxpos = 114;
     mc.move.moveToypos = 132;
     mc.waitPosTime(10000);
-    mc.rotateTo(0);
+    mc.rotateTo();
     mc.driveToRoller(4000);
 
 

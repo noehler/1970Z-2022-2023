@@ -110,10 +110,10 @@ void autonomous() {
 
     motorControl.runTurretIntake = false;
 
-    motorControl.driveDist(15);
+    motorControl.driveDist();
     
 
-    motorControl.rotateTo(0);
+    motorControl.rotateTo();
     delay(1000);
 
     motorControl.driveToRoller(100000);
