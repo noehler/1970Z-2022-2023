@@ -141,6 +141,7 @@ void autonomous() {
 void opcontrol() {
   sensing.set_status(24, 24, 90, 0, 0);
   motorControl_t motorControl;
+  motorControl.flyTune();
 
   Task drive_Task(drive_ControllerWrapper, (void *)&motorControl,
                   "My Driver Controller Task");

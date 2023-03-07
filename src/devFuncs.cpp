@@ -36,7 +36,9 @@ void driveTuner(void){
 
 void flyTuner(Motor flyWheel1, Motor flyWheel2, int loopDelay)
 {
-    motorControl_t mc;
+    PID.flyWheel.p = 1.94425;
+    PID.flyWheel.i = 0.0082814;
+    PID.flyWheel.d = 1;
     int PIDPOS = 1;
     double bestPVal = 94000;
     bool bsSet = 0;
@@ -47,7 +49,7 @@ void flyTuner(Motor flyWheel1, Motor flyWheel2, int loopDelay)
     flyWheel2.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
     while (1)
     {
-        int gS = 500;
+        int gS = 300;
         int moveDir = -1;
 
         bool testDone = false;

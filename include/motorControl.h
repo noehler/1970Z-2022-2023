@@ -56,7 +56,7 @@ private:
   double angularVelocityCalc(int number) {
     // return master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + 250;
     if (number ==3 && discCountChoice == 2){
-      return sensing.goalSpeed*1.549+87.42;
+      return sensing.goalSpeed*1.549+38.42;
     }
     else if(number == 2 && discCountChoice == 2){
       return sensing.goalSpeed*1.255+38.05;
@@ -782,6 +782,11 @@ void autonDriveController(void) {
       delay(optimalDelay);
     }
   }
+
+  void flyTune(void){
+    flyTuner(flyWheel1,flyWheel2,20);
+  }
+
 
   // voltage controller for flywheel motors
   void flyController() {
