@@ -141,14 +141,14 @@ void autonomous() {
 void opcontrol() {
   sensing.set_status(24, 24, 90, 0, 0);
   motorControl_t motorControl;
-  motorControl.flyTune();
+  //motorControl.flyTune();
 
   Task drive_Task(drive_ControllerWrapper, (void *)&motorControl,
                   "My Driver Controller Task");
   Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl,
                           "Intake and Turret Controller Task");
-  Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
-                "My Flywheel Speed Controller Task");
+  //Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
+  //              "My Flywheel Speed Controller Task");
   Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
   
   while (1) {  

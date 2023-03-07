@@ -89,7 +89,7 @@ private:
     } else if (angdiff < -180) {
       angdiff += 360;
     }
-    if (fabs(angdiff) < 2) {
+    if (fabs(angdiff) < 3) {
       angdiff = 0;
     }
 
@@ -108,12 +108,10 @@ private:
         turPredicScalar = 0;
 
       } else {
-        gyroScalar = 0.1;
-        chassisScalar = 0.35; // 0.3;
-        turPredicScalar = 1;
+        gyroScalar = 0.2;
+        chassisScalar = 0.4; // 0.3;
+        turPredicScalar = .7;
       }
-
-      previousangdiff = angdiff;
       double veldiff = gyroScalar * T * (sensing.robot.angAccel) -
                        sensing.robot.velW * chassisScalar +
                        turPredicScalar * sensing.robot.turvelocity +
@@ -122,12 +120,16 @@ private:
       PIDVelocity =
           (1 * veldiff + 0.01 * IPIDvel + 0.1 * (veldiff - previousveldiff));
       previousveldiff = veldiff;
-      if (fabs(angdiff) < 1 && PIDPosition == 0 && fabs(veldiff) < 1) {
+      if (fabs(angdiff) < 4 && PIDPosition == 0 && fabs(veldiff) < 1) {
         IPIDang = 0;
       }
       if (fabs(veldiff) < 0.1) {
         IPIDvel = 0;
       }
+      if (fabs(angdiff) < 3 && fabs(angdiff - previousangdiff) < 10) {
+        return 0;
+      }
+      previousangdiff = angdiff;
     } else {
       PIDVelocity = 0;
     }
@@ -204,12 +206,12 @@ public:
     PID.driveSS.i = 0.1;
     PID.driveSS.d = 10;
 
-    PID.turret.p = 1.2;
-    PID.turret.i = .03;
-    PID.turret.d = 2.1;
+    PID.turret.p = 1.0;
+    PID.turret.i = .01;
+    PID.turret.d = 8;
 
     PID.turret.p2 = 0.7;
-    PID.turret.i2 = 0.0002;
+    PID.turret.i2 = 0.00000002;
     PID.turret.d2 = 0;
 
     PID.flyWheel.p = 1.82587;
