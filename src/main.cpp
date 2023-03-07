@@ -149,8 +149,14 @@ void opcontrol() {
   Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
                 "My Flywheel Speed Controller Task");
   Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
-
+  
   while (1) {  
+    if (master.get_digital_new_press(DIGITAL_A)){
+      motorControl.discCountChoice = 2;
+    }
+    if (master.get_digital_new_press(DIGITAL_B)){
+      motorControl.discCountChoice = 1;
+    }
 
     sensing.SSOSTTT_bool = true;
     static bool autoAim = false;

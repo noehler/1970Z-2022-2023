@@ -55,10 +55,10 @@ private:
 
   double angularVelocityCalc(int number) {
     // return master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + 250;
-    if (number ==3){
+    if (number ==3 && discCountChoice == 2){
       return sensing.goalSpeed*1.549+87.42;
     }
-    else if(number == 2){
+    else if(number == 2 && discCountChoice == 2){
       return sensing.goalSpeed*1.255+38.05;
     }
     else{
@@ -66,7 +66,6 @@ private:
     }
   }
 
-  double angdiff;
   bool recoilPrevent;
   double turrControl(void) {
     static double PIDPosition = 0;
@@ -166,8 +165,6 @@ private:
   }
 
   
-  double diffFlyWheelW;
-  double diffFlyWheelW2;
 
 public:
 
@@ -183,8 +180,12 @@ public:
   ADIDigitalOut shoot3;
   ADIDigitalOut shoot1;
   ADIDigitalOut ejectPiston;
+  double angdiff;
+  int discCountChoice = 2;
   double intakespdTar =0;
   int intakeRunning;
+  double diffFlyWheelW;
+  double diffFlyWheelW2;
   // Constructor to assign values to the motors and PID values
   motorControl_t(void)
       : lfD(5, E_MOTOR_GEARSET_06, true), lbD(4, E_MOTOR_GEARSET_06, false),
@@ -893,29 +894,15 @@ void autonDriveController(void) {
   }
 
   void raiseAScore(int number) {
-    for (int i = 0; i<3; i++)
-    {
-      if(sensing.magFull){
-        while(fabs(angdiff)>3 && (fabs(diffFlyWheelW) + fabs(diffFlyWheelW2))/2 < 30){
-        delay(20);
-        }
-        if(number == 3){
-          shoot3.set_value(true);
-          delay(300);
-          shoot3.set_value(false);
-        }
-        else{
-          shoot1.set_value(true);
-          delay(300);
-          shoot1.set_value(false);
-        }
-        break;
-      }
-      else{
-        intakeRunning = 1;
-        delay(500);
-        intakeRunning = 0;
-      }
+    if(number == 3){
+      shoot3.set_value(true);
+      delay(300);
+      shoot3.set_value(false);
+    }
+    else{
+      shoot1.set_value(true);
+      delay(300);
+      shoot1.set_value(false);
     }
   }
 
