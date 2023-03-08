@@ -203,7 +203,7 @@ public:
 
     PID.driveSS.p = 1;
     PID.driveSS.i = 0.04;
-    PID.driveSS.d = 80;
+    PID.driveSS.d = 60;
 
     PID.turret.p = 1.0;
     PID.turret.i = .01;
@@ -917,8 +917,8 @@ void autonDriveController(void) {
     driveType = 3;
     int startTime = millis();
     while(!sensing.underRoller(1) && !sensing.underRoller(2) && millis() - startTime < time){
-      leftSpd = 12000;
-      rightSpd = 12000;
+      leftSpd = 8000;
+      rightSpd = 8000;
       delay(20);
     }
     leftSpd = 2000;

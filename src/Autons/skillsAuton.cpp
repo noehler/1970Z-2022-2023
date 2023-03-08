@@ -46,7 +46,7 @@ double pickPos(double posInput, int run){
     */
     //starting controller threads
 
-    
+
 void skillsAutonomous(void){
     double startTime = millis();
     sensing.set_status(37,18,270,100, 0);
@@ -76,7 +76,14 @@ void skillsAutonomous(void){
     while(sensing.robot.ypos<27 &&millis() - startTime <1500){
         delay(10);
     }
-    //line up with disk and roller might need a hold on drive motor
+    //pick up disk
+    setMotion(&mc, pickPos(0,i), pickPos(26,i),35,10,10,1);
+    mc.intakeRunning = 1;
+    startTime = millis();
+    while((sensing.robot.xpos>pickPos(24, 0) || sensing.robot.xpos<pickPos(24, 1))&&millis()-startTime<1000){
+        delay(10);
+    }
+    //line up with the roller might need a hold on drive motor
     mc.driveType = 1;
     if(i == 0){
         mc.HeadingTarget = 180;
@@ -88,13 +95,7 @@ void skillsAutonomous(void){
     while (fabs(sensing.robot.angle -180)+fabs(sensing.robot.velW)>=3&&millis() - startTime <1500){ ///////////////////////////////////////////////////////////////////////////// no time limit
         delay(10);
     }
-    //pick up disk
-    setMotion(&mc, pickPos(0,i), pickPos(26,i),35,10,10,1);
-    mc.intakeRunning = 1;
-    startTime = millis();
-    while((sensing.robot.xpos>pickPos(24, 0) || sensing.robot.xpos<pickPos(24, 1))&&millis()-startTime<1000){
-        delay(10);
-    }
+
     //drive to roller
     setMotion(&mc, pickPos(0,i), pickPos(26,i),100,10,5,1);
     startTime = millis();
@@ -102,8 +103,8 @@ void skillsAutonomous(void){
         delay(10);
     }
     //get the roller
-    mc.intakeRunning = 0;
     mc.driveToRoller(  1500);
+    mc.intakeRunning = 0;
 
     //out of roller
     setMotion(&mc, pickPos(20,i),pickPos(26,i),50,5,10,-1);
@@ -123,7 +124,7 @@ void skillsAutonomous(void){
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(13,i),pickPos(85,i),80,5,5,1);
+    setMotion(&mc, pickPos(15,i),pickPos(85,i),80,5,5,1);
     //finish moving and prep for shooting
     startTime = millis();
     while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
