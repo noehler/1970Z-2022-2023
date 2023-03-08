@@ -197,13 +197,13 @@ public:
         intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
 
-    PID.driveFR.p = 1;
+    PID.driveFR.p = 3;
     PID.driveFR.i = 0.1;
-    PID.driveFR.d = 1.5;
+    PID.driveFR.d = 5;
 
-    PID.driveSS.p = 1;
+    PID.driveSS.p = 1.3;
     PID.driveSS.i = 0.04;
-    PID.driveSS.d = 40;
+    PID.driveSS.d = 80;
 
     PID.turret.p = 1.0;
     PID.turret.i = .01;
@@ -938,8 +938,13 @@ void autonDriveController(void) {
     delay(200);
     intakeRunning = 0;
   }
-
-  void explode(void) { boomShackalacka.set_value(true); }
+  //expansion
+  void explode(void) { 
+    boomShackalacka.set_value(true); 
+    driveType = 3;
+    rightSpd = 0;
+    leftSpd = 0;
+  }
 };
 
 extern void drive_ControllerWrapper(void *mControl);
