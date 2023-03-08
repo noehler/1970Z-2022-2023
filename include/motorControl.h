@@ -83,6 +83,14 @@ private:
 
     angdiff = goalAngle - sensing.robot.turAng;
 
+    double turAngle = double(sensing.turretEncoder.get_position())/100;
+    while(turAngle+angdiff > 360){
+      angdiff-= 360;
+    }
+    while(turAngle+angdiff <0){
+      angdiff+= 360;
+    }
+
     if (angdiff > 180) {
       angdiff -= 360;
     } else if (angdiff < -180) {
