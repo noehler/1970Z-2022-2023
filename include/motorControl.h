@@ -199,11 +199,11 @@ public:
 
     PID.driveFR.p = 1;
     PID.driveFR.i = 0.1;
-    PID.driveFR.d = 1;
+    PID.driveFR.d = 1.5;
 
     PID.driveSS.p = 1;
-    PID.driveSS.i = 0.1;
-    PID.driveSS.d = 10;
+    PID.driveSS.i = 0.04;
+    PID.driveSS.d = 40;
 
     PID.turret.p = 1.0;
     PID.turret.i = .01;
