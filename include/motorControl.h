@@ -54,7 +54,6 @@ private:
   };
 
   double angularVelocityCalc(int number) {
-    // return master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y) + 250;
     if (number ==3 && discCountChoice == 2){
       return sensing.goalSpeed*1.549+38.42;
     }

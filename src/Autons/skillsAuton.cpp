@@ -90,113 +90,238 @@ void skillsAutonomous(void){
     setMotion(&mc, 20,26,50,5,10,-1);
     startTime = millis();
     while(sensing.robot.xpos<18&&millis()-startTime<1000){
+        //time out
+        //robot pos check
         delay(10);
     }
     //start aiming and and getting position for next disk
     sensing.robot.turretLock = false;
-    setMotion(&mc, 25,49,100,5,80,-1);
+    mc.discCountChoice = 2;
+    setMotion(&mc, 24,49,100,5,90,-1);
     startTime = millis();
-    while(sensing.robot.ypos<40&&millis()-startTime<500){
+    while(sensing.robot.xpos<24&&millis()-startTime<1000){
+        // robot pos check
+        //time out
         delay(10);
     }
-    setMotion(&mc, 25,49,100,5,10,-1);
-    startTime = millis();
-    mc.discCountChoice = 2;
+    setMotion(&mc, 9,89,100,5,10,-1);
     //finish moving and prep for shooting
     startTime = millis();
     while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
+        //robot to target dist check
+        //time out
         delay(10);
     }
-    //shoot
+    //shoot by condition
     startTime = millis();
     while(millis() - startTime <2000){
-        if (fabs(mc.angdiff)>3 && (fabs(mc.diffFlyWheelW) + fabs(mc.diffFlyWheelW2))/2 +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
+        //time out
+        if (fabs(mc.angdiff)<3 && (fabs(mc.diffFlyWheelW) + fabs(mc.diffFlyWheelW2))/2 +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
             break;
+            //flywheel speed check
+            //turret heading check
+            //robot speed check
         }
     }
-    mc.raiseAScore(3);//clear magazine shoot
+    mc.raiseAScore(3);//first batch
+    delay(300);
+    //reset turret, rotate to disks
+    sensing.robot.turretLock = true;
+    mc.driveType = 1;
+    mc.HeadingTarget = 0;
+    startTime = millis();
+    while (fabs(sensing.robot.angle)+fabs(sensing.robot.velW)>=3 &&millis() - startTime <3000 &&fabs(mc.angdiff)>3 ){
+        //robot heading check
+        //time out
+        //turret angle check before intake 
+        delay(10);
+    }
+    //start intaking 
+    mc.intakeRunning = 1;
+    setMotion(&mc, 37.4,89,40,5,10,1);
+    startTime = millis();
+    while(sensing.robot.xpos<37.4 && millis() - startTime <5000 && sensing.robot.magFullness ==3){
+        // check magazine full
+        // check position
+        // time out
+        delay(10);
+    }
+    mc.intakeRunning = 0;
+    sensing.robot.turretLock = false;
+    if (sensing.robot.magFullness!=1){
+    mc.discCountChoice = 2;
+    } else {
+    mc.discCountChoice = 1;
+    }
+    startTime = millis();
+    while(millis() - startTime <2000){
+        //time out
+        if (fabs(mc.angdiff)<3 && (fabs(mc.diffFlyWheelW) + fabs(mc.diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
+            break;
+            //flywheel speed check
+            //turret heading check
+            //robot speed check
+        }
+    }
+    if (sensing.robot.magFullness!=1){//second batch
+    mc.raiseAScore(3);
+    } else {
+    mc.raiseAScore(1);
+    }
+    delay(300);
+    sensing.robot.turretLock = true;
+
+    setMotion(&mc, 55.5,82,100,1,10,-1);
+    startTime = millis();
+    while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000 && fabs(mc.angdiff)>3){
+        //robot to target dist check
+        //time out
+        //turret angle check before intake 
+        delay(10);
+    }
+    mc.intakeRunning = 1;
+    mc.driveType = 1;
+    mc.HeadingTarget = 90;
+    while (fabs(sensing.robot.angle)+fabs(sensing.robot.velW)>=3 &&millis() - startTime <2000  ){
+        //robot heading check
+        //time out
+        delay(10);
+    }
+
+    setMotion(&mc, 55.5,124,40,1,10,1);
+    startTime = millis();
+    while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <5000&&sensing.robot.magFullness ==3){
+        //robot to target dist check
+        //time out
+        //check if magazine if full
+        delay(10);
+    }
     
-    //line up with next three disks and reset turretangle pos
+    mc.driveType = 3;
+    mc.rightSpd = 0;
+    mc.leftSpd = 0;
+    mc.intakeRunning = 0;
+    sensing.robot.turretLock = false;
+    if (sensing.robot.magFullness!=1){
+    mc.discCountChoice = 2;
+    } else {
+    mc.discCountChoice = 1;
+    }
+    startTime = millis();
+    while(millis() - startTime <2000){
+        //time out
+        if (fabs(mc.angdiff)<3 && (fabs(mc.diffFlyWheelW) + fabs(mc.diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
+            break;
+            //flywheel speed check
+            //turret heading check
+            //robot speed check
+        }
+    }
+    if (sensing.robot.magFullness!=1){//third batch
+    mc.raiseAScore(3);
+    } else {
+    mc.raiseAScore(1);
+    }
+    delay(300);
+
+    sensing.robot.turretLock = true;
+    setMotion(&mc, 55.5,150,100,1,10,1);
+    //finish moving and prep for shooting
+    startTime = millis();
+    while (sensing.robot.ypos<130 && millis() - startTime <2000){
+        //robot to target dist check
+        //time out
+        delay(10);
+    }
+    
+    mc.driveType = 1;
+    mc.HeadingTarget = 320;
+    startTime = millis();
+    while (fabs(sensing.robot.angle -320)+fabs(sensing.robot.velW)>=3 &&millis() - startTime <3500){
+        //time out
+        //heading check
+        delay(10);
+    }
+    setMotion(&mc, 84,108,100,1,10,1);
+    //finish moving and prep for shooting
+    startTime = millis();
+    while (distto(sensing.robot.xpos-70,sensing.robot.ypos-117)>=5 && millis() - startTime <2000){
+        //robot to target dist check
+        //time out
+        delay(10);
+    }
+    setMotion(&mc, 84,108,40,1,10,1);
+    mc.intakeRunning = 1;
+    startTime = millis();
+    while (distto(sensing.robot.xpos-84,sensing.robot.ypos-108)>=5 && millis() - startTime <2000&&sensing.robot.magFullness ==3){
+        //robot to target dist check
+        //time out
+        delay(10);
+    }
+    setMotion(&mc, 70,117,100,1,10,-1);
+    startTime = millis();
+    while (distto(sensing.robot.xpos-70,sensing.robot.ypos-117)>=5 && millis() - startTime <2000 &&sensing.robot.magFullness ==3){
+        //robot to target dist check
+        //time out
+        delay(10);
+    }
+    setMotion(&mc, 84,108,40,1,10,1);
+    startTime = millis();
+    while (distto(sensing.robot.xpos-84,sensing.robot.ypos-108)>=5 && millis() - startTime <2000&&sensing.robot.magFullness ==3){
+        //robot to target dist check
+        //time out
+        delay(10);
+    }
+    mc.intakeRunning = 0;
+    sensing.robot.turretLock = false;
+    if (sensing.robot.magFullness!=1){
+    mc.discCountChoice = 2;
+    } else {
+    mc.discCountChoice = 1;
+    }
+    startTime = millis();
+    while(millis() - startTime <2000){
+        //time out
+        if (fabs(mc.angdiff)<3 && (fabs(mc.diffFlyWheelW) + fabs(mc.diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
+            break;
+            //flywheel speed check
+            //turret heading check
+            //robot speed check
+        }
+    }
+    if (sensing.robot.magFullness!=1){//forth batch
+    mc.raiseAScore(3);
+    } else {
+    mc.raiseAScore(1);
+    }
+    delay(300);
     mc.driveType = 1;
     mc.HeadingTarget = 45;
-    mc.move.errtheta = 4;
-    startTime = millis();
-    sensing.robot.turretLock = true;
-    while ((fabs(sensing.robot.angle-45)>mc.move.errtheta && millis() - startTime <1000)){
+    while (fabs(sensing.robot.angle -45)+fabs(sensing.robot.velW)>=3 &&millis() - startTime < 1000){
+        //time out
+        //heading check
         delay(10);
     }
-    //move on to next three disk and pick them up
-    setMotion(&mc, 72,96,40,5,10,1);
-    mc.intakeRunning = 1;
+    setMotion(&mc, 107,125,100,1,10,1);
     startTime = millis();
-    while(distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance&&millis()-startTime<5000){
-        delay(10);
-    }
-    //shoot three
-    delay(500);
-    mc.intakeRunning = 0;
-    sensing.robot.turretLock = false;
-    delay(30);
-    mc.discCountChoice = 2;
-    startTime = millis();
-    while(millis() - startTime <3000){
-        if (fabs(mc.angdiff)>2 && (fabs(mc.diffFlyWheelW) + fabs(mc.diffFlyWheelW2))/2 < 30){
-            break;
-        }
-    }
-    mc.raiseAScore(3);//clear magazine shoot
-    //moving on to next three stack
-    sensing.robot.turretLock = true;
-    mc.intakeRunning = 1;
-    setMotion(&mc, 89,114,100,2,10,1);
-    startTime = millis();
-    while(distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance&&millis()-startTime<5000){
-        delay(10);
-    }
-    setMotion(&mc, 84,109,40,1,10,-1);
-    startTime = millis();
-    while(distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance&&millis()-startTime<5000){
-        delay(10);
-    }
-    setMotion(&mc, 89,114,40,2,10,1);
-    startTime = millis();
-    while(distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance&&millis()-startTime<5000){
-        delay(10);
-    }
-    //line up for shoot
-    delay(500);
-    mc.intakeRunning = 0;
-    sensing.robot.turretLock = false;
-    mc.discCountChoice = 2;
-    startTime = millis();
-    while(millis() - startTime <3000){
-        if (fabs(mc.angdiff)>3 && (fabs(mc.diffFlyWheelW) + fabs(mc.diffFlyWheelW2))/2 < 30){
-            break;
-        }
-    }
-    mc.raiseAScore(3);//clear magazine shoot
-    //move to roller
-    sensing.robot.turretLock = true;
-    setMotion(&mc, 114,126,100,2,10,1);
-    startTime = millis();
-    while(distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance&&millis()-startTime<5000){
+    while (distto(sensing.robot.xpos-84,sensing.robot.ypos-108)>=2 && millis() - startTime <2000){
+        //robot to target dist check
+        //time out
         delay(10);
     }
     mc.driveType = 1;
     mc.HeadingTarget = 90;
-    startTime = millis();
-    while ((fabs(sensing.robot.angle-45)>mc.move.errtheta && millis() - startTime <3000)){
+    while (fabs(sensing.robot.angle -90)+fabs(sensing.robot.velW)>=3 &&millis() - startTime < 2000){
+        //time out
+        //heading check
         delay(10);
     }
-    setMotion(&mc, 114,150,100,2,10,1);
-    startTime = millis();
-    while(sensing.robot.ypos<130){
+    setMotion(&mc, 107,150, 100,0,10,1);
+    while (sensing.robot.ypos<128){
         delay(10);
     }
-    mc.driveToRoller(2000);
+    mc.driveToRoller(2500);
     while(1){
         delay(200);
     }
-
-    //na te dr ove o ff the ro ad 
 }

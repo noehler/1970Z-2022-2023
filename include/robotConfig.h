@@ -99,14 +99,6 @@ class sensing_t{
                 robot.magFullness = 1;
             }
             return angBetween;
-
-            while(angBetween > 360){
-                angBetween-=360;
-            }
-            while(angBetween < 0){
-                angBetween+=360;
-            }
-            return angBetween;
         }
 
         int optimalDelay = 20;
