@@ -8,7 +8,7 @@
  }
 
 
-void setMotion(void *mc, double xTo, double yTo, double speedLimit = 100, double tolerance = 5, double errtheta = 10, int forward = 1){
+void moveto(void *mc, double xTo, double yTo, double speedLimit = 100, double tolerance = 5, double errtheta = 10, int forward = 1){
     //moveto frame parameters
     ((motorControl_t*) mc)->driveType = 0;
     ((motorControl_t*) mc)->move.moveToxpos = xTo;
@@ -26,6 +26,42 @@ double pickPos(double posInput, int run){
     else{
         return 144 - posInput;
     }
+}
+void shootdisks(void *mc){
+    ((motorControl_t*) mc)->intakeRunning = 0;
+    sensing.robot.turretLock = false;
+    if (sensing.robot.magFullness!=1){
+    ((motorControl_t*) mc)->discCountChoice = 2;
+    } else {
+    ((motorControl_t*) mc)->discCountChoice = 1;
+    }
+    int starttime = millis();
+    while(millis() - starttime <2000){
+        //time out
+        if (fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
+            break;
+            //flywheel speed check
+            //turret heading check
+            //robot speed check
+        }
+    }
+    if (sensing.robot.magFullness!=1){//second batch
+    ((motorControl_t*) mc)->raiseAScore(3);
+    } else {
+    ((motorControl_t*) mc)->raiseAScore(1);
+    }
+    delay(300);
+    sensing.robot.turretLock = true;
+}
+void intake(void *mc){
+    ((motorControl_t*) mc)->intakeRunning = 1;
+    sensing.robot.turretLock = true;
+}
+void movevoltage(void *mc, double L, double R){
+    
+    ((motorControl_t*) mc)->driveType = 3;
+    ((motorControl_t*) mc)->rightSpd = R;
+    ((motorControl_t*) mc)->leftSpd = L;
 }
 
     //sensing.set_status(totalX/loops,totalY/loops,270,100, 0);
@@ -48,36 +84,82 @@ double pickPos(double posInput, int run){
 
 
 void skillsAutonomous(void){
-    double startTime = millis();
-    sensing.set_status(37,18,270,100, 0);
-    delay(50);
+    
     motorControl_t mc;
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &mc, "Intake and Turret Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
     sensing.robot.turretLock = true;
+    double startTime = millis();
+    sensing.set_status(37,18,270,100, 0);
+    movevoltage(&mc,0,0);
+    delay(50);
+    //shoot disks
+    shootdisks(&mc);
+
     //move to roller
-    setMotion(&mc, 37,-10, 100,0,10,1);
+    moveto(&mc, 37,-10, 100,0,10,1);
     while (sensing.robot.ypos>16){
         delay(10);
     }
     mc.driveToRoller(1500);
+
     //move out of roller
-    setMotion(&mc, 37, 40,100,5,20,-1);
+    moveto(&mc, 37, 40,100,5,20,-1);
     while(sensing.robot.ypos<18){
         delay(10);
     }
-    
+    intake(&mc);
+    moveto(&mc, 35.7, 35.7,100,1,5,1);
+    startTime = millis();
+    while(sensing.robot.ypos<35.7  && millis() - startTime <5000 && sensing.robot.magFullness <3){
+        // check magazine full
+        // check position
+        // time out
+        delay(10);
+    }
+    movevoltage (&mc,3000,3000);
+    startTime = millis();
+    while(sensing.robot.ypos<48  && millis() - startTime <5000 && sensing.robot.magFullness <3){
+        // check magazine full
+        // check position
+        // time out
+        delay(10);
+    }
+    movevoltage (&mc,0,0);
+    shootdisks(&mc);
+    moveto(&mc, 35.7, 35.7,100,1,5,-1);
+    startTime = millis();
+    while(sensing.robot.ypos > 36&&millis() - startTime <2000){
+        delay(10);
+    }
+    moveto(&mc,0,37.5,100,1,5,1);
+    startTime = millis();
+    while(sensing.robot.ypos > 36&&millis() - startTime <2000){
+        delay(10);
+    }
+    mc.driveToRoller(2500);
+
+
+
+
+
+
+
+
+
+
+    delay(10000000);
     int i = 0;
     //move to lineup disk
-    setMotion(&mc, pickPos(43, i), pickPos(28,i),100,2,10,-1);
+    moveto(&mc, pickPos(43, i), pickPos(28,i),100,2,10,-1);
     startTime = millis();
     while(sensing.robot.ypos<27 &&millis() - startTime <1500){
         delay(10);
     }
     //pick up disk
-    setMotion(&mc, pickPos(0,i), pickPos(26,i),35,10,10,1);
+    moveto(&mc, pickPos(0,i), pickPos(26,i),35,10,10,1);
     mc.intakeRunning = 1;
     startTime = millis();
     while((sensing.robot.xpos>pickPos(24, 0) || sensing.robot.xpos<pickPos(24, 1))&&millis()-startTime<1000){
@@ -97,7 +179,7 @@ void skillsAutonomous(void){
     }
 
     //drive to roller
-    setMotion(&mc, pickPos(0,i), pickPos(26,i),100,10,5,1);
+    moveto(&mc, pickPos(0,i), pickPos(26,i),100,10,5,1);
     startTime = millis();
     while((sensing.robot.xpos>pickPos(18, 0) || sensing.robot.xpos<pickPos(18, 1))&&millis()-startTime<1000){
         delay(10);
@@ -107,7 +189,7 @@ void skillsAutonomous(void){
     mc.intakeRunning = 0;
 
     //out of roller
-    setMotion(&mc, pickPos(20,i),pickPos(26,i),50,5,10,-1);
+    moveto(&mc, pickPos(20,i),pickPos(26,i),50,5,10,-1);
     startTime = millis();
     while((sensing.robot.xpos<pickPos(18, 0) || sensing.robot.xpos>pickPos(18, 1))&&millis()-startTime<1000){
         //time out
@@ -117,14 +199,14 @@ void skillsAutonomous(void){
     //start aiming and and getting position for next disk
     sensing.robot.turretLock = false;
     mc.discCountChoice = 2;
-    setMotion(&mc, pickPos(24,i),pickPos(49,i),100,5,90,-1);
+    moveto(&mc, pickPos(24,i),pickPos(49,i),100,5,90,-1);
     startTime = millis();
     while((sensing.robot.xpos<pickPos(24, 0) || sensing.robot.xpos>pickPos(24, 1))&&millis()-startTime<1000){
         // robot pos check
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(15,i),pickPos(85,i),80,5,5,1);
+    moveto(&mc, pickPos(15,i),pickPos(85,i),80,5,5,1);
     //finish moving and prep for shooting
     startTime = millis();
     while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
@@ -163,7 +245,7 @@ void skillsAutonomous(void){
     }
 
     //getting in position to scrape along barrier
-    setMotion(&mc, pickPos(28,i),pickPos(88,i),50,5,10,1);
+    moveto(&mc, pickPos(28,i),pickPos(88,i),50,5,10,1);
     //finish moving and prep for shooting
     startTime = millis();
     while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
@@ -174,7 +256,7 @@ void skillsAutonomous(void){
 
     //start intaking 
     mc.intakeRunning = 1;
-    setMotion(&mc, pickPos(48,i),pickPos(89,i),50,5,10,1);
+    moveto(&mc, pickPos(48,i),pickPos(89,i),50,5,10,1);
     startTime = millis();
     while((sensing.robot.xpos<pickPos(48, 0) || sensing.robot.xpos>pickPos(48, 1)) && millis() - startTime <5000 && sensing.robot.magFullness <3){
         // check magazine full
@@ -207,7 +289,7 @@ void skillsAutonomous(void){
     delay(300);
     sensing.robot.turretLock = true;
 
-    setMotion(&mc, pickPos(55.5,i),pickPos(82,i),100,1,10,1);
+    moveto(&mc, pickPos(55.5,i),pickPos(82,i),100,1,10,1);
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000){
         //robot to target dist check
@@ -228,7 +310,7 @@ void skillsAutonomous(void){
         delay(10);
     }
 
-    setMotion(&mc, pickPos(55.5,i),pickPos(124,i),40,1,10,1);
+    moveto(&mc, pickPos(55.5,i),pickPos(124,i),40,1,10,1);
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <5000&&sensing.robot.magFullness < 3){
         //robot to target dist check
@@ -265,7 +347,7 @@ void skillsAutonomous(void){
     delay(300);
 
     sensing.robot.turretLock = true;
-    setMotion(&mc, pickPos(55.5,i),pickPos(150,i),100,1,10,1);
+    moveto(&mc, pickPos(55.5,i),pickPos(150,i),100,1,10,1);
     //finish moving and prep for shooting
     startTime = millis();
     while (sensing.robot.ypos<130 && millis() - startTime <2000){
@@ -287,7 +369,7 @@ void skillsAutonomous(void){
         //heading check
         delay(10);
     }
-    setMotion(&mc, pickPos(88,i),pickPos(109,i),100,5,10,1);
+    moveto(&mc, pickPos(88,i),pickPos(109,i),100,5,10,1);
     //finish moving and prep for shooting
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000){
@@ -295,7 +377,7 @@ void skillsAutonomous(void){
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(88,i),pickPos(109,i),40,5,10,1);
+    moveto(&mc, pickPos(88,i),pickPos(109,i),40,5,10,1);
     mc.intakeRunning = 1;
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime < 2000 && sensing.robot.magFullness <3){
@@ -303,14 +385,14 @@ void skillsAutonomous(void){
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(70,i),pickPos(117,i),100,5,10,-1);
+    moveto(&mc, pickPos(70,i),pickPos(117,i),100,5,10,-1);
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000 &&sensing.robot.magFullness <3){
         //robot to target dist check
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(88,i),pickPos(109,i),40,5,10,1);
+    moveto(&mc, pickPos(88,i),pickPos(109,i),40,5,10,1);
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000 && sensing.robot.magFullness <3){
         //robot to target dist check
@@ -354,7 +436,7 @@ void skillsAutonomous(void){
             //heading check
             delay(10);
         }
-        setMotion(&mc, pickPos(107,i),pickPos(123,i),100,2,10,1);
+        moveto(&mc, pickPos(107,i),pickPos(123,i),100,2,10,1);
         startTime = millis();
         while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000){
             //robot to target dist check
@@ -370,7 +452,7 @@ void skillsAutonomous(void){
             delay(10);
         }
         startTime = millis();
-        setMotion(&mc, 107,150, 100,5,10,1);
+        moveto(&mc, 107,150, 100,5,10,1);
         while (sensing.robot.ypos<130 && millis() - startTime < 2000){
             delay(10);
         }
@@ -383,7 +465,7 @@ void skillsAutonomous(void){
 
     i++;
     //move to lineup disk
-    setMotion(&mc, pickPos(43, i), pickPos(28,i),100,2,10,-1);
+    moveto(&mc, pickPos(43, i), pickPos(28,i),100,2,10,-1);
     startTime = millis();
     while(sensing.robot.ypos<27 &&millis() - startTime <1500){
         delay(10);
@@ -401,14 +483,14 @@ void skillsAutonomous(void){
         delay(10);
     }
     //pick up disk
-    setMotion(&mc, pickPos(0,i), pickPos(26,i),35,10,10,1);
+    moveto(&mc, pickPos(0,i), pickPos(26,i),35,10,10,1);
     mc.intakeRunning = 1;
     startTime = millis();
     while((sensing.robot.xpos>pickPos(24, 0) || sensing.robot.xpos<pickPos(24, 1))&&millis()-startTime<1000){
         delay(10);
     }
     //drive to roller
-    setMotion(&mc, pickPos(0,i), pickPos(26,i),100,10,5,1);
+    moveto(&mc, pickPos(0,i), pickPos(26,i),100,10,5,1);
     startTime = millis();
     while((sensing.robot.xpos>pickPos(18, 0) || sensing.robot.xpos<pickPos(18, 1))&&millis()-startTime<1000){
         delay(10);
@@ -418,7 +500,7 @@ void skillsAutonomous(void){
     mc.driveToRoller(  1500);
 
     //out of roller
-    setMotion(&mc, pickPos(20,i),pickPos(26,i),50,5,10,-1);
+    moveto(&mc, pickPos(20,i),pickPos(26,i),50,5,10,-1);
     startTime = millis();
     while((sensing.robot.xpos<pickPos(18, 0) || sensing.robot.xpos>pickPos(18, 1))&&millis()-startTime<1000){
         //time out
@@ -428,14 +510,14 @@ void skillsAutonomous(void){
     //start aiming and and getting position for next disk
     sensing.robot.turretLock = false;
     mc.discCountChoice = 2;
-    setMotion(&mc, pickPos(24,i),pickPos(49,i),100,5,90,-1);
+    moveto(&mc, pickPos(24,i),pickPos(49,i),100,5,90,-1);
     startTime = millis();
     while((sensing.robot.xpos<pickPos(24, 0) || sensing.robot.xpos>pickPos(24, 1))&&millis()-startTime<1000){
         // robot pos check
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(13,i),pickPos(85,i),80,5,5,1);
+    moveto(&mc, pickPos(13,i),pickPos(85,i),80,5,5,1);
     //finish moving and prep for shooting
     startTime = millis();
     while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
@@ -474,7 +556,7 @@ void skillsAutonomous(void){
     }
 
     //getting in position to scrape along barrier
-    setMotion(&mc, pickPos(28,i),pickPos(88,i),50,5,10,1);
+    moveto(&mc, pickPos(28,i),pickPos(88,i),50,5,10,1);
     //finish moving and prep for shooting
     startTime = millis();
     while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
@@ -485,7 +567,7 @@ void skillsAutonomous(void){
 
     //start intaking 
     mc.intakeRunning = 1;
-    setMotion(&mc, pickPos(48,i),pickPos(89,i),50,5,10,1);
+    moveto(&mc, pickPos(48,i),pickPos(89,i),50,5,10,1);
     startTime = millis();
     while((sensing.robot.xpos<pickPos(48, 0) || sensing.robot.xpos>pickPos(48, 1)) && millis() - startTime <5000 && sensing.robot.magFullness <3){
         // check magazine full
@@ -518,7 +600,7 @@ void skillsAutonomous(void){
     delay(300);
     sensing.robot.turretLock = true;
 
-    setMotion(&mc, pickPos(55.5,i),pickPos(82,i),100,1,10,1);
+    moveto(&mc, pickPos(55.5,i),pickPos(82,i),100,1,10,1);
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000){
         //robot to target dist check
@@ -539,7 +621,7 @@ void skillsAutonomous(void){
         delay(10);
     }
 
-    setMotion(&mc, pickPos(55.5,i),pickPos(124,i),40,1,10,1);
+    moveto(&mc, pickPos(55.5,i),pickPos(124,i),40,1,10,1);
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <5000&&sensing.robot.magFullness < 3){
         //robot to target dist check
@@ -576,7 +658,7 @@ void skillsAutonomous(void){
     delay(300);
 
     sensing.robot.turretLock = true;
-    setMotion(&mc, pickPos(55.5,i),pickPos(150,i),100,1,10,1);
+    moveto(&mc, pickPos(55.5,i),pickPos(150,i),100,1,10,1);
     //finish moving and prep for shooting
     startTime = millis();
     while (sensing.robot.ypos<130 && millis() - startTime <2000){
@@ -598,7 +680,7 @@ void skillsAutonomous(void){
         //heading check
         delay(10);
     }
-    setMotion(&mc, pickPos(88,i),pickPos(109,i),100,5,10,1);
+    moveto(&mc, pickPos(88,i),pickPos(109,i),100,5,10,1);
     //finish moving and prep for shooting
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000){
@@ -606,7 +688,7 @@ void skillsAutonomous(void){
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(88,i),pickPos(109,i),40,5,10,1);
+    moveto(&mc, pickPos(88,i),pickPos(109,i),40,5,10,1);
     mc.intakeRunning = 1;
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime < 2000 && sensing.robot.magFullness <3){
@@ -614,14 +696,14 @@ void skillsAutonomous(void){
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(70,i),pickPos(117,i),100,5,10,-1);
+    moveto(&mc, pickPos(70,i),pickPos(117,i),100,5,10,-1);
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000 &&sensing.robot.magFullness <3){
         //robot to target dist check
         //time out
         delay(10);
     }
-    setMotion(&mc, pickPos(88,i),pickPos(109,i),40,5,10,1);
+    moveto(&mc, pickPos(88,i),pickPos(109,i),40,5,10,1);
     startTime = millis();
     while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <2000 && sensing.robot.magFullness <3){
         //robot to target dist check
@@ -665,7 +747,7 @@ void skillsAutonomous(void){
             //heading check
             delay(10);
         }
-        setMotion(&mc, pickPos(107,i),pickPos(123,i),100,2,10,1);
+        moveto(&mc, pickPos(107,i),pickPos(123,i),100,2,10,1);
         startTime = millis();
         while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000){
             //robot to target dist check
@@ -681,7 +763,7 @@ void skillsAutonomous(void){
             delay(10);
         }
         startTime = millis();
-        setMotion(&mc, 107,150, 100,5,10,1);
+        moveto(&mc, 107,150, 100,5,10,1);
         while (sensing.robot.ypos<130 && millis() - startTime < 2000){
             delay(10);
         }
@@ -694,7 +776,7 @@ void skillsAutonomous(void){
     sensing.goal.ypos = 72;
     sensing.robot.turretLock = false;
     startTime = millis();
-    setMotion(&mc, 24,24, 100,5,5,1);
+    moveto(&mc, 24,24, 100,5,5,1);
     mc.waitPosTime(3000);
 
     startTime = millis();
