@@ -201,7 +201,7 @@ public:
     PID.driveFR.i = 0.1;
     PID.driveFR.d = 5;
 
-    PID.driveSS.p = 1.3;
+    PID.driveSS.p = 1;
     PID.driveSS.i = 0.04;
     PID.driveSS.d = 80;
 
