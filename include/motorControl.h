@@ -13,7 +13,7 @@ using namespace pros;
 
 class motorControl_t {
 private:
-  int optimalDelay = 20;
+  int optimalDelay = 10;
 
   int drivePowerR;
   int drivePowerL;
@@ -82,15 +82,7 @@ private:
     }*/
 
     angdiff = goalAngle - sensing.robot.turAng;
-
-    double turAngle = double(sensing.turretEncoder.get_position())/100;
-    while(turAngle+angdiff > 360){
-      angdiff-= 360;
-    }
-    while(turAngle+angdiff <0){
-      angdiff+= 360;
-    }
-
+    
     if (angdiff > 180) {
       angdiff -= 360;
     } else if (angdiff < -180) {
@@ -99,6 +91,7 @@ private:
     if (fabs(angdiff) < 3) {
       angdiff = 0;
     }
+    updatedAD = true;
 
     static double IPIDvel = 0;
     static double previousveldiff = 0;
@@ -189,6 +182,7 @@ public:
   ADIDigitalOut shoot3;
   ADIDigitalOut shoot1;
   ADIDigitalOut ejectPiston;
+  bool updatedAD = false;
   double angdiff;
   int discCountChoice = 2;
   double intakespdTar =0;

@@ -30,15 +30,18 @@ double pickPos(double posInput, int run){
 void shootdisks(void *mc){
     ((motorControl_t*) mc)->intakeRunning = 0;
     sensing.robot.turretLock = false;
+    delay(20);
     if (sensing.robot.magFullness!=1){
     ((motorControl_t*) mc)->discCountChoice = 2;
     } else {
     ((motorControl_t*) mc)->discCountChoice = 1;
     }
     int starttime = millis();
-    while(millis() - starttime <2000){
+    ((motorControl_t*) mc)->updatedAD = false;
+    while(millis() - starttime <5000){
         //time out
-        if (fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
+        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
+            std::cout<<"good turret"<<"\n";
             break;
             //flywheel speed check
             //turret heading check
@@ -63,7 +66,11 @@ void movevoltage(void *mc, double L, double R){
     ((motorControl_t*) mc)->rightSpd = R;
     ((motorControl_t*) mc)->leftSpd = L;
 }
-
+void rotateto(void *mc,double ang){
+    
+    ((motorControl_t*) mc)->driveType = 1;
+    ((motorControl_t*) mc)->HeadingTarget = ang;
+}
     //sensing.set_status(totalX/loops,totalY/loops,270,100, 0);
     //standard motion frame
     /*
@@ -110,8 +117,14 @@ void skillsAutonomous(void){
     while(sensing.robot.ypos<18){
         delay(10);
     }
+    
+    rotateto(&mc,90);
+    startTime = millis();
+    while(fabs(sensing.robot.angle)+fabs(sensing.robot.velW)>=3 &&millis() - startTime <3000){
+        delay(10);
+    }
     intake(&mc);
-    moveto(&mc, 35.7, 35.7,100,1,5,1);
+    moveto(&mc, 37, 37,100,1,5,1);
     startTime = millis();
     while(sensing.robot.ypos<35.7  && millis() - startTime <5000 && sensing.robot.magFullness <3){
         // check magazine full
@@ -127,20 +140,47 @@ void skillsAutonomous(void){
         // time out
         delay(10);
     }
+
     movevoltage (&mc,0,0);
+    delay(1000);
     shootdisks(&mc);
+
+
     moveto(&mc, 35.7, 35.7,100,1,5,-1);
     startTime = millis();
-    while(sensing.robot.ypos > 36&&millis() - startTime <2000){
+    while(sensing.robot.ypos > 36&&millis() - startTime <3000){
         delay(10);
     }
     moveto(&mc,0,37.5,100,1,5,1);
     startTime = millis();
-    while(sensing.robot.ypos > 36&&millis() - startTime <2000){
+    while(sensing.robot.xpos>18&&millis() - startTime <2000){
         delay(10);
     }
     mc.driveToRoller(2500);
 
+    moveto(&mc,37.5,37.5,100,1,20,-1);
+    startTime = millis();
+    while(sensing.robot.xpos < 24&&millis() - startTime <2000){
+        delay(10);
+    }
+
+    moveto(&mc,26.7,89,100,1,5,1);
+    startTime = millis();
+    intake(&mc);
+    while(sensing.robot.ypos < 89&&millis() - startTime <5000){
+        delay(10);
+    }
+    moveto(&mc,48,89,100,2,20,1);
+    startTime = millis();
+    while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
+        //robot to target dist check
+        //time out
+        delay(10);
+    }
+    
+    movevoltage (&mc,0,0);
+    delay(1000);
+    shootdisks(&mc);
 
 
 

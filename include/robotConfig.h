@@ -235,9 +235,9 @@ class sensing_t{
                 static double odomposy = 0;
                 double Arc1 = distTraveled(&rightEncoderFB); //rightEncoderFB travel, to forward direction of robot is positive
                 double Arc2 = distTraveled(&leftEncoderFB); //leftEncoderFB travel, to forward direction of robot is positiv
-                double Arc3 = distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
+                double Arc3 = -distTraveled(&encoderLR); //backEncoderFB travel, to right of robot is positive
                 double a = 4.8125; //distance between two tracking wheels
-                double b = 3.625; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
+                double b = -3.625; //distance from tracking center to back tracking wheel, positive direction is to the back of robot
                 double P1 = (Arc1 - Arc2);
                 double Delta_y, Delta_x;
                 double i1 = inertial.get_rotation();
