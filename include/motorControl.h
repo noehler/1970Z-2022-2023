@@ -55,13 +55,13 @@ private:
 
   double angularVelocityCalc(int number) {
     if (number ==3 && discCountChoice == 2){
-      return sensing.goalSpeed*1.549+38.42;
+      return sensing.goalSpeed*1.549+3.842;
     }
     else if(number == 2 && discCountChoice == 2){
-      return sensing.goalSpeed*1.255+38.05;
+      return sensing.goalSpeed*1.26+3.805;
     }
     else{
-      return sensing.goalSpeed*1.183+38.57;
+      return sensing.goalSpeed*1.188+3.857;
     }
   }
 
@@ -90,12 +90,12 @@ private:
     }
     
     double robotAngleDiff = goalAngle-sensing.robot.angle;
-    double turretAngle = double(sensing.turretEncoder.get_position())/100;
+    double turretAngle = double(sensing.turretEncoder.get_position())/100+180;
     if (turretAngle + angdiff > 360){
-      angdiff+= 360;
+      angdiff-= 360;
     }
     if(turretAngle + angdiff < 0){
-      angdiff-= 360;
+      angdiff+= 360;
     }
     updatedAD = true;
 

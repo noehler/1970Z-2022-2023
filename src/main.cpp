@@ -31,7 +31,7 @@ void initialize() {
 
   Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
   Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
-  sensing.set_status(24, 24, 90, 0, 0);
+  sensing.set_status(37,18,270,100, 0);
 }
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -137,7 +137,17 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
-
+bool vibrate = false;
+void vibrateController(void){
+  while(1){
+    while(!vibrate){
+      delay(20);
+    }
+    vibrate = false;
+    master.rumble(".");
+    delay(50);
+  }
+}
 void opcontrol() {
   motorControl_t motorControl;
   //motorControl.flyTune();
@@ -149,6 +159,7 @@ void opcontrol() {
   Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
                 "My Flywheel Speed Controller Task");
   Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
+  Task vibrationTask(vibrateController,"My Vibrator Controller Task");
   
   while (1) {  
     if (master.get_digital_new_press(DIGITAL_A)){
@@ -170,6 +181,17 @@ void opcontrol() {
       sensing.goalSpeed = 200;
     } else {
       sensing.robot.turretLock = false;
+    }
+
+    static bool turretGood = false;
+    if(fabs(motorControl.diffFlyWheelW) <35 && motorControl.angdiff < 3 && sensing.robot.turretLock == false){
+      if (turretGood == false){
+        vibrate = true;
+      }
+      turretGood = true;
+    }
+    else{
+      turretGood = false;
     }
 
     if (master.get_digital_new_press(DIGITAL_DOWN) &&master.get_digital_new_press(DIGITAL_LEFT) ) {

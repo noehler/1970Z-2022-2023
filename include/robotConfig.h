@@ -185,6 +185,8 @@ class sensing_t{
             //note: rotation of Gps strip can vary depend on field if true, going to verify on 2/28
             bool sensorFail = false;
             while (1){
+                static bool prevX;
+                static bool prevY;
                 static double ydiff = 0, xdiff = 0;//diff from middle/gps origin
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
                 if (isRed){
@@ -209,7 +211,7 @@ class sensing_t{
                 }
                 static bool firstFail = true;
                 // if red: x direction is correct y is flipped, if blue: x direction is flipped, y is correct
-                if (robot.GPSxpos - (72 + xdiff) == 0 && !sensorFail){
+                if (prevX - (72 + xdiff) == 0){
                     sensorFail = true;
 
                     if (firstFail){
@@ -222,6 +224,7 @@ class sensing_t{
                 else{
                     sensorFail = false;
                 }
+                prevX = (72 + xdiff);
                 robot.GPSxpos = 72 + xdiff - cos(robot.turAng*M_PI/180)*4.5;
                 robot.GPSypos = 72 + ydiff - sin(robot.turAng*M_PI/180)*4.5;
 
