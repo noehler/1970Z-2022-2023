@@ -202,7 +202,12 @@ private:
     static int baseSPD;
     static int jamTime = -9000;
     static int startTime = millis();
+    static bool switched = false;
     if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) {
+      if (switched == false){
+        startTime = millis();
+        switched = true;
+      }
       if (millis() - jamTime > 500){
         baseSPD = 12000;
       }
@@ -210,14 +215,17 @@ private:
         baseSPD = -12000;
         startTime = millis();
       }
-      if (millis() - startTime >250 && millis() - jamTime > 500 && fabs(intakeMotor.get_actual_velocity()) < 5){
+      if ( millis() - startTime >250 && millis() - jamTime > 500 && fabs(intakeMotor.get_actual_velocity()) < 5){
         jamTime = millis();
       }
 
     } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) ||
               intakeRunning == 2) {
       baseSPD = -12000;
+      switched = false;
+
     } else if (intakeRunning == 3){
+      switched = false;
       if (intakeMotor.get_actual_velocity()<intakespdTar && baseSPD < 12000){
         baseSPD +=100;
       } else if (intakeMotor.get_actual_velocity()>intakespdTar && baseSPD > -12000){
@@ -227,6 +235,8 @@ private:
       }
     } else {
       baseSPD = 0;
+      switched = false;
+
     }
     return baseSPD;
   }
@@ -268,8 +278,8 @@ public:
     PID.driveFR.i = 0.1;
     PID.driveFR.d = 5;
 
-    PID.driveSS.p = 1.2;
-    PID.driveSS.i = 0.25;
+    PID.driveSS.p = 1.6;
+    PID.driveSS.i = 0.20;
     PID.driveSS.d = 20;
 
     PID.turret.p = 1.0;
@@ -439,6 +449,10 @@ void rotateTo() {
 
       moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                     PID.driveSS.d * (moveI.ets - previousets);
+      logValue("Pspin", PID.driveSS.p * moveI.ets, 8);
+      logValue("Ispin", PID.driveSS.i * IPIDSS, 9);
+      logValue("Dspin", PID.driveSS.d * (moveI.ets - previousets), 10);
+      logValue("Totalspin", moveI.PIDSS, 11);
 
       previousets = moveI.ets;
       moveI.PIDSSFLAT = moveI.PIDSS;
@@ -812,7 +826,6 @@ void autonDriveController(void) {
       logValue("Gx", sensing.robot.GPSxpos, 4);
       logValue("Gy", sensing.robot.GPSypos, 5);
       logValue("Heading", sensing.robot.angle, 6);
-      logValue("dt", driveType, 8);
       outValsSDCard();
       delay(optimalDelay);
     }
