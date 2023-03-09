@@ -27,7 +27,7 @@ double pickPos(double posInput, int run){
         return 144 - posInput;
     }
 }
-void shootdisks(void *mc, bool calibrapePos = false, int number = 4){
+void shootdisks(void *mc, int overallStartTime, bool calibrapePos = false, int number = 4){
     if (number == 4){
         number = sensing.robot.magFullness;
     }
@@ -44,7 +44,7 @@ void shootdisks(void *mc, bool calibrapePos = false, int number = 4){
     double gpsIntegY = 0;
     double loops = 0;
     ((motorControl_t*) mc)->updatedAD = false;
-    while(millis() - starttime <6000){
+    while(millis() - starttime <6000 && millis() - overallStartTime < 55000){
         //time out
         if (calibrapePos){
             gpsIntegX+=sensing.robot.GPSxpos;
@@ -88,9 +88,9 @@ void rotateto(void *mc,double ang, double range = 3){
     ((motorControl_t*) mc)->move.errtheta = range;
 }
 
-void intakeWaitForDiscs(void *mc, int maxTime, int goalAmt = 3){
+void intakeWaitForDiscs(void *mc, int maxTime, int overallStartTime, int goalAmt = 3){
     int startTime = millis();
-    while(distto(((motorControl_t*) mc)->move.moveToxpos, ((motorControl_t*) mc)->move.moveToypos) > ((motorControl_t*) mc)->move.tolerance && sensing.robot.magFullness < goalAmt && millis()-startTime < maxTime){
+    while(distto(((motorControl_t*) mc)->move.moveToxpos, ((motorControl_t*) mc)->move.moveToypos) > ((motorControl_t*) mc)->move.tolerance && sensing.robot.magFullness < goalAmt && millis()-startTime < maxTime && millis() - overallStartTime < 55000){
         delay(10);
     }
 }
@@ -112,14 +112,16 @@ void intakeWaitForDiscs(void *mc, int maxTime, int goalAmt = 3){
     */
     //starting controller threads
 
-void waitRotate(void *mc, int maxTime){
+void waitRotate(void *mc, int maxTime, int overallStartTime){
     int startTime = millis();
-    while(fabs(sensing.robot.angle-((motorControl_t*) mc)->HeadingTarget)+fabs(sensing.robot.velW)>= ((motorControl_t*) mc)->move.errtheta && millis() - startTime <maxTime){
+    while(fabs(sensing.robot.angle-((motorControl_t*) mc)->HeadingTarget)+fabs(sensing.robot.velW)>= ((motorControl_t*) mc)->move.errtheta && millis() - startTime <maxTime && millis() - overallStartTime < 55000){
         delay(10);
     }
 }
 
 void skillsAutonomous(void){
+
+    int overallStartTime = millis();
     
     motorControl_t mc;
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
@@ -147,11 +149,11 @@ void skillsAutonomous(void){
     
     //move to lineup disk
     moveto(&mc, 48, 23,100,5,10,-1);
-    mc.waitPosTime(2500);
+    mc.waitPosTime(2500,overallStartTime);
     //line up with disk and roller might need a hold on drive motor
     rotateto(&mc, 180);
     startTime = millis();
-    waitRotate(&mc, 1000);
+    waitRotate(&mc, 1000,overallStartTime);
 
     //pick up disk
     moveto(&mc, 0, 23,35,10,3,1);                                  //John: potentially too big of error heading, but at the same time, the pid spin is wack so idk.
@@ -165,11 +167,11 @@ void skillsAutonomous(void){
     movevoltage(&mc, 0,0);
     mc.intakeRunning = 0;                                           //John: between each shoots, time can be lowered to 200ms or lower 
     delay(200);
-    shootdisks(&mc,0,1);
+    shootdisks(&mc,overallStartTime,0,1);
     delay(200);
-    shootdisks(&mc,0,1);
+    shootdisks(&mc,overallStartTime,0,1);
     delay(200);
-    shootdisks(&mc,0,1);
+    shootdisks(&mc,overallStartTime,0,1);
     
     //drive to roller
     moveto(&mc, 0, 23,100,10,5,1); 
@@ -194,56 +196,60 @@ void skillsAutonomous(void){
     intake(&mc);
     moveto(&mc, 46,35,30,3, 5,1);                                        //John: maybe errtheta too big, and maybe too far of distance to travel, I would like to test some manuver to knock over stacks
     
-    intakeWaitForDiscs(&mc,3000);
+    intakeWaitForDiscs(&mc,5000,overallStartTime);
     if(sensing.robot.magFullness != 3){
         moveto(&mc, 40,33,100,5,10,-1);
-        mc.waitPosTime(3000);
+        mc.waitPosTime(3000,overallStartTime);
 
         moveto(&mc, 48,40,30,3);
-        intakeWaitForDiscs(&mc,3000);
+        intakeWaitForDiscs(&mc,3000,overallStartTime);
     }
     delay(600);
 
     //shoot first triple stack
     movevoltage(&mc, 0,0);
-    shootdisks(&mc);
+    shootdisks(&mc,overallStartTime);
     sensing.robot.turretLock = true;
     delay(700);
 
     //lining up for 2nd triple stack
     moveto(&mc, 36,33,30,3,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
-    mc.waitPosTime(3000);
+    mc.waitPosTime(3000,overallStartTime);
 
     //second triple stack
     intake(&mc);
     moveto(&mc, 72,33,30,3); 
-    intakeWaitForDiscs(&mc,3000);
+    intakeWaitForDiscs(&mc,3000,overallStartTime);
     if(sensing.robot.magFullness != 3){
         moveto(&mc, 60,36,100,5,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
-        mc.waitPosTime(3000);
+        mc.waitPosTime(3000,overallStartTime);
 
         moveto(&mc, 72,36,30,3,5);                                  //John: maybe lower error theta to avoid side of the robot contact disks=
-        intakeWaitForDiscs(&mc,3000);
+        intakeWaitForDiscs(&mc,3000,overallStartTime);
     }
     
     //shoot second triple stack
     movevoltage(&mc, 0,0);
-    shootdisks(&mc);
+    shootdisks(&mc,overallStartTime,1);
     sensing.robot.turretLock = true;
     delay(300);
+
+    //moving back to line up with discs
+    moveto(&mc, 72,33,30,3,10,-1); 
+    intakeWaitForDiscs(&mc,2000,overallStartTime);
 
     //collecting first of row of discs
     intake(&mc);
     moveto(&mc, 84,60,60,3);                                  //John: maybe lower error theta to avoid side of the robot contact disks
-    mc.waitPosTime(4000);
+    mc.waitPosTime(4000,overallStartTime);
     
     intake(&mc);
     moveto(&mc, 108,84,30,3, 5);                                  //John: maybe lower error theta to avoid side of the robot contact disks             //fixed?
-    mc.waitPosTime(8000);
+    mc.waitPosTime(8000,overallStartTime);
     
     //shoot second triple stack
     movevoltage(&mc, 0,0);
-    shootdisks(&mc, 1);
+    shootdisks(&mc,overallStartTime, 1);
     sensing.robot.turretLock = true;
     delay(300);
 
@@ -253,12 +259,12 @@ void skillsAutonomous(void){
     //picking up last 3 stack
     intake(&mc);
     moveto(&mc, 108,114,30,3, 5);
-    mc.waitPosTime(9000);                                     //John: too long of wait time             //fixed?
+    mc.waitPosTime(9000,overallStartTime);                                     //John: too long of wait time             //fixed?
     
     //shooting last triple stack
     movevoltage(&mc, 0,0);
     delay(400);
-    shootdisks(&mc);
+    shootdisks(&mc,overallStartTime);
     delay(300);
 
     sensing.robot.turretLock = true;
@@ -270,7 +276,7 @@ void skillsAutonomous(void){
         delay(10);
     }
     rotateto(&mc, 90);
-    waitRotate(&mc, 750);
+    waitRotate(&mc, 750,overallStartTime);
     intake(&mc);
 
     mc.driveToRoller(2500);
@@ -283,11 +289,11 @@ void skillsAutonomous(void){
     
     //move to lineup disk
     moveto(&mc, 144-48, 144-23,100,5,10,-1);
-    mc.waitPosTime(2500);
+    mc.waitPosTime(2500,overallStartTime);
     //line up with disk and roller might need a hold on drive motor
     rotateto(&mc, 0);
     startTime = millis();
-    waitRotate(&mc, 2000);
+    waitRotate(&mc, 2000,overallStartTime);
 
     //pick up disk
     moveto(&mc, 144-0, 144-24,60,10,10,1);
@@ -300,7 +306,7 @@ void skillsAutonomous(void){
     //shoot any in bot
     movevoltage(&mc, 0,0);
     delay(400);
-    shootdisks(&mc);
+    shootdisks(&mc,overallStartTime);
     delay(300);
 
     //drive to roller
@@ -316,7 +322,7 @@ void skillsAutonomous(void){
     //shoot any in bot
     movevoltage(&mc, 0,0);
     delay(400);
-    shootdisks(&mc);
+    shootdisks(&mc,overallStartTime);
     delay(300);
     sensing.goal.xpos = 72;
     sensing.goal.ypos = 72;

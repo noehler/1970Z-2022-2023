@@ -426,9 +426,8 @@ class sensing_t{
         bool rollerIsGood(void){
             if(underRoller(1)){
                 c::optical_rgb_s color = opticalSensor.get_rgb();
-                static int startTime = millis();
                 
-                if (((color.red > 3000 && color.blue < 1800 && isRed == false) || (color.red < 2000 && color.blue > 2500 && isRed == true)) && underRoller(1)){
+                if (((color.red > 3000 && color.blue < 1800 && isRed == false) || (color.red < 1000 && color.blue > 1200 && isRed == true)) && underRoller(1)){
                     return 1;
                 }
                 else{
@@ -436,9 +435,8 @@ class sensing_t{
                 }
             }else if(underRoller(2)){
                 c::optical_rgb_s color = opticalSensor2.get_rgb();
-                static int startTime = millis();
                 
-                if (((color.red > 2000 && color.blue < 1000 && isRed == false) || (color.red < 700 && color.blue > 1000 && isRed == true)) && underRoller(2)){
+                if (((color.red > 3000 && color.blue < 1800 && isRed == false) || (color.red < 1000 && color.blue > 1200 && isRed == true)) && underRoller(2)){
                     return 1;
                 }
                 else{

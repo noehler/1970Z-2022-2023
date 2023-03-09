@@ -62,7 +62,6 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-
 void autonomous() {
   autonType = skillsAuton;
   if (autonType == winPointClose) { // close win Point auton
@@ -110,10 +109,9 @@ void autonomous() {
 
     motorControl.runTurretIntake = false;
 
-    motorControl.driveDist();
-    
+    motorControl.driveDist(1);
 
-    motorControl.rotateTo();
+    motorControl.rotateTo(1);
     delay(1000);
 
     motorControl.driveToRoller(100000);
@@ -171,7 +169,7 @@ void opcontrol() {
 
     sensing.SSOSTTT_bool = true;
     static bool autoAim = false;
-    bool aimMiddle = false;
+    static int aimSpot = 0;
     if (master.get_digital_new_press(DIGITAL_UP)) {
       autoAim = !autoAim;
     }
@@ -194,19 +192,26 @@ void opcontrol() {
       turretGood = false;
     }
 
-    if (master.get_digital_new_press(DIGITAL_DOWN) &&master.get_digital_new_press(DIGITAL_LEFT) ) {
-      aimMiddle = !aimMiddle;
-      if(aimMiddle){
-        
-        sensing.goal.xpos = 72;
-        sensing.goal.ypos = 72;
-        sensing.goal.zpos = 72;
+    if (master.get_digital_new_press(DIGITAL_DOWN) &&master.get_digital(DIGITAL_LEFT) ) {
+      aimSpot+=1;
+      if (aimSpot ==3){
+        aimSpot = 0;
       }
-      else{
+      if(aimSpot == 0){
         
         sensing.goal.xpos = 20;
         sensing.goal.ypos = 124;
         sensing.goal.zpos = 30;
+      }
+      else if (aimSpot == 1){
+        sensing.goal.xpos = 124;
+        sensing.goal.ypos = 20;
+        sensing.goal.zpos = 30;
+      }
+      else{
+        sensing.goal.xpos = 72;
+        sensing.goal.ypos = 72;
+
       }
     }
     

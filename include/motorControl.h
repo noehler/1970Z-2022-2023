@@ -77,8 +77,8 @@ private:
     static double prevPIDPosition = 0;
     static double T = 0;
     static double previousT = 0;
-    static double PIDscalar = 1;
-    static double gyroScalar = 0.1;
+    static double PIDscalar = 5; //should be one, reacting to 0.2 on pid velocity P value been 0.2
+    static double gyroScalar = 0.2;
     static double chassisScalar = 0.35; // 0.3;
     static double turPredicScalar = .7;
     T = float(millis()) / 1000 - previousT;
@@ -88,7 +88,7 @@ private:
     }*/
 
     //start of jam detection
-    static bool switched = false;
+    /*static bool switched = false;
     static bool jammed = false;
     static bool jamTime = millis();
     static int startTime = millis();
@@ -117,7 +117,7 @@ private:
       IPIDvel = 0;
       
     master.print(0,0, "unjammed");
-    }
+    }*/
 
     //end of jame detection
 
@@ -274,21 +274,21 @@ public:
         intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
 
-    PID.driveFR.p = 3;
+    PID.driveFR.p = 4;
     PID.driveFR.i = 0.1;
     PID.driveFR.d = 5;
 
-    PID.driveSS.p = 1.6;
-    PID.driveSS.i = 0.20;
-    PID.driveSS.d = 20;
+    PID.driveSS.p = 11;
+    PID.driveSS.i = 0.065;
+    PID.driveSS.d = 42.69;
 
     PID.turret.p = 1.0;
     PID.turret.i = .01;
     PID.turret.d = 8;
 
-    PID.turret.p2 = 0.2;//0.7
+    PID.turret.p2 = 0.15;//0.7
     PID.turret.i2 = 0.00000002;
-    PID.turret.d2 = 10;
+    PID.turret.d2 = 14;
 
     PID.flyWheel.p = 1.82587;
     PID.flyWheel.i = 0.0219322;
@@ -300,7 +300,7 @@ public:
   moveToInfoExternal_t move;
   double DistToTravel =0; 
   double HeadingTarget = 0;
-void driveDist() {
+void driveDist(bool resetIntegs) {
     double currentheading = sensing.robot.angle * M_PI / 180;
     move.targetHeading = currentheading;
     lfD.tare_position();
@@ -308,14 +308,16 @@ void driveDist() {
     rfD.tare_position();
     rbD.tare_position();
     moveToInfoInternal_t moveI;
-    double IPIDSS = 0;
-    double previousets = 0;
-    double IPIDfw = 0;
-    double previouset = 0;
-    IPIDSS = 0;
-    previousets = 0;
-    IPIDfw = 0;
-    previouset = 0;
+    static double IPIDSS = 0;
+    static double previousets = 0;
+    static double IPIDfw = 0;
+    static double previouset = 0;
+    if (resetIntegs){
+      IPIDSS = 0;
+      previousets = 0;
+      IPIDfw = 0;
+      previouset = 0;
+    }
     moveI.dist = 0;      // change of position
     moveI.distR = 0;     // chagne of right postion
     moveI.distL = 0;     // change of left position
@@ -405,7 +407,7 @@ void driveDist() {
     
   }
 
-void rotateTo() {
+void rotateTo(bool resetIntegs) {
     double currentheading = sensing.robot.angle * M_PI / 180;
     moveToInfoInternal_t moveI;
     double IPIDSS = 0;
@@ -430,6 +432,9 @@ void rotateTo() {
       SpinTo() function. perferd to have a sperate thread for calculating live
       position, than just take out codes from line 41 to line 48
       */
+      if (resetIntegs == true){
+        resetMoveToSS = true;
+      }
      if (resetMoveToSS){
         moveI.ets = 0;
         moveI.PIDSS = 0;
@@ -481,13 +486,16 @@ void rotateTo() {
       }
   }
 
-void moveTo() {
+void moveTo(bool resetIntegs) {
     static moveToInfoInternal_t moveI;
     static double IPIDSS = 0;
     static double previousets = 0;
     static double IPIDfw = 0;
     static double previouset = 0;
     double turnOrMoveMult = 1;
+    if (resetIntegs == true){
+      move.resetMoveTo = true;
+    }
     if (move.resetMoveTo) {
       IPIDSS = 0;
       previousets = 0;
@@ -548,6 +556,10 @@ void moveTo() {
       moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                     PID.driveSS.d * (moveI.ets - previousets);
     }
+    logValue("Pspin", PID.driveSS.p * moveI.ets, 8);
+    logValue("Ispin", PID.driveSS.i * IPIDSS, 9);
+    logValue("Dspin", PID.driveSS.d * (moveI.ets - previousets), 10);
+    logValue("Totalspin", moveI.PIDSS, 11);
 
 
     if (fabs(moveI.ets) < move.errtheta*turnOrMoveMult) {
@@ -748,10 +760,10 @@ void tailGater(bez_Return_t temp) {
     rbD.brake();
   }
 
-void waitPosTime(int maxTime) {
+void waitPosTime(int maxTime, int overallStartTime) {
     int startTime = millis();
     move.resetMoveTo = false;
-    while (millis() - startTime < maxTime && move.resetMoveTo == false) {
+    while (millis() - startTime < maxTime && move.resetMoveTo == false && millis() - overallStartTime < 55000) {
       delay(20);
     }
   }
@@ -763,20 +775,25 @@ void waitPosTime(int maxTime) {
 void autonDriveController(void) {
     autoDriveRun = true;
     while (!competition::is_disabled() && competition::is_autonomous() && autoDriveRun == true) {
-      
+      static int prevdriveType = 1000;
+      bool resetIntegs = false;
+      if (driveType != prevdriveType){
+        resetIntegs = true;
+      }
       switch (driveType){
         case 0://moveTo
-            moveTo();
+            moveTo(resetIntegs);
             break;
         case 1://rotateTo
-            rotateTo();
+            rotateTo(resetIntegs);
             break;
         case 2://drivevDist
-            driveDist();
+            driveDist(resetIntegs);
             break;
         case 3://driveVoltage
             break;
       }
+      prevdriveType = driveType;
       if (leftSpd > 12000) {
         leftSpd = 12000;
       }
