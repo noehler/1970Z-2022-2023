@@ -109,7 +109,7 @@ void skillsAutonomous(void){
     
 
     double startTime = millis();
-    sensing.goalSpeed = 200;
+    sensing.goalSpeed = 180;
     sensing.set_status(37,18,270,100, 0);
     sensing.goal.xpos = 124;
     sensing.goal.ypos = 20;
@@ -119,7 +119,7 @@ void skillsAutonomous(void){
     mc.driveToRoller(2500);
     
     //move out of roller
-    moveto(&mc, 37, 16,100,5,20,-1);
+    moveto(&mc, 37, 16,100,0,20,-1);                               //John: tolerance is bigger than exit condition potentially a stop point
     while(sensing.robot.ypos<16){
         delay(10);
     }
@@ -133,7 +133,7 @@ void skillsAutonomous(void){
     waitRotate(&mc, 5000, 1);
 
     //pick up disk
-    moveto(&mc, 0, 23,35,10,10,1);
+    moveto(&mc, 0, 23,35,10,3,1);                                  //John: potentially too big of error heading, but at the same time, the pid spin is wack so idk.
     intake(&mc);
     startTime = millis();
     while(sensing.robot.xpos>24 &&millis()-startTime<3000){
@@ -142,18 +142,18 @@ void skillsAutonomous(void){
 
     //shooting batch 1
     movevoltage(&mc, 0,0);
-    mc.intakeRunning = 0;
-    delay(400);
+    mc.intakeRunning = 0;                                           //John: between each shoots, time can be lowered to 200ms or lower 
+    delay(200);
     shootdisks(&mc,1);
-    delay(400);
+    delay(200);
     shootdisks(&mc,1);
-    delay(400);
+    delay(200);
     shootdisks(&mc,1);
     
     //drive to roller
-    moveto(&mc, 0, 23,100,10,5,1);
+    moveto(&mc, 0, 23,100,10,5,1); 
     startTime = millis();
-    while((sensing.robot.xpos>pickPos(18, 0) || sensing.robot.xpos<pickPos(18, 1))&&millis()-startTime<1000){
+    while((sensing.robot.xpos>pickPos(18, 0) || sensing.robot.xpos<pickPos(18, 1))&&millis()-startTime<1000){//disguesting picpos
         delay(10);
     }
     //get the roller
@@ -172,7 +172,7 @@ void skillsAutonomous(void){
     //first triple stack
     intake(&mc);
     //moveto(&mc, 44,37,30,3);
-    moveto(&mc, 48,40,30,3);
+    moveto(&mc, 48,40,30,3);                                        //John: maybe errtheta too big, and maybe too far of distance to travel, I would like to test some manuver to knock over stacks
     mc.waitPosTime(7000);
     /*if(sensing.robot.magFullness != 3){
         moveto(&mc, 40,33,100,5,10,-1);
@@ -190,18 +190,18 @@ void skillsAutonomous(void){
     delay(300);
 
     //lining up for 2nd triple stack
-    moveto(&mc, 36,36,30,3,10,-1);
+    moveto(&mc, 36,36,30,3,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
     mc.waitPosTime(4000);
 
     //second triple stack
     intake(&mc);
-    moveto(&mc, 72,36,30,3);
+    moveto(&mc, 72,36,30,3);                                  //John: maybe lower error theta to avoid side of the robot contact disks
     mc.waitPosTime(5000);
     if(sensing.robot.magFullness != 3){
-        moveto(&mc, 60,36,100,5,10,-1);
+        moveto(&mc, 60,36,100,5,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
         mc.waitPosTime(3000);
 
-        moveto(&mc, 72,36,30,3);
+        moveto(&mc, 72,36,30,3);                                  //John: maybe lower error theta to avoid side of the robot contact disks
         mc.waitPosTime(3000);
     }
     
@@ -213,11 +213,11 @@ void skillsAutonomous(void){
 
     //collecting first of row of discs
     intake(&mc);
-    moveto(&mc, 84,60,60,3);
+    moveto(&mc, 84,60,60,3);                                  //John: maybe lower error theta to avoid side of the robot contact disks
     mc.waitPosTime(4000);
     
     intake(&mc);
-    moveto(&mc, 108,84,30,3);
+    moveto(&mc, 108,84,30,3);                                  //John: maybe lower error theta to avoid side of the robot contact disks
     mc.waitPosTime(8000);
     
     //shoot second triple stack
@@ -232,7 +232,7 @@ void skillsAutonomous(void){
     //picking up last 3 stack
     intake(&mc);
     moveto(&mc, 108,114,30,3, 5);
-    mc.waitPosTime(15000);
+    mc.waitPosTime(15000);                                     //John: too long of wait time
     
     //shooting last triple stack
     movevoltage(&mc, 0,0);
