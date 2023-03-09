@@ -105,24 +105,28 @@ void skillsAutonomous(void){
     //shoot disks
     shootdisks(&mc);
 
+    
+    master.print(0, 0, "shoot done");
     //move to roller
     moveto(&mc, 37,-10, 100,0,10,1);
     while (sensing.robot.ypos>16){
         delay(10);
     }
     mc.driveToRoller(1500);
-
+    
+    master.print(0, 0, "roller done");
     //move out of roller
-    moveto(&mc, 37, 40,100,5,20,-1);
-    while(sensing.robot.ypos<18){
+    moveto(&mc, 37, 40,70,5,20,-1);
+    while(sensing.robot.ypos<17){
         delay(10);
     }
-    
-    rotateto(&mc,90);
+    rotateto(&mc,86);
     startTime = millis();
     while(fabs(sensing.robot.angle)+fabs(sensing.robot.velW)>=3 &&millis() - startTime <3000){
         delay(10);
     }
+    
+    master.print(0, 0, "rotate done");
     intake(&mc);
     moveto(&mc, 37, 37,100,1,5,1);
     startTime = millis();
@@ -140,12 +144,13 @@ void skillsAutonomous(void){
         // time out
         delay(10);
     }
-
     movevoltage (&mc,0,0);
     delay(1000);
     shootdisks(&mc);
-
-
+    
+    master.print(0, 0, "shoot done");
+    delay(500);
+    
     moveto(&mc, 35.7, 35.7,100,1,5,-1);
     startTime = millis();
     while(sensing.robot.ypos > 36&&millis() - startTime <3000){
@@ -164,13 +169,13 @@ void skillsAutonomous(void){
         delay(10);
     }
 
-    moveto(&mc,26.7,89,100,1,5,1);
+    moveto(&mc,25,82,100,1,10,1);
     startTime = millis();
     intake(&mc);
-    while(sensing.robot.ypos < 89&&millis() - startTime <5000){
+    while(sensing.robot.ypos < 77&&millis() - startTime <5000){
         delay(10);
     }
-    moveto(&mc,48,89,100,2,20,1);
+    moveto(&mc,48,82,40,2,20,1);
     startTime = millis();
     while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
         //robot to target dist check
@@ -182,8 +187,42 @@ void skillsAutonomous(void){
     delay(1000);
     shootdisks(&mc);
 
+    moveto(&mc, 52.5,82,100,1,10,1);
+    startTime = millis();
+    while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=4 && millis() - startTime <2000){
+        //robot to target dist check
+        //time out
+        delay(10);
+    }
+    mc.intakeRunning = 1;
+    rotateto(&mc,90);
+   
+    while (fabs(sensing.robot.angle)+fabs(sensing.robot.velW)>=3 &&millis() - startTime <2000  ){
+        //robot heading check
+        //time out
+        delay(10);
+    }
 
-
+    moveto(&mc, 55.5,124,40,1,10,1);
+    startTime = millis();
+    while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <5000&&sensing.robot.magFullness < 3){
+        //robot to target dist check
+        //time out
+        //check if magazine if full
+        delay(10);
+    }
+    shootdisks(&mc);
+    delay(500);
+    intake(&mc);
+    moveto(&mc, 84,108,100,0,5,1);
+    startTime = millis();
+    while (distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <5000&&sensing.robot.magFullness < 3){
+        //robot to target dist check
+        //time out
+        //check if magazine if full
+        delay(10);
+    }
+    shootdisks(&mc);
 
 
 

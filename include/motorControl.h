@@ -211,9 +211,9 @@ public:
     PID.turret.i = .01;
     PID.turret.d = 8;
 
-    PID.turret.p2 = 0.7;
+    PID.turret.p2 = 0.2;//0.7
     PID.turret.i2 = 0.00000002;
-    PID.turret.d2 = 0;
+    PID.turret.d2 = 10;
 
     PID.flyWheel.p = 1.82587;
     PID.flyWheel.i = 0.0219322;
