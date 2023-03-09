@@ -168,6 +168,12 @@ private:
                        sensing.robot.velW * chassisScalar +
                        turPredicScalar * sensing.robot.turvelocity +
                        PIDPosition * PIDscalar;
+      
+      
+      logValue("p", PID.turret.p * angdiff, 0);
+      logValue("i", PID.turret.i * IPIDang, 1);
+      logValue("d", PID.turret.d * (angdiff - previousangdiff), 2);
+      outValsSDCard();
       IPIDvel += veldiff;
       PIDVelocity =
           (1 * veldiff + 0.01 * IPIDvel + 0.1 * (veldiff - previousveldiff));
@@ -282,9 +288,9 @@ public:
     PID.driveSS.i = 0.065;
     PID.driveSS.d = 42.69;
 
-    PID.turret.p = 1.0;
+    PID.turret.p = .30;
     PID.turret.i = .01;
-    PID.turret.d = 8;
+    PID.turret.d = 10;
 
     PID.turret.p2 = 0.15;//0.7
     PID.turret.i2 = 0.00000002;
@@ -454,10 +460,10 @@ void rotateTo(bool resetIntegs) {
 
       moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                     PID.driveSS.d * (moveI.ets - previousets);
-      logValue("Pspin", PID.driveSS.p * moveI.ets, 8);
+      /*logValue("Pspin", PID.driveSS.p * moveI.ets, 8);
       logValue("Ispin", PID.driveSS.i * IPIDSS, 9);
       logValue("Dspin", PID.driveSS.d * (moveI.ets - previousets), 10);
-      logValue("Totalspin", moveI.PIDSS, 11);
+      logValue("Totalspin", moveI.PIDSS, 11);*/
 
       previousets = moveI.ets;
       moveI.PIDSSFLAT = moveI.PIDSS;
@@ -556,10 +562,10 @@ void moveTo(bool resetIntegs) {
       moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                     PID.driveSS.d * (moveI.ets - previousets);
     }
-    logValue("Pspin", PID.driveSS.p * moveI.ets, 8);
+    /*logValue("Pspin", PID.driveSS.p * moveI.ets, 8);
     logValue("Ispin", PID.driveSS.i * IPIDSS, 9);
     logValue("Dspin", PID.driveSS.d * (moveI.ets - previousets), 10);
-    logValue("Totalspin", moveI.PIDSS, 11);
+    logValue("Totalspin", moveI.PIDSS, 11);*/
 
 
     if (fabs(moveI.ets) < move.errtheta*turnOrMoveMult) {
@@ -836,14 +842,14 @@ void autonDriveController(void) {
         }
 
 
-      logValue("x", sensing.robot.xpos, 0);
+      /*logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
       logValue("Ox", sensing.robot.odoxpos, 2);
       logValue("Oy", sensing.robot.odoypos, 3);
       logValue("Gx", sensing.robot.GPSxpos, 4);
       logValue("Gy", sensing.robot.GPSypos, 5);
       logValue("Heading", sensing.robot.angle, 6);
-      outValsSDCard();
+      outValsSDCard();*/
       delay(optimalDelay);
     }
     lfD.brake();
@@ -869,14 +875,14 @@ void autonDriveController(void) {
       rfD.move_voltage(rightSpd);
       rbD.move_voltage(rightSpd);
 
-      logValue("x", sensing.robot.xpos, 0);
+      /*logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
       logValue("Ox", sensing.robot.odoxpos, 2);
       logValue("Oy", sensing.robot.odoypos, 3);
       logValue("Gx", sensing.robot.GPSxpos, 4);
       logValue("Gy", sensing.robot.GPSypos, 5);
       logValue("Heading", sensing.robot.angle, 6);
-      outValsSDCard();
+      outValsSDCard();*/
       delay(optimalDelay);
     }
   }
@@ -910,6 +916,7 @@ void autonDriveController(void) {
       double deriv2 = PID.flyWheel.d2 * (diffFlyWheelW2 - prevFWdiffSPD2);
       prevFWdiffSPD = diffFlyWheelW;
       prevFWdiffSPD2 = diffFlyWheelW2;
+
       flyWVolt = 12000.0 / 127 * (prop + integ + deriv);
       flyWVolt2 = 12000.0 / 127 * (prop2 + integ2 + deriv2);
 

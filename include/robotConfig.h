@@ -182,7 +182,6 @@ class sensing_t{
                     xdiff = double(temp_status.y)*39.37;
                     ydiff = -double(temp_status.x)*39.37;
                 }
-                logValue("RTS", GPS_sensor.get_error(), 7);
 
                 if (GPS_sensor.get_error() < 0.012 && 
                     sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 1 && 
@@ -192,8 +191,8 @@ class sensing_t{
                     robot.ypos = robot.GPSypos;
                 }
                 else{
-                    robot.xpos = robot.odoxpos;
-                    robot.ypos = robot.odoypos;
+                    /*robot.xpos = robot.odoxpos;
+                    robot.ypos = robot.odoypos;*/
                 }
                 static bool firstFail = true;
                 // if red: x direction is correct y is flipped, if blue: x direction is flipped, y is correct
