@@ -41,9 +41,9 @@ void shootdisks(void *mc, int number = 4){
     }
     int starttime = millis();
     ((motorControl_t*) mc)->updatedAD = false;
-    while(millis() - starttime <5000){
+    while(millis() - starttime <6000){
         //time out
-        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY)< 30){
+        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 +  + fabs(sensing.robot.angAccel)*2< 30){
             std::cout<<"good turret"<<"\n";
             break;
             //flywheel speed check
@@ -92,6 +92,12 @@ void rotateto(void *mc,double ang){
     */
     //starting controller threads
 
+void waitRotate(void *mc, int maxTime, double tolerance = 3){
+    int startTime = millis();
+    while(fabs(sensing.robot.angle-((motorControl_t*) mc)->HeadingTarget)+fabs(sensing.robot.velW)>=tolerance && millis() - startTime <maxTime){
+        delay(10);
+    }
+}
 
 void skillsAutonomous(void){
     
@@ -119,20 +125,15 @@ void skillsAutonomous(void){
     }
     
     //move to lineup disk
-    moveto(&mc, 48, 23,100,2,10,-1);
-    startTime = millis();
-    while(sensing.robot.ypos<27 &&millis() - startTime <4000){
-        delay(10);
-    }
+    moveto(&mc, 48, 23,100,5,10,-1);
+    mc.waitPosTime(2500);
     //line up with disk and roller might need a hold on drive motor
     rotateto(&mc, 180);
     startTime = millis();
-    while(fabs(sensing.robot.angle)+fabs(sensing.robot.velW)>=3 &&millis() - startTime <3000){
-        delay(10);
-    }
+    waitRotate(&mc, 5000, 1);
 
     //pick up disk
-    moveto(&mc, 0, 26,35,10,10,1);
+    moveto(&mc, 0, 23,35,10,10,1);
     intake(&mc);
     startTime = millis();
     while(sensing.robot.xpos>24 &&millis()-startTime<3000){
@@ -142,7 +143,6 @@ void skillsAutonomous(void){
     //shooting batch 1
     movevoltage(&mc, 0,0);
     mc.intakeRunning = 0;
-    sensing.robot.magFullness = 1;
     delay(400);
     shootdisks(&mc,1);
     delay(400);
@@ -151,7 +151,7 @@ void skillsAutonomous(void){
     shootdisks(&mc,1);
     
     //drive to roller
-    moveto(&mc, 0, 26,100,10,5,1);
+    moveto(&mc, 0, 23,100,10,5,1);
     startTime = millis();
     while((sensing.robot.xpos>pickPos(18, 0) || sensing.robot.xpos<pickPos(18, 1))&&millis()-startTime<1000){
         delay(10);
@@ -161,7 +161,7 @@ void skillsAutonomous(void){
     mc.driveToRoller(  2500);
 
     //out of roller
-    moveto(&mc, 20,26,50,5,10,-1);
+    moveto(&mc, 20,23,50,5,10,-1);
     startTime = millis();
     while((sensing.robot.xpos<pickPos(18, 0) || sensing.robot.xpos>pickPos(18, 1))&&millis()-startTime<1000){
         //time out
@@ -171,28 +171,127 @@ void skillsAutonomous(void){
 
     //first triple stack
     intake(&mc);
+    //moveto(&mc, 44,37,30,3);
     moveto(&mc, 48,40,30,3);
-    mc.waitPosTime(10000);
+    mc.waitPosTime(7000);
+    /*if(sensing.robot.magFullness != 3){
+        moveto(&mc, 40,33,100,5,10,-1);
+        mc.waitPosTime(3000);
+
+        moveto(&mc, 48,40,30,3);
+        mc.waitPosTime(3000);
+    }*/
+    delay(600);
 
     //shoot first triple stack
     movevoltage(&mc, 0,0);
-    shootdisks(&mc);
+    shootdisks(&mc, 3);
     sensing.robot.turretLock = true;
     delay(300);
 
+    //lining up for 2nd triple stack
+    moveto(&mc, 36,36,30,3,10,-1);
+    mc.waitPosTime(4000);
 
     //second triple stack
     intake(&mc);
     moveto(&mc, 72,36,30,3);
-    mc.waitPosTime(10000);
+    mc.waitPosTime(5000);
+    if(sensing.robot.magFullness != 3){
+        moveto(&mc, 60,36,100,5,10,-1);
+        mc.waitPosTime(3000);
 
+        moveto(&mc, 72,36,30,3);
+        mc.waitPosTime(3000);
+    }
+    
     //shoot second triple stack
     movevoltage(&mc, 0,0);
-    shootdisks(&mc);
+    shootdisks(&mc,3);
     sensing.robot.turretLock = true;
     delay(300);
 
+    //collecting first of row of discs
+    intake(&mc);
+    moveto(&mc, 84,60,60,3);
+    mc.waitPosTime(4000);
+    
+    intake(&mc);
+    moveto(&mc, 108,84,30,3);
+    mc.waitPosTime(8000);
+    
+    //shoot second triple stack
     movevoltage(&mc, 0,0);
+    shootdisks(&mc,3);
+    sensing.robot.turretLock = true;
+    delay(300);
+
+    sensing.goal.xpos = 20;
+    sensing.goal.ypos = 124;
+
+    //picking up last 3 stack
+    intake(&mc);
+    moveto(&mc, 108,114,30,3, 5);
+    mc.waitPosTime(15000);
+    
+    //shooting last triple stack
+    movevoltage(&mc, 0,0);
+    shootdisks(&mc,3);
+    delay(300);
+
+    sensing.robot.turretLock = true;
+    sensing.goal.xpos = 72;
+    sensing.goal.ypos = 72;
+
+    //move to roller
+    intake(&mc);
+    mc.driveToRoller(2500);
+    
+    //move out of roller
+    moveto(&mc, 144-37, 144-16,100,5,20,-1);
+    while(sensing.robot.ypos>144-16){
+        delay(10);
+    }
+    
+    //move to lineup disk
+    moveto(&mc, 144-48, 144-23,100,5,10,-1);
+    mc.waitPosTime(2500);
+    //line up with disk and roller might need a hold on drive motor
+    rotateto(&mc, 0);
+    startTime = millis();
+    waitRotate(&mc, 5000, 1);
+
+    //pick up disk
+    moveto(&mc, 144-0, 144-24,60,10,10,1);
+    intake(&mc);
+    startTime = millis();
+    while(sensing.robot.xpos<144-24 &&millis()-startTime<3000){
+        delay(10);
+    }
+    //drive to roller
+    moveto(&mc, 144-0, 144-24,100,10,5,1);
+    startTime = millis();
+    while((sensing.robot.xpos>pickPos(18, 0) || sensing.robot.xpos<pickPos(18, 1))&&millis()-startTime<1000){
+        delay(10);
+    }
+    //get the roller
+    mc.intakeRunning = 0;
+    mc.driveToRoller(  2500);
+
+    //out of roller
+    moveto(&mc, 124,120,50,5,10,-1);
+    startTime = millis();
+    while((sensing.robot.xpos<pickPos(18, 0) || sensing.robot.xpos>pickPos(18, 1))&&millis()-startTime<1000){
+        //time out
+        //robot pos check
+        delay(10);
+    }
+
+    sensing.robot.turretLock = false;
+    movevoltage(&mc, 0,0);
+    delay(500);
+    mc.explode();
+
     while(1){
         delay(200);
     }

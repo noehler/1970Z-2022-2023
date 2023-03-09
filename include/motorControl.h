@@ -6,6 +6,7 @@
 #include "bezierCalculations.h"
 #include "devFuncs.h"
 #include "pros/misc.hpp"
+#include "pros/rtos.h"
 #include "robotConfig.h"
 #include "sdLogging.h"
 
@@ -55,13 +56,13 @@ private:
 
   double angularVelocityCalc(int number) {
     if (number ==3 && discCountChoice == 2){
-      return sensing.goalSpeed*1.549+3.842;
+      return sensing.goalSpeed*1.56+3.842;
     }
     else if(number == 2 && discCountChoice == 2){
       return sensing.goalSpeed*1.26+3.805;
     }
     else{
-      return sensing.goalSpeed*1.184+3.857;
+      return sensing.goalSpeed*1.186+3.857;
     }
   }
 
@@ -69,6 +70,11 @@ private:
   double turrControl(void) {
     static double PIDPosition = 0;
     static double PIDVelocity = 0;
+    
+    static double IPIDang = 0;
+    static double IPIDvel = 0;
+
+    static double prevPIDPosition = 0;
     static double T = 0;
     static double previousT = 0;
     static double PIDscalar = 1;
@@ -80,6 +86,40 @@ private:
     /*if (!competition::is_disabled() && !competition::is_autonomous()){
         robotGoal.angleBetweenHorABS = robot.angle + 180;
     }*/
+
+    //start of jam detection
+    static bool switched = false;
+    static bool jammed = false;
+    static bool jamTime = millis();
+    static int startTime = millis();
+    if (sensing.robot.turretLock == false){
+      if(!switched){
+        
+        startTime = millis();
+        switched = true;
+      }
+    }
+    else{
+      switched = false;
+    }
+    if (fabs(prevPIDPosition) >  10000 && abs(sensing.turretEncoder.get_velocity()) < 5 && millis() - startTime >300 && sensing.robot.turretLock == false){
+      sensing.robot.turretLock = true;
+      jamTime = millis();
+      jammed = true;
+      IPIDang = 0;
+      IPIDvel = 0;
+    master.print(0,0, "jammed");
+    }
+    if(millis()-jamTime > 400 && jammed == true){
+      sensing.robot.turretLock = false;
+      jammed = false;
+      IPIDang = 0;
+      IPIDvel = 0;
+      
+    master.print(0,0, "unjammed");
+    }
+
+    //end of jame detection
 
     angdiff = goalAngle - sensing.robot.turAng;
     
@@ -99,10 +139,10 @@ private:
     }
     updatedAD = true;
 
+    
+
     static double previousveldiff = 0;
     static double previousangdiff = 0;
-    static double IPIDang = 0;
-    static double IPIDvel = 0;
 
     if (fabs(angdiff) < 3) {
       angdiff = 0;
@@ -154,13 +194,26 @@ private:
       IPIDang = 0;
     }
 
+    prevPIDPosition = PIDPosition;
     return PIDVelocity;
   }
   
   double intakeControl(void) {
     static int baseSPD;
+    static int jamTime = -9000;
+    static int startTime = millis();
     if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) {
-      baseSPD = 12000;
+      if (millis() - jamTime > 500){
+        baseSPD = 12000;
+      }
+      else{
+        baseSPD = -12000;
+        startTime = millis();
+      }
+      if (millis() - startTime >250 && millis() - jamTime > 500 && fabs(intakeMotor.get_actual_velocity()) < 5){
+        jamTime = millis();
+      }
+
     } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) ||
               intakeRunning == 2) {
       baseSPD = -12000;
@@ -215,9 +268,9 @@ public:
     PID.driveFR.i = 0.1;
     PID.driveFR.d = 5;
 
-    PID.driveSS.p = 1;
-    PID.driveSS.i = 0.2;
-    PID.driveSS.d = 1;
+    PID.driveSS.p = 1.2;
+    PID.driveSS.i = 0.25;
+    PID.driveSS.d = 20;
 
     PID.turret.p = 1.0;
     PID.turret.i = .01;

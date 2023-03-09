@@ -84,20 +84,6 @@ class sensing_t{
 
         double turretPosChoice(double angBetween){
             static int prevBadTime = c::millis();
-            double dist = distSense.get();
-            if (dist == PROS_ERR){
-                master.print(2, 0, "DistFailed");
-                robot.magFullness = 3;
-            }
-            else if (dist < 40){
-                robot.magFullness = 3;
-            }
-            else if (dist < 80){
-                robot.magFullness = 2;
-            }
-            else{
-                robot.magFullness = 1;
-            }
             return angBetween;
         }
 
@@ -381,6 +367,23 @@ class sensing_t{
                 double V_disk = P2 / P3;
                 double turOfCenterOffset = 0; // offcenter offset, not tested yet
                 //outputting calculated values
+
+                
+                double dist = distSense.get();
+                if (dist == PROS_ERR){
+                master.print(2, 0, "DistFailed");
+                robot.magFullness = 3;
+                }
+                else if (dist < 40){
+                    robot.magFullness = 3;
+                }
+                else if (dist < 80){
+                    robot.magFullness = 2;
+                }
+                else{
+                    robot.magFullness = 1;
+                }
+
                 if (!robot.turretLock){
                     goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
                     goalSpeed = V_disk;
