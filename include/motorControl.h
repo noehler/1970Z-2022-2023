@@ -88,9 +88,7 @@ private:
     } else if (angdiff < -180) {
       angdiff += 360;
     }
-    if (fabs(angdiff) < 3) {
-      angdiff = 0;
-    }
+    
     double robotAngleDiff = goalAngle-sensing.robot.angle;
     double turretAngle = double(sensing.turretEncoder.get_position())/100;
     if (turretAngle + angdiff > 360){
@@ -101,10 +99,16 @@ private:
     }
     updatedAD = true;
 
-    static double IPIDvel = 0;
     static double previousveldiff = 0;
-    static double IPIDang = 0;
     static double previousangdiff = 0;
+    static double IPIDang = 0;
+    static double IPIDvel = 0;
+
+    if (fabs(angdiff) < 3) {
+      angdiff = 0;
+      IPIDvel = 0;
+      IPIDang = 0;
+    }
 
     if (!competition::is_disabled()) {
       IPIDang += angdiff;
