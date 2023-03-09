@@ -61,7 +61,7 @@ private:
       return sensing.goalSpeed*1.26+3.805;
     }
     else{
-      return sensing.goalSpeed*1.188+3.857;
+      return sensing.goalSpeed*1.184+3.857;
     }
   }
 
@@ -216,8 +216,8 @@ public:
     PID.driveFR.d = 5;
 
     PID.driveSS.p = 1;
-    PID.driveSS.i = 0.04;
-    PID.driveSS.d = 60;
+    PID.driveSS.i = 0.2;
+    PID.driveSS.d = 1;
 
     PID.turret.p = 1.0;
     PID.turret.i = .01;
@@ -796,10 +796,6 @@ void autonDriveController(void) {
       outValsSDCard();
       delay(optimalDelay);
     }
-  }
-
-  void flyTune(void){
-    flyTuner(flyWheel1,flyWheel2,20);
   }
 
 
