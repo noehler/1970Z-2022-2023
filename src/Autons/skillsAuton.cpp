@@ -102,7 +102,7 @@ void skillsAutonomous(void){
     sensing.set_status(37,18,270,100, 0);
     movevoltage(&mc,0,0);
     delay(50);
-    //shoot disks
+    //shoot preload disks
     shootdisks(&mc);
 
     
@@ -120,6 +120,7 @@ void skillsAutonomous(void){
     while(sensing.robot.ypos<17){
         delay(10);
     }
+    //rotate for first triple stack
     rotateto(&mc,86);
     startTime = millis();
     while(fabs(sensing.robot.angle)+fabs(sensing.robot.velW)>=3 &&millis() - startTime <3000){
@@ -127,10 +128,12 @@ void skillsAutonomous(void){
     }
     
     master.print(0, 0, "rotate done");
+
+    //collect first triple stack
     intake(&mc);
     moveto(&mc, 37, 37,100,1,5,1);
     startTime = millis();
-    while(sensing.robot.ypos<35.7  && millis() - startTime <5000 && sensing.robot.magFullness <3){
+    while(sensing.robot.ypos<35.7  && millis() - startTime <5000 && sensing.robot.magFullness <3){///////////////////// if this exits out mag fullness will be true, maybe remove it here
         // check magazine full
         // check position
         // time out
@@ -138,7 +141,7 @@ void skillsAutonomous(void){
     }
     movevoltage (&mc,3000,3000);
     startTime = millis();
-    while(sensing.robot.ypos<48  && millis() - startTime <5000 && sensing.robot.magFullness <3){
+    while(sensing.robot.ypos<48  && millis() - startTime <5000 && sensing.robot.magFullness <3){/////////////////////why are there 2 of these
         // check magazine full
         // check position
         // time out
@@ -146,6 +149,8 @@ void skillsAutonomous(void){
     }
     movevoltage (&mc,0,0);
     delay(1000);
+
+    //shooting first tripple stack
     shootdisks(&mc);
     
     master.print(0, 0, "shoot done");
@@ -156,25 +161,33 @@ void skillsAutonomous(void){
     while(sensing.robot.ypos > 36&&millis() - startTime <3000){
         delay(10);
     }
+
+    //turning to roller
     moveto(&mc,0,37.5,100,1,5,1);
     startTime = millis();
     while(sensing.robot.xpos>18&&millis() - startTime <2000){
         delay(10);
     }
+
+    //turning second roller
     mc.driveToRoller(2500);
 
+    //backing out of roller
     moveto(&mc,37.5,37.5,100,1,20,-1);
     startTime = millis();
     while(sensing.robot.xpos < 24&&millis() - startTime <2000){
         delay(10);
     }
 
+    //move to collect first disc from first set of boarder discs
     moveto(&mc,25,82,100,1,10,1);
     startTime = millis();
     intake(&mc);
     while(sensing.robot.ypos < 77&&millis() - startTime <5000){
         delay(10);
     }
+
+    //collect first set of border discs
     moveto(&mc,48,82,40,2,20,1);
     startTime = millis();
     while ((distto(sensing.robot.xpos-mc.move.moveToxpos,sensing.robot.ypos-mc.move.moveToypos)>=mc.move.tolerance && millis() - startTime <3000)){
@@ -183,6 +196,7 @@ void skillsAutonomous(void){
         delay(10);
     }
     
+    //shoot fist set of border disccs
     movevoltage (&mc,0,0);
     delay(1000);
     shootdisks(&mc);
