@@ -828,15 +828,32 @@ void autonDriveController(void) {
         rbD.move_voltage(rightSpd);
         }
 
+        logValue("x", sensing.robot.xpos, 0);
+        logValue("y", sensing.robot.ypos, 1);
+        logValue("ODOx", sensing.robot.odoxpos, 2);
+        logValue("ODOy", sensing.robot.odoypos, 3);
+        logValue("GPSx", sensing.robot.GPSxpos, 4);
+        logValue("GPSy", sensing.robot.GPSypos, 5);
+        logValue("heading", sensing.robot.angle, 6);
+        logValue("turret Angle", sensing.robot.turAng, 7);
+        logValue("battery Level", battery::get_capacity(), 8);
+        logValue("lfdTemp", lfD.get_temperature(), 9);
+        logValue("lbdTemp", lbD.get_temperature(), 10);
+        logValue("rfdTemp", rfD.get_temperature(), 11);
+        logValue("rbdTemp", rbD.get_temperature(), 12);
+        logValue("intakeTemp", intakeMotor.get_temperature(), 13);
+        logValue("turretTemp", turretMotor.get_temperature(), 14);
+        logValue("flyWheel1Temp", flyWheel1.get_temperature(), 15);
+        logValue("flyWheel2Temp", flyWheel2.get_temperature(), 16);
+        logValue("flyWheel1SPD", flyWheel1.get_actual_velocity(), 17);
+        logValue("flyWheel2SPD", flyWheel2.get_actual_velocity(), 18);
+        logValue("magFullness", sensing.robot.magFullness,19);
+        logValue("goalAngle", goalAngle, 20);
+        logValue("goalSPD", sensing.goalSpeed, 21);
+        logValue("time", millis(), 22);
 
-      logValue("x", sensing.robot.xpos, 0);
-      logValue("y", sensing.robot.ypos, 1);
-      logValue("Ox", sensing.robot.odoxpos, 2);
-      logValue("Oy", sensing.robot.odoypos, 3);
-      logValue("Gx", sensing.robot.GPSxpos, 4);
-      logValue("Gy", sensing.robot.GPSypos, 5);
-      logValue("Heading", sensing.robot.angle, 6);
-      outValsSDCard();
+        outValsSDCard();
+
       delay(optimalDelay);
     }
     lfD.brake();
@@ -864,15 +881,30 @@ void autonDriveController(void) {
 
       logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
-      logValue("Ox", sensing.robot.odoxpos, 2);
-      logValue("Oy", sensing.robot.odoypos, 3);
-      logValue("Gx", sensing.robot.GPSxpos, 4);
-      logValue("Gy", sensing.robot.GPSypos, 5);
-      logValue("Heading", sensing.robot.angle, 6);
-      logValue("goalx", sensing.goal.xpos, 7);
-      logValue("goaly", sensing.goal.ypos, 8);
-      logValue("color", color, 9);
+      logValue("ODOx", sensing.robot.odoxpos, 2);
+      logValue("ODOy", sensing.robot.odoypos, 3);
+      logValue("GPSx", sensing.robot.GPSxpos, 4);
+      logValue("GPSy", sensing.robot.GPSypos, 5);
+      logValue("heading", sensing.robot.angle, 6);
+      logValue("turret Angle", sensing.robot.turAng, 7);
+      logValue("battery Level", battery::get_capacity(), 8);
+      logValue("lfdTemp", lfD.get_temperature(), 9);
+      logValue("lbdTemp", lbD.get_temperature(), 10);
+      logValue("rfdTemp", rfD.get_temperature(), 11);
+      logValue("rbdTemp", rbD.get_temperature(), 12);
+      logValue("intakeTemp", intakeMotor.get_temperature(), 13);
+      logValue("turretTemp", turretMotor.get_temperature(), 14);
+      logValue("flyWheel1Temp", flyWheel1.get_temperature(), 15);
+      logValue("flyWheel2Temp", flyWheel2.get_temperature(), 16);
+      logValue("flyWheel1SPD", flyWheel1.get_actual_velocity(), 17);
+      logValue("flyWheel2SPD", flyWheel2.get_actual_velocity(), 18);
+      logValue("magFullness", sensing.robot.magFullness,19);
+      logValue("goalAngle", goalAngle, 20);
+      logValue("goalSPD", sensing.goalSpeed, 21);
+      logValue("time", millis(), 22);
+
       outValsSDCard();
+
       delay(optimalDelay);
     }
   }
@@ -904,6 +936,14 @@ void autonDriveController(void) {
       double integ2 = IPIDang2 * PID.flyWheel.i2;
       double deriv = PID.flyWheel.d * (diffFlyWheelW - prevFWdiffSPD);
       double deriv2 = PID.flyWheel.d2 * (diffFlyWheelW2 - prevFWdiffSPD2);
+
+      logValue("p1", prop, 23);
+      logValue("i1", integ, 24);
+      logValue("d1", deriv, 25);
+      logValue("p2", prop2, 26);
+      logValue("i2", integ2, 27);
+      logValue("d2", deriv2, 28);
+
       prevFWdiffSPD = diffFlyWheelW;
       prevFWdiffSPD2 = diffFlyWheelW2;
 

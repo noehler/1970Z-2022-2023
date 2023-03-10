@@ -32,6 +32,7 @@ void initialize() {
 
   Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
   Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
+  Task AutonSelector_Task(AutonSelector, "Auton Selector Task");
   sensing.set_status(37,18,270,100, 0);
 }
 /**
@@ -64,10 +65,6 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-  autonType = winPointBoth;
-  color = 0;
-  winPointAuton();
-
   if (autonType == winPointClose) { // close win Point auton
   } else if (autonType == winPointFar) { // far win Point auton
                                          

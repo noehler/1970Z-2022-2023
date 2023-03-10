@@ -117,6 +117,7 @@ lv_res_t colorSwitchClick(lv_obj_t * btn){
             setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(255, 0, 255), LV_COLOR_MAKE(255, 100, 255), LV_COLOR_MAKE(255, 0, 255), LV_COLOR_MAKE(255, 0, 255), LV_COLOR_MAKE(150, 150, 150), LV_COLOR_MAKE(0, 0, 0), colorBtn), colorBtn);
         }
     }
+    updateScreen = true;
 
     return LV_RES_OK;
 }
@@ -154,6 +155,8 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
                 break;
         }
     }
+    
+    updateScreen = true;
     autonSet = true;
     preMatchCheck();
 

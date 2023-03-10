@@ -1,9 +1,11 @@
 #include "Autons/autonSetup.h"
 #include "main.h"
+#include "pros/misc.hpp"
 
 autonTypes_t autonType = noAuton;
 //0 is blue, 1 is red, 2 is driver skill
 int color = true;
+bool updateScreen = true;
 
 void autonNotSetup(void){
     
@@ -107,5 +109,70 @@ void waitRotate(void *mc, int maxTime, int overallStartTime, int overallMaxTime)
     int startTime = millis();
     while(fabs(sensing.robot.angle-((motorControl_t*) mc)->HeadingTarget)+fabs(sensing.robot.velW)>= ((motorControl_t*) mc)->move.errtheta && millis() - startTime <maxTime && millis() - overallStartTime < overallMaxTime){
         delay(10);
+    }
+}
+
+void AutonSelector(void){    
+    while(1){
+        if (master.get_digital(DIGITAL_A)){
+            autonType = winPointBoth;
+            updateScreen = true;
+        }
+
+        if (master.get_digital(DIGITAL_B)){
+            autonType = winPointClose;
+            updateScreen = true;
+        }
+
+        if (master.get_digital(DIGITAL_X)){
+            autonType = winPointClose;
+            updateScreen = true;
+        }
+
+        if (master.get_digital(DIGITAL_Y)){
+            autonType = noAuton;
+            updateScreen = true;
+        }
+
+        if (master.get_digital(DIGITAL_DOWN)){
+            autonType = skillsAuton;
+            updateScreen = true;
+        }
+
+        if (master.get_digital(DIGITAL_UP)){
+            color+=1;
+            if (color == 3){
+                color = 0;
+            }
+            updateScreen = true;
+        }
+        
+        if (updateScreen == true){
+            delay(50);
+            master.clear();
+            delay(50);
+            if (color == 0){
+                master.print(0, 0, "blue");
+            }else if (color == 1){
+                master.print(0, 0, "red");
+            }else{
+                master.print(0, 0, "skills");
+            }
+            delay(50);
+            if (autonType == winPointClose){
+                master.print(1, 0, "close wp");
+            }else if (autonType == winPointFar){
+                master.print(1, 0, "far wp");
+            }else if (autonType == winPointBoth){
+                master.print(1, 0, "full wp");
+            }else if (autonType == noAuton){
+                master.print(1, 0, "no Auton");
+            }else{
+                master.print(1, 0, "skills");
+            }
+
+            updateScreen = false;
+        }
+        delay(30);
     }
 }

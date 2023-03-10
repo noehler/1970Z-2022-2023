@@ -17,7 +17,7 @@ void skillsAutonomous(void){
 
     double startTime = millis();
     sensing.goalSpeed = 180;
-    sensing.set_status(37,18,270,100, 0);
+    sensing.set_status(37,18,270,100, 1);
     sensing.goal.xpos = 124;
     sensing.goal.ypos = 20;
     sensing.robot.turretLock = true;
@@ -41,7 +41,7 @@ void skillsAutonomous(void){
     waitRotate(&mc, 1000,overallStartTime);
 
     //pick up disk
-    moveto(&mc, 0, 23,35,10,3,1);                                  //John: potentially too big of error heading, but at the same time, the pid spin is wack so idk.
+    moveto(&mc, 0, 23,40,10,3,1);                                  //John: potentially too big of error heading, but at the same time, the pid spin is wack so idk.
     intake(&mc);
     startTime = millis();
     while(sensing.robot.xpos>24 &&millis()-startTime<5000){
@@ -98,12 +98,12 @@ void skillsAutonomous(void){
     delay(700);
 
     //lining up for 2nd triple stack
-    moveto(&mc, 36,33,30,3,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
+    moveto(&mc, 36,33,100,3,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
     mc.waitPosTime(3000,overallStartTime);
 
     //second triple stack
     intake(&mc);
-    moveto(&mc, 72,33,30,3); 
+    moveto(&mc, 72,33,40,3); 
     intakeWaitForDiscs(&mc,3000,overallStartTime);
     if(sensing.robot.magFullness != 3){
         moveto(&mc, 60,36,100,5,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
@@ -120,7 +120,7 @@ void skillsAutonomous(void){
     delay(300);
 
     //moving back to line up with discs
-    moveto(&mc, 72,33,30,3,10,-1); 
+    moveto(&mc, 72,33,100,3,10,-1); 
     intakeWaitForDiscs(&mc,2000,overallStartTime);
 
     //collecting first of row of discs
@@ -129,7 +129,7 @@ void skillsAutonomous(void){
     mc.waitPosTime(4000,overallStartTime);
     
     intake(&mc);
-    moveto(&mc, 108,84,30,3, 5);                                  //John: maybe lower error theta to avoid side of the robot contact disks             //fixed?
+    moveto(&mc, 108,84,40,3, 5);                                  //John: maybe lower error theta to avoid side of the robot contact disks             //fixed?
     mc.waitPosTime(8000,overallStartTime);
     
     //shoot second triple stack
@@ -167,8 +167,8 @@ void skillsAutonomous(void){
     mc.driveToRoller(2500);
     
     //move out of roller
-    moveto(&mc, 144-37, 144-16,100,5,20,-1);
-    while(sensing.robot.ypos>144-16){
+    moveto(&mc, 144-37, 144-18,100,5,20,-1);
+    while(sensing.robot.ypos>144-18){
         delay(10);
     }
     
@@ -204,11 +204,7 @@ void skillsAutonomous(void){
     intake(&mc);
     mc.driveToRoller(  2500);
 
-    //shoot any in bot
-    movevoltage(&mc, 0,0);
-    delay(400);
-    shootdisks(&mc,overallStartTime);
-    delay(300);
+    //expanding
     sensing.goal.xpos = 72;
     sensing.goal.ypos = 72;
 
