@@ -152,7 +152,7 @@ class sensing_t{
             //sensor failure output here.
         }
         //color = true > red. color = false > blue.
-        void set_status (double xpos, double ypos, double heading ,double color_sensor_luminance , bool color){
+        void set_status (double xpos, double ypos, double heading ,double color_sensor_luminance , int colorPT){
             opticalSensor.set_led_pwm(color_sensor_luminance);
             opticalSensor2.set_led_pwm(color_sensor_luminance);
             robot.xpos = xpos;
@@ -161,7 +161,7 @@ class sensing_t{
             robot.odoypos = ypos;
             robot.zpos = 8.5;
             chaIntAng = heading;
-            isRed = color; 
+            color = colorPT; 
             goal.xpos = 20;
             goal.ypos = 124;
             goal.zpos = 30;
@@ -175,7 +175,7 @@ class sensing_t{
                 static bool prevY;
                 static double ydiff = 0, xdiff = 0;//diff from middle/gps origin
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
-                if (isRed){
+                if (color!=0){
                     xdiff = -double(temp_status.y)*39.37;
                     ydiff = double(temp_status.x)*39.37;
                 } else{
@@ -424,18 +424,18 @@ class sensing_t{
 
         bool rollerIsGood(void){
             if(underRoller(1)){
-                c::optical_rgb_s color = opticalSensor.get_rgb();
+                c::optical_rgb_s color_sensor = opticalSensor.get_rgb();
                 
-                if (((color.red > 3000 && color.blue < 1800 && isRed == false) || (color.red < 1000 && color.blue > 1200 && isRed == true)) && underRoller(1)){
+                if (((color_sensor.red > 3000 && color_sensor.blue < 1800 && color == false) || (color_sensor.red < 1000 && color_sensor.blue > 1200 && color == true)) && underRoller(1)){
                     return 1;
                 }
                 else{
                     return 0;
                 }
             }else if(underRoller(2)){
-                c::optical_rgb_s color = opticalSensor2.get_rgb();
+                c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
                 
-                if (((color.red > 3000 && color.blue < 1800 && isRed == false) || (color.red < 1000 && color.blue > 1200 && isRed == true)) && underRoller(2)){
+                if (((color_sensor.red > 3000 && color_sensor.blue < 1800 && color == false) || (color_sensor.red < 1000 && color_sensor.blue > 1200 && color == true)) && underRoller(2)){
                     return 1;
                 }
                 else{

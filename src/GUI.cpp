@@ -103,12 +103,18 @@ lv_res_t colorSwitchClick(lv_obj_t * btn){
 
     if(id == 0)
     {
-        isRed = !isRed;
-        if (isRed){
+        color +=1 ;
+        if (color > 2){
+            color = 0;
+        }
+        if (color == 1){
             setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(255, 100, 100), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(255, 0, 0), LV_COLOR_MAKE(150, 150, 150), LV_COLOR_MAKE(0, 0, 0), colorBtn), colorBtn);
         }
-        else{
+        else if (color == 0){
             setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(100, 100, 255), LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(0, 0, 255), LV_COLOR_MAKE(150, 150, 150), LV_COLOR_MAKE(0, 0, 0), colorBtn), colorBtn);
+        }
+        else{
+            setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(255, 0, 255), LV_COLOR_MAKE(255, 100, 255), LV_COLOR_MAKE(255, 0, 255), LV_COLOR_MAKE(255, 0, 255), LV_COLOR_MAKE(150, 150, 150), LV_COLOR_MAKE(0, 0, 0), colorBtn), colorBtn);
         }
     }
 

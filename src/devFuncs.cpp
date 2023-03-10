@@ -13,7 +13,7 @@ public:
 
 void driveTuner(void){
   motorControl_t mc;
-  isRed = false;
+  color = 0;
   sensing.set_status(72, 72, 0, 0, 1);
   mc.move.speed_limit = 127;
   delay(1000);

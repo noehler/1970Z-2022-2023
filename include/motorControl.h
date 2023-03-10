@@ -62,7 +62,7 @@ private:
       return sensing.goalSpeed*1.26+3.805;
     }
     else{
-      return sensing.goalSpeed*1.186+3.857;
+      return sensing.goalSpeed*1.176+30.57;
     }
   }
 
@@ -169,11 +169,6 @@ private:
                        turPredicScalar * sensing.robot.turvelocity +
                        PIDPosition * PIDscalar;
       
-      
-      logValue("p", PID.turret.p * angdiff, 0);
-      logValue("i", PID.turret.i * IPIDang, 1);
-      logValue("d", PID.turret.d * (angdiff - previousangdiff), 2);
-      outValsSDCard();
       IPIDvel += veldiff;
       PIDVelocity =
           (1 * veldiff + 0.01 * IPIDvel + 0.1 * (veldiff - previousveldiff));
@@ -460,10 +455,6 @@ void rotateTo(bool resetIntegs) {
 
       moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                     PID.driveSS.d * (moveI.ets - previousets);
-      /*logValue("Pspin", PID.driveSS.p * moveI.ets, 8);
-      logValue("Ispin", PID.driveSS.i * IPIDSS, 9);
-      logValue("Dspin", PID.driveSS.d * (moveI.ets - previousets), 10);
-      logValue("Totalspin", moveI.PIDSS, 11);*/
 
       previousets = moveI.ets;
       moveI.PIDSSFLAT = moveI.PIDSS;
@@ -562,10 +553,6 @@ void moveTo(bool resetIntegs) {
       moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                     PID.driveSS.d * (moveI.ets - previousets);
     }
-    /*logValue("Pspin", PID.driveSS.p * moveI.ets, 8);
-    logValue("Ispin", PID.driveSS.i * IPIDSS, 9);
-    logValue("Dspin", PID.driveSS.d * (moveI.ets - previousets), 10);
-    logValue("Totalspin", moveI.PIDSS, 11);*/
 
 
     if (fabs(moveI.ets) < move.errtheta*turnOrMoveMult) {
@@ -842,14 +829,14 @@ void autonDriveController(void) {
         }
 
 
-      /*logValue("x", sensing.robot.xpos, 0);
+      logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
       logValue("Ox", sensing.robot.odoxpos, 2);
       logValue("Oy", sensing.robot.odoypos, 3);
       logValue("Gx", sensing.robot.GPSxpos, 4);
       logValue("Gy", sensing.robot.GPSypos, 5);
       logValue("Heading", sensing.robot.angle, 6);
-      outValsSDCard();*/
+      outValsSDCard();
       delay(optimalDelay);
     }
     lfD.brake();
@@ -875,14 +862,17 @@ void autonDriveController(void) {
       rfD.move_voltage(rightSpd);
       rbD.move_voltage(rightSpd);
 
-      /*logValue("x", sensing.robot.xpos, 0);
+      logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
       logValue("Ox", sensing.robot.odoxpos, 2);
       logValue("Oy", sensing.robot.odoypos, 3);
       logValue("Gx", sensing.robot.GPSxpos, 4);
       logValue("Gy", sensing.robot.GPSypos, 5);
       logValue("Heading", sensing.robot.angle, 6);
-      outValsSDCard();*/
+      logValue("goalx", sensing.goal.xpos, 7);
+      logValue("goaly", sensing.goal.ypos, 8);
+      logValue("color", color, 9);
+      outValsSDCard();
       delay(optimalDelay);
     }
   }
