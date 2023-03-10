@@ -753,10 +753,10 @@ void tailGater(bez_Return_t temp) {
     rbD.brake();
   }
 
-void waitPosTime(int maxTime, int overallStartTime) {
+void waitPosTime(int maxTime, int overallStartTime, int overallMaxTime = 55000) {
     int startTime = millis();
     move.resetMoveTo = false;
-    while (millis() - startTime < maxTime && move.resetMoveTo == false && millis() - overallStartTime < 55000) {
+    while (millis() - startTime < maxTime && move.resetMoveTo == false && millis() - overallStartTime < overallMaxTime) {
       delay(20);
     }
   }
@@ -1011,8 +1011,8 @@ void autonDriveController(void) {
       rightSpd = 8000;
       delay(20);
     }
-    leftSpd = 2000;
-    rightSpd = 2000;
+    leftSpd = 6000;
+    rightSpd = 6000;
     intakeRunning = 3;
     intakespdTar=180;
     while (finished == false && millis() - startTime < time) {

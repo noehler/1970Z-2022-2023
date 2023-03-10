@@ -33,12 +33,14 @@ double pickPos(double posInput, int run){
         return 144 - posInput;
     }
 }
-void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number){
+void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, int overallMaxTime){
     if (number == 4){
         number = sensing.robot.magFullness;
     }
-    ((motorControl_t*) mc)->intakeRunning = 0;
+    ((motorControl_t*) mc)->intakeRunning = 2;
     sensing.robot.turretLock = false;
+    delay(200);
+    ((motorControl_t*) mc)->intakeRunning = 0;
     delay(20);
     if (number!=1){
     ((motorControl_t*) mc)->discCountChoice = 2;
@@ -50,7 +52,7 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number){
     double gpsIntegY = 0;
     double loops = 0;
     ((motorControl_t*) mc)->updatedAD = false;
-    while(millis() - starttime <6000 && millis() - overallStartTime < 55000){
+    while(millis() - starttime <6000 && millis() - overallStartTime < overallMaxTime){
         //time out
         if (calibrapePos){
             gpsIntegX+=sensing.robot.GPSxpos;
@@ -66,8 +68,8 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number){
         }
     }
     if (calibrapePos){
-        sensing.robot.odoxpos = gpsIntegX/loops;
-        sensing.robot.odoxpos = gpsIntegY/loops;
+        sensing.robot.xpos = gpsIntegX/loops;
+        sensing.robot.xpos = gpsIntegY/loops;
     }
     if (number!=1){//second batch
     ((motorControl_t*) mc)->raiseAScore(3);
@@ -94,16 +96,16 @@ void rotateto(void *mc,double ang, double range){
     ((motorControl_t*) mc)->move.errtheta = range;
 }
 
-void intakeWaitForDiscs(void *mc, int maxTime, int overallStartTime, int goalAmt){
+void intakeWaitForDiscs(void *mc, int maxTime, int overallStartTime, int goalAmt, int overallMaxTime){
     int startTime = millis();
-    while(distto(((motorControl_t*) mc)->move.moveToxpos, ((motorControl_t*) mc)->move.moveToypos) > ((motorControl_t*) mc)->move.tolerance && sensing.robot.magFullness < goalAmt && millis()-startTime < maxTime && millis() - overallStartTime < 55000){
+    while(distto(((motorControl_t*) mc)->move.moveToxpos, ((motorControl_t*) mc)->move.moveToypos) > ((motorControl_t*) mc)->move.tolerance && sensing.robot.magFullness < goalAmt && millis()-startTime < maxTime && millis() - overallStartTime < overallMaxTime){
         delay(10);
     }
 }
 
-void waitRotate(void *mc, int maxTime, int overallStartTime){
+void waitRotate(void *mc, int maxTime, int overallStartTime, int overallMaxTime){
     int startTime = millis();
-    while(fabs(sensing.robot.angle-((motorControl_t*) mc)->HeadingTarget)+fabs(sensing.robot.velW)>= ((motorControl_t*) mc)->move.errtheta && millis() - startTime <maxTime && millis() - overallStartTime < 55000){
+    while(fabs(sensing.robot.angle-((motorControl_t*) mc)->HeadingTarget)+fabs(sensing.robot.velW)>= ((motorControl_t*) mc)->move.errtheta && millis() - startTime <maxTime && millis() - overallStartTime < overallMaxTime){
         delay(10);
     }
 }

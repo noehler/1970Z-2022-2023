@@ -1,5 +1,6 @@
 #include "main.h"
 #include "Autons/autonSetup.h"
+#include "Autons/winPointAuton.h"
 #include "bezierCalculations.h"
 #include "devFuncs.h"
 #include "motorControl.h"
@@ -63,61 +64,17 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-  autonType = skillsAuton;
+  autonType = winPointBoth;
+  color = 0;
+  winPointAuton();
+
   if (autonType == winPointClose) { // close win Point auton
-    sensing.robot.xpos = 6.25 + 24;
-    sensing.robot.ypos = 24 - 6;
-    sensing.robot.zpos = 8.5;
-    chaIntAng = 270;
-
-    sensing.goal.xpos = 20;
-    sensing.goal.ypos = 124;
-    sensing.goal.zpos = 30;
-    motorControl_t motorControl;
-    motorControl.setpistons();
-
-    Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
-                  "My Flywheel Speed Controller Task");
-    Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
-    Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl,
-                          "Intake and Turret Controller Task");
-    sensing.robot.turretLock = false;
-
-    sensing.goalSpeed = 200;
-    delay(3000);
-    // goalAngle = 0;
-    motorControl.raiseAScore(3);
-    motorControl.runTurretIntake = false;
-
-    motorControl.driveToRoller(10000);
-    // fly_Task.suspend();
   } else if (autonType == winPointFar) { // far win Point auton
-    chaIntAng = 90;
-    motorControl_t motorControl;
-    motorControl.setpistons();
-
-    Task fly_Task(fly_ControllerWrapper, (void*) &motorControl, "My Flywheel Speed Controller Task");
-    Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
-    Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl,
-                          "Intake and Turret Controller Task");
-    sensing.robot.turretLock = false;
-
-    sensing.goalSpeed = 200;
-    goalAngle = 0;
-    delay(5000);
-    motorControl.raiseAScore(3);
-
-    motorControl.runTurretIntake = false;
-
-    motorControl.driveDist(1);
-
-    motorControl.rotateTo(1);
-    delay(1000);
-
-    motorControl.driveToRoller(100000);
                                          
-  } else if (autonType == noAuton) {
-  } else {
+  } else if (autonType == winPointBoth) {//both roller win point
+    winPointAuton();
+  } else if (autonType == noAuton) {//noAuton
+  } else {                          //skills Auton
     skillsAutonomous();
   }
 }

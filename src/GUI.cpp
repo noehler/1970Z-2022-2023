@@ -133,6 +133,10 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
                 lv_label_set_text(autonTypeLabel, "winPoint near auton selected"); //sets label text
                 break;
             case winPointClose:
+                autonType = winPointBoth;
+                lv_label_set_text(autonTypeLabel, "winPoint Both selected"); //sets label text
+                break;
+            case winPointBoth:
                 autonType = noAuton;
                 lv_label_set_text(autonTypeLabel, "no auton selected"); //sets label text
                 break;
