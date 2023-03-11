@@ -62,7 +62,7 @@ private:
       return sensing.goalSpeed*1.26+3.805;
     }
     else{
-      return sensing.goalSpeed*1.176+30.57;
+      return sensing.goalSpeed*1.172+31.57;
     }
   }
 
@@ -937,13 +937,6 @@ void autonDriveController(void) {
       double deriv = PID.flyWheel.d * (diffFlyWheelW - prevFWdiffSPD);
       double deriv2 = PID.flyWheel.d2 * (diffFlyWheelW2 - prevFWdiffSPD2);
 
-      logValue("p1", prop, 23);
-      logValue("i1", integ, 24);
-      logValue("d1", deriv, 25);
-      logValue("p2", prop2, 26);
-      logValue("i2", integ2, 27);
-      logValue("d2", deriv2, 28);
-
       prevFWdiffSPD = diffFlyWheelW;
       prevFWdiffSPD2 = diffFlyWheelW2;
 
@@ -1063,11 +1056,13 @@ void autonDriveController(void) {
       }
       delay(20);
     }
-    leftSpd = -6000;
-    rightSpd = -6000;
-    delay(200);
+    leftSpd = -8000;
+    rightSpd = -8000;
+    intakeRunning = 1;
+    delay(300);
     intakeRunning = 0;
   }
+
   //expansion
   void explode(void) { 
     boomShackalacka.set_value(true); 

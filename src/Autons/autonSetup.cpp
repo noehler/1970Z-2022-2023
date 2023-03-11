@@ -57,9 +57,11 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
     while(millis() - starttime <6000 && millis() - overallStartTime < overallMaxTime){
         //time out
         if (calibrapePos){
-            gpsIntegX+=sensing.robot.GPSxpos;
-            gpsIntegY+=sensing.robot.GPSxpos;
-            loops++;
+            if (sensing.GPS_sensor.get_error() < 0.012){
+                gpsIntegX+=sensing.robot.GPSxpos;
+                gpsIntegY+=sensing.robot.GPSxpos;
+                loops++;
+            }
         }
         if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 +  + fabs(sensing.robot.angAccel)*2< 30){
             std::cout<<"good turret"<<"\n";
@@ -113,8 +115,8 @@ void waitRotate(void *mc, int maxTime, int overallStartTime, int overallMaxTime)
 }
 
 void AutonSelector(void){    
-    while(1){
-        if (master.get_digital(DIGITAL_A)){
+    while(competition::is_disabled()){
+        /*if (master.get_digital(DIGITAL_A)){
             autonType = winPointBoth;
             updateScreen = true;
         }
@@ -145,7 +147,7 @@ void AutonSelector(void){
                 color = 0;
             }
             updateScreen = true;
-        }
+        }*/
         
         if (updateScreen == true){
             delay(50);

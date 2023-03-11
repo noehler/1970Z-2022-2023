@@ -176,19 +176,19 @@ class sensing_t{
                 static double ydiff = 0, xdiff = 0;//diff from middle/gps origin
                 pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
                 if (color!=0){
-                    xdiff = -double(temp_status.y)*39.37;
-                    ydiff = double(temp_status.x)*39.37;
-                } else{
                     xdiff = double(temp_status.y)*39.37;
                     ydiff = -double(temp_status.x)*39.37;
+                } else{
+                    xdiff = -double(temp_status.y)*39.37;
+                    ydiff = double(temp_status.x)*39.37;
                 }
 
                 if (GPS_sensor.get_error() < 0.012 && 
                     sqrt(pow(robot.velX,2) + pow(robot.velY,2)) < 1 && 
                     robot.xpos >36 && robot.xpos < 108 && robot.ypos >36 && robot.ypos < 108 && !sensorFail)
                 {
-                    robot.xpos = robot.GPSxpos;
-                    robot.ypos = robot.GPSypos;
+                    //robot.xpos = robot.GPSxpos;
+                    //robot.ypos = robot.GPSypos;
                 }
                 else{
                     /*robot.xpos = robot.odoxpos;
@@ -379,8 +379,11 @@ class sensing_t{
                 else if (dist < 80){
                     robot.magFullness = 2;
                 }
-                else{
+                else if (dist < 130){
                     robot.magFullness = 1;
+                }
+                else{
+                    robot.magFullness = 0;
                 }
 
                 if (!robot.turretLock){
@@ -403,6 +406,8 @@ class sensing_t{
         }
 
         bool underRoller(int sensorNum){
+            logValue("std::string name", opticalSensor.get_proximity(), 0);
+            outValsSDCard();
             if (sensorNum == 1){
                 if (opticalSensor.get_proximity() > 180){
                     return 1;
@@ -426,7 +431,7 @@ class sensing_t{
             if(underRoller(1)){
                 c::optical_rgb_s color_sensor = opticalSensor.get_rgb();
                 
-                if (((color_sensor.red > 3000 && color_sensor.blue < 1800 && color == false) || (color_sensor.red < 1000 && color_sensor.blue > 1200 && color == true)) && underRoller(1)){
+                if (((color_sensor.red > 2000 && color_sensor.blue < 700 && color == false) || (!(color_sensor.red > 2000 && color_sensor.blue < 700) && color == true)) && underRoller(1)){
                     return 1;
                 }
                 else{
@@ -435,7 +440,7 @@ class sensing_t{
             }else if(underRoller(2)){
                 c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
                 
-                if (((color_sensor.red > 3000 && color_sensor.blue < 1800 && color == false) || (color_sensor.red < 1000 && color_sensor.blue > 1200 && color == true)) && underRoller(2)){
+                if (((color_sensor.red > 2000 && color_sensor.blue < 700 && color == false) || (!(color_sensor.red > 2000 && color_sensor.blue < 700) && color == true)) && underRoller(2)){
                     return 1;
                 }
                 else{

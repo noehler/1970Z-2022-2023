@@ -115,7 +115,7 @@ void skillsAutonomous(void){
     
     //shoot second triple stack
     movevoltage(&mc, 0,0);
-    shootdisks(&mc,overallStartTime,1);
+    shootdisks(&mc,overallStartTime);
     sensing.robot.turretLock = true;
     delay(300);
 
@@ -134,7 +134,7 @@ void skillsAutonomous(void){
     
     //shoot second triple stack
     movevoltage(&mc, 0,0);
-    shootdisks(&mc,overallStartTime, 1);
+    shootdisks(&mc,overallStartTime);
     sensing.robot.turretLock = true;
     delay(300);
 
@@ -144,7 +144,7 @@ void skillsAutonomous(void){
     //picking up last 3 stack
     intake(&mc);
     moveto(&mc, 108,114,30,3, 5);
-    mc.waitPosTime(9000,overallStartTime);                                     //John: too long of wait time             //fixed?
+    mc.waitPosTime(9000,overallStartTime,1);                                     //John: too long of wait time             //fixed?
     
     //shooting last triple stack
     movevoltage(&mc, 0,0);

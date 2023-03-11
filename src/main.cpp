@@ -65,6 +65,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
+  skillsAutonomous();
   if (autonType == winPointClose) { // close win Point auton
   } else if (autonType == winPointFar) { // far win Point auton
                                          
@@ -102,7 +103,6 @@ void vibrateController(void){
 }
 void opcontrol() {
   motorControl_t motorControl;
-  //motorControl.flyTune();
 
   Task drive_Task(drive_ControllerWrapper, (void *)&motorControl,
                   "My Driver Controller Task");
