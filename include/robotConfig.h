@@ -13,6 +13,8 @@ using namespace pros;
 extern Controller master;
 extern Controller sidecar;
 
+extern bool highTurretInitAng;
+
 extern double getNum(std::string Output);
 
 class Object{
@@ -121,6 +123,12 @@ class sensing_t{
                         discSearch(3), distSense(20), GPS_sensor(12){}
 
         void Init(void){
+            if (double(turretEncoder.get_position())/100 > 180){
+                highTurretInitAng = true;
+            }
+            else{
+                highTurretInitAng = false;
+            }
 
             std::cout << "values set\n";
             static bool inertialsSet = false;

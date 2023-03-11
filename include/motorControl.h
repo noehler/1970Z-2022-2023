@@ -130,7 +130,7 @@ private:
     }
     
     double robotAngleDiff = goalAngle-sensing.robot.angle;
-    double turretAngle = double(sensing.turretEncoder.get_position())/100+180;
+    double turretAngle = double(sensing.turretEncoder.get_position())/100+180-highTurretInitAng*360;
     if (turretAngle + angdiff > 360){
       angdiff-= 360;
     }
@@ -1035,7 +1035,7 @@ void autonDriveController(void) {
     }
   }
 
-  void driveToRoller(double time) { // changing to let move to take over the initial moveto
+  void driveToRoller(double time, bool reverseOut = true) { // changing to let move to take over the initial moveto
     bool finished = false;
     driveType = 3;
     int startTime = millis();
@@ -1056,10 +1056,12 @@ void autonDriveController(void) {
       }
       delay(20);
     }
-    leftSpd = -8000;
-    rightSpd = -8000;
-    intakeRunning = 1;
-    delay(300);
+    if(reverseOut){
+      leftSpd = -8000;
+      rightSpd = -8000;
+      intakeRunning = 1;
+      delay(300);
+    }
     intakeRunning = 0;
   }
 

@@ -65,10 +65,10 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-  skillsAutonomous();
   if (autonType == winPointClose) { // close win Point auton
+    closeWinPoint();
   } else if (autonType == winPointFar) { // far win Point auton
-                                         
+    farWinPoint();                        
   } else if (autonType == winPointBoth) {//both roller win point
     winPointAuton();
   } else if (autonType == noAuton) {//noAuton

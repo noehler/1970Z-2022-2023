@@ -6,6 +6,7 @@ sensing_t sensing;
 double targetAngleOffest = 0;
 double chaIntAng = 0;
 double goalAngle = 0;
+bool highTurretInitAng = 0;
 
 void odometry_Wrapper(void* sensing) {
     ((sensing_t*) sensing)->odometry();

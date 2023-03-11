@@ -35,7 +35,7 @@ double pickPos(double posInput, int run){
         return 144 - posInput;
     }
 }
-void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, int overallMaxTime){
+void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, int overallMaxTime, int maxTime){
     if (number == 4){
         number = sensing.robot.magFullness;
     }
@@ -54,7 +54,7 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
     double gpsIntegY = 0;
     double loops = 0;
     ((motorControl_t*) mc)->updatedAD = false;
-    while(millis() - starttime <6000 && millis() - overallStartTime < overallMaxTime){
+    while(millis() - starttime <maxTime && millis() - overallStartTime < overallMaxTime){
         //time out
         if (calibrapePos){
             if (sensing.GPS_sensor.get_error() < 0.012){
