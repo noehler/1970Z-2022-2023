@@ -31,6 +31,7 @@ void initialize() {
   sensing.Init();
 
   Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
+  Task outPutting_task(outValsSDCard, "Outputting Task");
   Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
   Task AutonSelector_Task(AutonSelector, "Auton Selector Task");
   sensing.set_status(37,18,270,100, 0);
@@ -146,27 +147,14 @@ void opcontrol() {
       turretGood = false;
     }
     if (color != 2){
-      if (master.get_digital_new_press(DIGITAL_DOWN) &&master.get_digital(DIGITAL_LEFT) ) {
-        aimSpot+=1;
-        if (aimSpot ==3){
-          aimSpot = 0;
-        }
-        if(aimSpot == 0){
-          
-          sensing.goal.xpos = 20;
-          sensing.goal.ypos = 124;
-          sensing.goal.zpos = 30;
-        }
-        else if (aimSpot == 1){
-          sensing.goal.xpos = 124;
-          sensing.goal.ypos = 20;
-          sensing.goal.zpos = 30;
-        }
-        else{
-          sensing.goal.xpos = 72;
-          sensing.goal.ypos = 72;
-
-        }
+      if(master.get_digital(DIGITAL_LEFT)){
+        sensing.goal.xpos = 20;
+        sensing.goal.ypos = 124;
+        sensing.goal.zpos = 30;
+      }
+      else if (master.get_digital(DIGITAL_RIGHT)){
+        sensing.goal.xpos = 72;
+        sensing.goal.ypos = 72;
       }
     }
     else{
@@ -182,6 +170,34 @@ void opcontrol() {
       }
     }
     
+    static int loop = 0;
+    static double xGPSintegral = 0;
+    static double yGPSintegral = 0;
+    static bool calculatePos = false;
+    //GPS Calibration
+    if (master.get_digital(DIGITAL_Y)){
+      xGPSintegral +=sensing.robot.GPSxpos;
+      yGPSintegral +=sensing.robot.GPSypos;
+      loop++;
+      calculatePos = true;
+    }
+    else{
+      if (calculatePos && loop > 250){
+        sensing.robot.xpos = xGPSintegral/loop;
+        sensing.robot.ypos = yGPSintegral/loop;
+
+        xGPSintegral = 0;
+        yGPSintegral = 0;
+        loop = 0;
+        calculatePos = 0;
+      }
+      else{
+        xGPSintegral = 0;
+        yGPSintegral = 0;
+        calculatePos = 0;
+        loop = 0;
+      }
+    }
     
     delay(20);
   }

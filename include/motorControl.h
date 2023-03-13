@@ -62,7 +62,7 @@ private:
       return sensing.goalSpeed*1.26+3.805;
     }
     else{
-      return sensing.goalSpeed*1.172+31.57;
+      return sensing.goalSpeed*1.134+30;
     }
   }
 
@@ -852,8 +852,6 @@ void autonDriveController(void) {
         logValue("goalSPD", sensing.goalSpeed, 21);
         logValue("time", millis(), 22);
 
-        outValsSDCard();
-
       delay(optimalDelay);
     }
     lfD.brake();
@@ -902,8 +900,6 @@ void autonDriveController(void) {
       logValue("goalAngle", goalAngle, 20);
       logValue("goalSPD", sensing.goalSpeed, 21);
       logValue("time", millis(), 22);
-
-      outValsSDCard();
 
       delay(optimalDelay);
     }

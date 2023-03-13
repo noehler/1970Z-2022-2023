@@ -46,20 +46,40 @@ int startRecord(void){
 }
 
 void outValsSDCard(void){
-    if (usd::is_installed()){
-        static int fileNum;
-        static bool headerMade = false;
-    
-        char buffer[25];
-        if (!headerMade){
-        fileNum = startRecord();
-        }
-        sprintf(buffer, "/usd/logs/vals_%d.csv", fileNum);
-        FILE *usd_file_write = fopen(buffer, "a");
-        if (!headerMade){
+    while(1){
+        if (usd::is_installed() && outVals[1] != 420.69){
+            static int fileNum;
+            static bool headerMade = false;
+        
+            char buffer[25];
+            if (!headerMade){
+            fileNum = startRecord();
+            }
+            sprintf(buffer, "/usd/logs/vals_%d.csv", fileNum);
+            FILE *usd_file_write = fopen(buffer, "a");
+            if (!headerMade){
+                for (int i = 0; i < 40; i++){
+                    if (outVals[i] != 420.69){
+                        fprintf(usd_file_write,"%s", outNames[i]);
+                    }
+                    if (outVals[i+1] != 420.69){
+                        fprintf(usd_file_write,",");
+                    }
+                    else{
+                        break;
+                    }
+                }
+                fprintf(usd_file_write,"\n");
+                headerMade = true;
+            }
             for (int i = 0; i < 40; i++){
                 if (outVals[i] != 420.69){
-                    fprintf(usd_file_write,"%s", outNames[i]);
+                    fprintf(usd_file_write,"%f", outVals[i]);
+                    if (i < 20){
+                        char buffer[20];
+                        sprintf(buffer, "%s: %.4f", outNames[i], outVals[i]);
+                        lv_label_set_text(outLabels[i], buffer);
+                    }
                 }
                 if (outVals[i+1] != 420.69){
                     fprintf(usd_file_write,",");
@@ -69,35 +89,18 @@ void outValsSDCard(void){
                 }
             }
             fprintf(usd_file_write,"\n");
-            headerMade = true;
+            fclose(usd_file_write);
         }
-        for (int i = 0; i < 40; i++){
-            if (outVals[i] != 420.69){
-                fprintf(usd_file_write,"%f", outVals[i]);
-                if (i < 20){
+        else{
+            for (int i = 0; i < 20; i++){
+                if (outVals[i] != 420.69){
                     char buffer[20];
                     sprintf(buffer, "%s: %.4f", outNames[i], outVals[i]);
                     lv_label_set_text(outLabels[i], buffer);
                 }
             }
-            if (outVals[i+1] != 420.69){
-                fprintf(usd_file_write,",");
-            }
-            else{
-                break;
-            }
         }
-        fprintf(usd_file_write,"\n");
-        fclose(usd_file_write);
-    }
-    else{
-        for (int i = 0; i < 20; i++){
-            if (outVals[i] != 420.69){
-                char buffer[20];
-                sprintf(buffer, "%s: %.4f", outNames[i], outVals[i]);
-                lv_label_set_text(outLabels[i], buffer);
-            }
-        }
+        delay(20);
     }
 }
 

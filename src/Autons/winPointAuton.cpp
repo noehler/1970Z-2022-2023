@@ -31,30 +31,33 @@ void winPointAuton(void){
     delay(200);
     shootdisks(&mc, overallStartTime);
     
-    //picking up disc
+    //move to lineup roller
     intake(&mc);
-    moveto(&mc, 72, 48,40);
-    intakeWaitForDiscs(&mc, 4000,overallStartTime);
+    moveto(&mc, 128, 105,60, 5,50);
+    intakeWaitForDiscs(&mc, 9000,overallStartTime);
 
     //shooting
     movevoltage(&mc, 0, 0);
     delay(200);
     shootdisks(&mc, overallStartTime);
 
-    //move to lineup roller
+    
     intake(&mc);
-    moveto(&mc, 96, 60,100);
-    mc.waitPosTime(1000,overallStartTime);
-    intake(&mc);
-    moveto(&mc, 128, 105,100, 5,50);
-    mc.waitPosTime(3000,overallStartTime);
+    moveto(&mc, 128, 104,100, 5,50);
+    mc.waitPosTime(3000, overallStartTime);
 
+    //trying to clear disks
+    mc.intakeRunning = 2;
+    movevoltage(&mc, -12000, 12000);
+    delay(500);
+    
     //rotating to face with roller
+    mc.intakeRunning = 0;
     rotateto(&mc, 0);
     waitRotate(&mc, 1500, overallStartTime);
 
     //getting final roller
-    mc.driveToRoller(10000);
+    mc.driveToRoller(10000, 0);
     
     movevoltage(&mc, 0, 0);
     while(1){
@@ -83,7 +86,7 @@ void closeWinPoint(void){
     }
     
     //move to lineup disk
-    moveto(&mc, 48, 16,100,5,10,-1);
+    moveto(&mc, 48, 24,100,5,10,-1);
     mc.waitPosTime(2500,overallStartTime);
 
     //shooting
@@ -93,12 +96,12 @@ void closeWinPoint(void){
     
     //picking up disc
     intake(&mc);
-    moveto(&mc, 96, 12,50);
+    moveto(&mc, 60, 36,50);
     intakeWaitForDiscs(&mc, 10000,overallStartTime);
     if (sensing.robot.magFullness != 3){
-        moveto(&mc, 70, 12,100,5,-1);
+        moveto(&mc, 54, 30,100,5,5,-1);
         mc.waitPosTime(10000,overallStartTime);
-        moveto(&mc, 96, 12,50);
+        moveto(&mc, 72, 48,50);
         intakeWaitForDiscs(&mc, 10000,overallStartTime);
     }
     
@@ -129,7 +132,7 @@ void farWinPoint(void){
 
     intake(&mc);
     moveto(&mc,100, 54.5, 100);
-    intakeWaitForDiscs(&mc, 7000, overallStartTime,3,9000);
+    intakeWaitForDiscs(&mc, 7000, overallStartTime,3,6000);
 
     movevoltage(&mc, 0, 0);
     shootdisks(&mc, overallStartTime, 0,4,10000,3000);

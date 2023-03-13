@@ -414,8 +414,6 @@ class sensing_t{
         }
 
         bool underRoller(int sensorNum){
-            logValue("std::string name", opticalSensor.get_proximity(), 0);
-            outValsSDCard();
             if (sensorNum == 1){
                 if (opticalSensor.get_proximity() > 180){
                     return 1;
