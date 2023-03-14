@@ -14,6 +14,19 @@ using namespace pros;
 
 class motorControl_t {
 private:
+  Motor lfD;
+  Motor lbD;
+  Motor rfD;
+  Motor rbD;
+  Motor flyWheel1;
+  Motor flyWheel2;
+  Motor turretMotor;
+  Motor intakeMotor;
+  ADIDigitalOut boomShackalacka;
+  ADIDigitalOut shoot3;
+  ADIDigitalOut shoot1;
+  ADIDigitalOut ejectPiston;
+
   int optimalDelay = 10;
 
   int drivePowerR;
@@ -56,13 +69,13 @@ private:
 
   double angularVelocityCalc(int number) {
     if (number ==3 && discCountChoice == 2){
-      return sensing.goalSpeed*1.56+3.842;
+      return sensing.goalSpeed*1.6+30.842;
     }
     else if(number == 2 && discCountChoice == 2){
-      return sensing.goalSpeed*1.26+3.805;
+      return sensing.goalSpeed*1.30+3.805;
     }
     else{
-      return sensing.goalSpeed*1.134+30;
+      return sensing.goalSpeed*1.144+30;
     }
   }
 
@@ -245,19 +258,6 @@ private:
   
 
 public:
-
-  Motor lfD;
-  Motor lbD;
-  Motor rfD;
-  Motor rbD;
-  Motor flyWheel1;
-  Motor flyWheel2;
-  Motor turretMotor;
-  Motor intakeMotor;
-  ADIDigitalOut boomShackalacka;
-  ADIDigitalOut shoot3;
-  ADIDigitalOut shoot1;
-  ADIDigitalOut ejectPiston;
   bool updatedAD = false;
   double angdiff;
   int discCountChoice = 2;
@@ -850,7 +850,8 @@ void autonDriveController(void) {
         logValue("magFullness", sensing.robot.magFullness,19);
         logValue("goalAngle", goalAngle, 20);
         logValue("goalSPD", sensing.goalSpeed, 21);
-        logValue("time", millis(), 22);
+        logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
+        logValue("time", millis(), 23);
 
       delay(optimalDelay);
     }
@@ -899,7 +900,8 @@ void autonDriveController(void) {
       logValue("magFullness", sensing.robot.magFullness,19);
       logValue("goalAngle", goalAngle, 20);
       logValue("goalSPD", sensing.goalSpeed, 21);
-      logValue("time", millis(), 22);
+      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
+      logValue("time", millis(), 23);
 
       delay(optimalDelay);
     }
@@ -908,70 +910,162 @@ void autonDriveController(void) {
 
   // voltage controller for flywheel motors
   void flyController() {
+    double maxSpeed = 610;
+
+    //speed needed to accelerate
+    double bottomLimit = 10;
+    //speed needed to decelerate
+    double topLimit = 30;
+
+    //setting up PID controller values
+    double angularVelocityDifferenceIntegral1 = 0;
+    double angularVelocityDifferenceIntegral2 = 0;
+    double prevAngularVelocityDifference1 = 0;
+    double prevAngularVelocityDifference2 = 0;
+
     while (!competition::is_disabled()) {
-      static double IPIDang = 0;
-      static double IPIDang2 = 0;
-      if (competition::is_disabled()) {
-        IPIDang = 0;
-        IPIDang2 = 0;
-      }
-      double flyWVolt;
-      double flyWVolt2;
-      double flyWheelW = flyWheel1.get_actual_velocity();
-      double flyWheelW2 = flyWheel2.get_actual_velocity();
-      diffFlyWheelW = angularVelocityCalc(sensing.robot.magFullness) - flyWheelW;
-      diffFlyWheelW2 = angularVelocityCalc(sensing.robot.magFullness) - flyWheelW2;
-      static double prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
-      static double prevFWdiffSPD2 = angularVelocityCalc(sensing.robot.magFullness);
+      if (flyWheel1.get_temperature() < 45 && flyWheel2.get_temperature() < 45){
+        double flyWVolt1, flyWVolt2;
+        double goalAngularVelocity = angularVelocityCalc(sensing.goalSpeed);
+        double holdPower1 = (18.48*goalAngularVelocity)+687.6;
+        double holdPower2 = (17.57*goalAngularVelocity)+883.2;
+        
+        //positive values means acceleration is needed and negative means speed is too high
+        double angularVelocityDifference1 = goalAngularVelocity - flyWheel1.get_actual_velocity();
+        double angularVelocityDifference2 = goalAngularVelocity - flyWheel2.get_actual_velocity();
 
-      IPIDang += diffFlyWheelW;
-      IPIDang2 += diffFlyWheelW2;
-      double prop = PID.flyWheel.p * diffFlyWheelW;
-      double prop2 = PID.flyWheel.p2 * diffFlyWheelW2;
-      double integ = IPIDang * PID.flyWheel.i;
-      double integ2 = IPIDang2 * PID.flyWheel.i2;
-      double deriv = PID.flyWheel.d * (diffFlyWheelW - prevFWdiffSPD);
-      double deriv2 = PID.flyWheel.d2 * (diffFlyWheelW2 - prevFWdiffSPD2);
+        //checking nanf
+        if (angularVelocityDifferenceIntegral1 == NAN){
+          angularVelocityDifferenceIntegral1 = 0;
+        }
+        if (angularVelocityDifferenceIntegral2 == NAN){
+          angularVelocityDifferenceIntegral2 = 0;
+        }
 
-      prevFWdiffSPD = diffFlyWheelW;
-      prevFWdiffSPD2 = diffFlyWheelW2;
+        //flywheel1 controller
+        if (angularVelocityDifference1 > bottomLimit){//not fast enough
+          angularVelocityDifferenceIntegral1 = 0;
+          flyWVolt1 = 12000;
+        }
+        else if (angularVelocityDifference1 < -topLimit){//too fast
+          angularVelocityDifferenceIntegral1 = 0;
+          flyWVolt1 = -300;
+        }
+        else{
+          double prop = angularVelocityDifference1 * PID.flyWheel.p*0;
+          double integ = angularVelocityDifferenceIntegral1 * PID.flyWheel.i*0;
+          if (!(integ > 60)){
+            angularVelocityDifferenceIntegral1 += angularVelocityDifference1;
+          }
+          double deriv = (prevAngularVelocityDifference2 - angularVelocityDifference2) * PID.flyWheel.d*0;
+          double PIDVAL = (prop + integ + deriv)*12000/127*0;
+          angularVelocityDifferenceIntegral1 += angularVelocityDifference1;
+          flyWVolt1 = holdPower1 + PIDVAL;
+          if (flyWVolt2 >12000){
+            flyWVolt2 = 12000;
+          }
+          if (flyWVolt2<-12000){
+            flyWVolt2 = -12000;
+          }
+        }
 
-      flyWVolt = 12000.0 / 127 * (prop + integ + deriv);
-      flyWVolt2 = 12000.0 / 127 * (prop2 + integ2 + deriv2);
+        //flywheel2 controller
+        if (angularVelocityDifference2 > bottomLimit){//not fast enough
+          angularVelocityDifferenceIntegral2 = 0;
+          flyWVolt2 = 12000;
+        }
+        else if (angularVelocityDifference2 < -topLimit){//too fast
+          angularVelocityDifferenceIntegral2 = 0;
+          flyWVolt2 = -200;
+        }
+        else{
+          double prop = angularVelocityDifference2 * PID.flyWheel.p*0;
+          double integ = angularVelocityDifferenceIntegral2 * PID.flyWheel.i*0;
+          if (!(integ > 60)){
+            angularVelocityDifferenceIntegral2 += angularVelocityDifference2;
+          }
+          double deriv = (prevAngularVelocityDifference2 - angularVelocityDifference2) * PID.flyWheel.d*0;
+          double PIDVAL = (prop + integ + deriv)*12000/127*0;
+          flyWVolt2 = holdPower2 + PIDVAL;
+          if (flyWVolt2 >12000){
+            flyWVolt2 = 12000;
+          }
+          if (flyWVolt2<-12000){
+            flyWVolt2 = -12000;
+          }
+        }
 
-      if (flyWVolt > 12000) {
-        flyWVolt = 12000;
-      }
-      if (flyWVolt < -12000) {
-        flyWVolt = -12000;
-      }
-      if (fabs(diffFlyWheelW) < 1 && flyWVolt == 0) {
-        IPIDang = 0;
-      }
+        prevAngularVelocityDifference1 = angularVelocityDifference1;
+        prevAngularVelocityDifference2 = angularVelocityDifference2;
 
-      if (flyWVolt2 > 12000) {
-        flyWVolt2 = 12000;
+        flyWheel1.move_voltage(flyWVolt1);
+        flyWheel2.move_voltage(flyWVolt2);
       }
-      if (flyWVolt2 < -12000) {
-        flyWVolt2 = -12000;
-      }
-      if (fabs(diffFlyWheelW2) < 1 && flyWVolt2 == 0) {
-        IPIDang2 = 0;
-      }
+      else{
+        static double IPIDang = 0;
+        static double IPIDang2 = 0;
+        if (competition::is_disabled()) {
+          IPIDang = 0;
+          IPIDang2 = 0;
+        }
+        double flyWVolt;
+        double flyWVolt2;
+        double flyWheelW = flyWheel1.get_actual_velocity();
+        double flyWheelW2 = flyWheel2.get_actual_velocity();
+        diffFlyWheelW = angularVelocityCalc(sensing.robot.magFullness) - flyWheelW;
+        diffFlyWheelW2 = angularVelocityCalc(sensing.robot.magFullness) - flyWheelW2;
+        static double prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
+        static double prevFWdiffSPD2 = angularVelocityCalc(sensing.robot.magFullness);
 
-      if (isnanf(flyWVolt)) {
-        flyWVolt = 0;
-        prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
-        IPIDang = 0;
-      }
-      if (isnanf(flyWVolt2)) {
-        flyWVolt2 = 0;
-        prevFWdiffSPD2 = angularVelocityCalc(sensing.robot.magFullness);
-        IPIDang2 = 0;
-      }
+        IPIDang += diffFlyWheelW;
+        IPIDang2 += diffFlyWheelW2;
+        double prop = PID.flyWheel.p * diffFlyWheelW;
+        double prop2 = PID.flyWheel.p2 * diffFlyWheelW2;
+        double integ = IPIDang * PID.flyWheel.i;
+        double integ2 = IPIDang2 * PID.flyWheel.i2;
+        double deriv = PID.flyWheel.d * (diffFlyWheelW - prevFWdiffSPD);
+        double deriv2 = PID.flyWheel.d2 * (diffFlyWheelW2 - prevFWdiffSPD2);
 
-      flyWheel1.move_voltage(flyWVolt);
-      flyWheel2.move_voltage(flyWVolt2);
+        prevFWdiffSPD = diffFlyWheelW;
+        prevFWdiffSPD2 = diffFlyWheelW2;
+
+        flyWVolt = 12000.0 / 127 * (prop + integ + deriv);
+        flyWVolt2 = 12000.0 / 127 * (prop2 + integ2 + deriv2);
+
+        if (flyWVolt > 12000) {
+          flyWVolt = 12000;
+        }
+        if (flyWVolt < -12000) {
+          flyWVolt = -12000;
+        }
+        if (fabs(diffFlyWheelW) < 1 && flyWVolt == 0) {
+          IPIDang = 0;
+        }
+
+        if (flyWVolt2 > 12000) {
+          flyWVolt2 = 12000;
+        }
+        if (flyWVolt2 < -12000) {
+          flyWVolt2 = -12000;
+        }
+        if (fabs(diffFlyWheelW2) < 1 && flyWVolt2 == 0) {
+          IPIDang2 = 0;
+        }
+
+        if (isnanf(flyWVolt)) {
+          flyWVolt = 0;
+          prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
+          IPIDang = 0;
+        }
+        if (isnanf(flyWVolt2)) {
+          flyWVolt2 = 0;
+          prevFWdiffSPD2 = angularVelocityCalc(sensing.robot.magFullness);
+          IPIDang2 = 0;
+        }
+
+        flyWheel1.move_voltage(flyWVolt);
+        flyWheel2.move_voltage(flyWVolt2);
+      }
 
       delay(optimalDelay);
     }
