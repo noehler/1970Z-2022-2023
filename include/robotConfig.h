@@ -148,6 +148,7 @@ class sensing_t{
                     delay(50);
                     std::cout << "calibrating\n";
                 }
+                delay(1000);
                 std::cout << "calibrated\n";
                 inertialsSet = true;
             }

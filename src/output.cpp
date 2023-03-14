@@ -52,21 +52,23 @@ int lastWarnTime = 0;
 bool showing = true;
 char errorMessage[30];
 void warnScreenUpdate(void){
-    if (c::millis()-lastWarnTime <waitTime && millis() > waitTime){
-        if (updateScreen[1]){
-            showing = true;
-            updateScreen[1] = false;
+    if (sidecar.is_connected()){
+        if (c::millis()-lastWarnTime <waitTime && millis() > waitTime){
+            if (updateScreen[1]){
+                showing = true;
+                updateScreen[1] = false;
+                delay(50);
+                sidecar.print(0, 0, errorMessage);
+            }
             delay(50);
-            sidecar.print(0, 0, errorMessage);
+            sidecar.rumble(".-");
         }
-        delay(50);
-        sidecar.rumble(".-");
-    }
-    else{
-        if (showing){
-            showing = false;
-            delay(50);
-            sidecar.clear();
+        else{
+            if (showing){
+                showing = false;
+                delay(50);
+                sidecar.clear();
+            }
         }
     }
 }
