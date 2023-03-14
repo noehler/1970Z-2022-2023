@@ -1,15 +1,4 @@
 #include "main.h"
-#include "Autons/autonSetup.h"
-#include "Autons/winPointAuton.h"
-#include "bezierCalculations.h"
-#include "devFuncs.h"
-#include "motorControl.h"
-#include "pros/misc.h"
-#include "pros/motors.hpp"
-#include "pros/rtos.h"
-#include "robotConfig.h"
-#include "sdLogging.h"
-#include <iostream>
 
 /**
  * A callback function for LLEMU's center button.

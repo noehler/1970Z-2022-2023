@@ -37,7 +37,7 @@
 #include "api.h"
 #include "GUI.h"
 #include "devFuncs.h"
-#include "sdLogging.h"
+#include "output.h"
 #include "Autons/autonSetup.h"
 #include "Autons/skillsAuton.h"
 #include "robotConfig.h"

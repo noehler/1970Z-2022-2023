@@ -1,5 +1,4 @@
 #include "main.h"
-#include "pros/misc.hpp"
 
 //these are needed in order to activate tasks of members of a class
 void drive_ControllerWrapper(void* mControl) {

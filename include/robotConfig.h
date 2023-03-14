@@ -5,7 +5,7 @@
 #include "GUI.h"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
-#include "sdLogging.h"
+#include "output.h"
 #include "Autons/autonSetup.h"
 
 using namespace pros;

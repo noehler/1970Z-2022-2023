@@ -8,7 +8,7 @@
 #include "pros/misc.hpp"
 #include "pros/rtos.h"
 #include "robotConfig.h"
-#include "sdLogging.h"
+#include "output.h"
 
 using namespace pros;
 

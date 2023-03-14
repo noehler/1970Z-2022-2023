@@ -1,8 +1,4 @@
 #include "main.h"
-#include "motorControl.h"
-#include "pros/misc.hpp"
-#include "robotConfig.h"
-#include "sdLogging.h"
 
 void skillsAutonomous(void){
 

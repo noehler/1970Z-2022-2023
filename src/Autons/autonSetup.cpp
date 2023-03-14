@@ -5,7 +5,7 @@
 autonTypes_t autonType = noAuton;
 //0 is blue, 1 is red, 2 is driver skill
 int color = true;
-bool updateScreen = true;
+bool updateScreen[2] = {1,1};
 
 void autonNotSetup(void){
     
@@ -116,40 +116,8 @@ void waitRotate(void *mc, int maxTime, int overallStartTime, int overallMaxTime)
 
 void AutonSelector(void){    
     while(competition::is_disabled()){
-        /*if (master.get_digital(DIGITAL_A)){
-            autonType = winPointBoth;
-            updateScreen = true;
-        }
-
-        if (master.get_digital(DIGITAL_B)){
-            autonType = winPointClose;
-            updateScreen = true;
-        }
-
-        if (master.get_digital(DIGITAL_X)){
-            autonType = winPointClose;
-            updateScreen = true;
-        }
-
-        if (master.get_digital(DIGITAL_Y)){
-            autonType = noAuton;
-            updateScreen = true;
-        }
-
-        if (master.get_digital(DIGITAL_DOWN)){
-            autonType = skillsAuton;
-            updateScreen = true;
-        }
-
-        if (master.get_digital(DIGITAL_UP)){
-            color+=1;
-            if (color == 3){
-                color = 0;
-            }
-            updateScreen = true;
-        }*/
         
-        if (updateScreen == true){
+        if (updateScreen[0] == true){
             delay(50);
             master.clear();
             delay(50);
@@ -173,7 +141,7 @@ void AutonSelector(void){
                 master.print(1, 0, "skills");
             }
 
-            updateScreen = false;
+            updateScreen[0] = false;
         }
         delay(30);
     }

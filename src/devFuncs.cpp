@@ -1,8 +1,4 @@
 #include "main.h"
-#include "motorControl.h"
-#include "pros/misc.hpp"
-#include "pros/motors.hpp"
-#include "sdLogging.h"
 
 using namespace pros;
 class tunedSystems_t

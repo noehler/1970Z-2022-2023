@@ -2,7 +2,7 @@
 #define __BEZIERCALCULATIONS_H__
 
 #include "robotConfig.h"
-#include "sdLogging.h"
+#include "output.h"
 class bez_Return_t{
     public:
         bez_Return_t(void){

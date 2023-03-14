@@ -1,5 +1,7 @@
+#include "Autons/autonSetup.h"
 #include "main.h"
 #include "pros/misc.hpp"
+#include "pros/rtos.h"
 #include <fstream>
 
 
@@ -43,6 +45,37 @@ int startRecord(void){
           return i;
         }
     }
+}
+
+int waitTime = 0;
+int lastWarnTime = 0;
+bool showing = true;
+char errorMessage[30];
+void warnScreenUpdate(void){
+    if (c::millis()-lastWarnTime <waitTime && millis() > waitTime){
+        if (updateScreen[1]){
+            showing = true;
+            updateScreen[1] = false;
+            delay(50);
+            sidecar.print(0, 0, errorMessage);
+        }
+        delay(50);
+        sidecar.rumble(".-");
+    }
+    else{
+        if (showing){
+            showing = false;
+            delay(50);
+            sidecar.clear();
+        }
+    }
+}
+
+void warn(std::string message, int messageShowTime){
+    lastWarnTime = millis();
+    waitTime = messageShowTime;
+    strcpy(errorMessage, message.c_str());
+    updateScreen[1] = true;
 }
 
 void outValsSDCard(void){
@@ -100,8 +133,7 @@ void outValsSDCard(void){
                 }
             }
         }
+        warnScreenUpdate();
         delay(20);
     }
 }
-
- 

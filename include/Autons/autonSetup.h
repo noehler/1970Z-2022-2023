@@ -18,7 +18,7 @@ extern void waitRotate(void *mc, int maxTime, int overallStartTime, int overallM
 extern void AutonSelector(void);
 
 
-extern bool updateScreen;
+extern bool updateScreen[2];
 
 extern autonTypes_t autonType;
 extern int color;
