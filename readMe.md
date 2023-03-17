@@ -1,11 +1,10 @@
 For Judges and those interested:
-Our code is organized into several different classes. The two main classes are:
+Our code is organized into several different classesand threads. The two main classes are:
 - sensing class- This is defined in "include/robotConfig.h". In in this class the position calculations and sensor input are done.
 - motor Control class- This is defined in "include/motorControl.h".  This class deals with various motorcontrollers and final calculations(like goal speed in inches per second to rpm needed). 
 
 To find our macros used for autons you can look in "src/Autons/autonSetup.cpp"
 The main thread takes place in "src/main.cpp". From here all other threads are started. 
-
 
 
 For future students:
@@ -18,6 +17,5 @@ If you end up using our code or taking inspiriation, please cite our team and gi
 - Also another function which could be useful is the SSOSTTT() function. This is a function that is used to account for robot velocity and other factors to properly aim a turret and spin up a flywheel. This can be found in SSOSTTT() in public of motorControl_t in "include/motorcontrol.h"
 
 
-
 Final Note:
-We have everything defined in inches(sorry, but we find this to be the best measurement system for the vex field as it is designed around these systems), so if you work in meters you will need to adapt these equations for your own purposes. For help in these you can view our notebook at [insert link here].
+We have everything defined in inches(sorry, but we find this to be the best measurement system for the vex field as it is designed around imperial units), so if you work in meters you will need to adapt these equations for your own purposes. For help in these you can view the derivations in our notebook at [insert link here].

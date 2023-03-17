@@ -3,8 +3,9 @@
 #include "pros/misc.hpp"
 
 autonTypes_t autonType = noAuton;
-//0 is blue, 1 is red, 2 is driver skill
-int color = true;
+
+int color = true;//0 is blue, 1 is red, 2 is driver skill
+
 bool updateScreen[2] = {1,1};
 
 void autonNotSetup(void){

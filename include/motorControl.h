@@ -223,7 +223,7 @@ private:
 public:
   bool updatedAD = false;
   double angdiff;
-  int discCountChoice = 2;
+  int discCountChoice = 2;//1 for single shot, 2 for automatic decision
   double intakespdTar =0;
   int intakeRunning;
   double diffFlyWheelW;
