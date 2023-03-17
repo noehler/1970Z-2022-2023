@@ -34,10 +34,18 @@
  */
 #define PROS_USE_LITERALS
 
-//linking everything through the robotconfig file so that I can use extern pros::thing
+#include "api.h"
+#include "GUI.h"
+#include "devFuncs.h"
+#include "output.h"
+#include "Autons/autonSetup.h"
+#include "Autons/skillsAuton.h"
 #include "robotConfig.h"
-
+#include "motorControl.h"
+#include "bezierCalculations.h"
+#include "Autons/winPointAuton.h"
 /**
+#include "motorControl.h"
  * You should add more #includes here
  */
 //#include "okapi/api.hpp"
@@ -63,13 +71,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void autonomous(void);
 void initialize(void);
 void disabled(void);
 void competition_initialize(void);
-void autonomous();
 void opcontrol(void);
-extern double mod(double,double);
-extern double i1offset,i2offset,i3offset,j1offset,j2offset,j3offset,k1offset,k2offset,k3offset;
 #ifdef __cplusplus
 }
 #endif
@@ -82,3 +88,4 @@ extern double i1offset,i2offset,i3offset,j1offset,j2offset,j3offset,k1offset,k2o
 #endif
 
 #endif  // _PROS_MAIN_H_
+ 

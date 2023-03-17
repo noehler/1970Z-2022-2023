@@ -1,9 +1,15 @@
 #ifndef __GUI_H__
 #define __GUI_H__
 
-extern void guiInit(void);
-extern void controller2(void);
-extern double targetAngleOffest;
-extern bool manAngle;
+#include "api.h"
 
-#endif
+using namespace pros;
+
+extern lv_obj_t * posBtn;
+extern void setupScreen(void);
+extern void preMatchCheck(void);
+extern lv_obj_t * turrSlider;
+extern lv_obj_t * outLabels[20];
+extern lv_obj_t * icon;
+
+#endif 
