@@ -69,13 +69,13 @@ private:
 
   double angularVelocityCalc(int number) {
     if (number ==3 && discCountChoice == 2){
-      return sensing.goalSpeed*1.6+30.842;
+      return sensing.goalSpeed*1.5+30.842;
     }
     else if(number == 2 && discCountChoice == 2){
       return sensing.goalSpeed*1.30+3.805;
     }
     else{
-      return sensing.goalSpeed*1.144+30;
+      return sensing.goalSpeed*1.14+30;
     }
   }
 
@@ -96,43 +96,6 @@ private:
     static double turPredicScalar = .7;
     T = float(millis()) / 1000 - previousT;
     previousT += T;
-    /*if (!competition::is_disabled() && !competition::is_autonomous()){
-        robotGoal.angleBetweenHorABS = robot.angle + 180;
-    }*/
-
-    //start of jam detection
-    /*static bool switched = false;
-    static bool jammed = false;
-    static bool jamTime = millis();
-    static int startTime = millis();
-    if (sensing.robot.turretLock == false){
-      if(!switched){
-        
-        startTime = millis();
-        switched = true;
-      }
-    }
-    else{
-      switched = false;
-    }
-    if (fabs(prevPIDPosition) >  10000 && abs(sensing.turretEncoder.get_velocity()) < 5 && millis() - startTime >300 && sensing.robot.turretLock == false){
-      sensing.robot.turretLock = true;
-      jamTime = millis();
-      jammed = true;
-      IPIDang = 0;
-      IPIDvel = 0;
-    master.print(0,0, "jammed");
-    }
-    if(millis()-jamTime > 400 && jammed == true){
-      sensing.robot.turretLock = false;
-      jammed = false;
-      IPIDang = 0;
-      IPIDvel = 0;
-      
-    master.print(0,0, "unjammed");
-    }*/
-
-    //end of jame detection
 
     angdiff = goalAngle - sensing.robot.turAng;
     
@@ -843,8 +806,8 @@ void autonDriveController(void) {
         logValue("rbdTemp", rbD.get_temperature(), 12);
         logValue("intakeTemp", intakeMotor.get_temperature(), 13);
         logValue("turretTemp", turretMotor.get_temperature(), 14);
-        logValue("flyWheel1Temp", flyWheel1.get_temperature(), 15);
-        logValue("flyWheel2Temp", flyWheel2.get_temperature(), 16);
+        logValue("fW1Temp", flyWheel1.get_temperature(), 15);
+        logValue("fW2Temp", flyWheel2.get_temperature(), 16);
         logValue("flyWheel1SPD", flyWheel1.get_actual_velocity(), 17);
         logValue("flyWheel2SPD", flyWheel2.get_actual_velocity(), 18);
         logValue("magFullness", sensing.robot.magFullness,19);

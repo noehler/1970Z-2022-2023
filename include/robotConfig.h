@@ -395,9 +395,9 @@ class sensing_t{
                     robot.magFullness = 0;
                 }
 
+                goalSpeed = V_disk;
                 if (!robot.turretLock){
                     goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
-                    goalSpeed = V_disk;
                 }
                 else{
                     goalAngle = robot.angle + 180;

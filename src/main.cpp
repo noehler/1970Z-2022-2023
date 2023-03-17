@@ -120,7 +120,6 @@ void opcontrol() {
     if (autoAim == false) {
       sensing.robot.turretLock = true;
       goalAngle = sensing.robot.angle + 180;
-      sensing.goalSpeed = 200;
     } else {
       sensing.robot.turretLock = false;
     }
@@ -171,7 +170,7 @@ void opcontrol() {
       calculatePos = true;
     }
     else{
-      if (calculatePos && loop > 250){
+      if (calculatePos && loop > 50){
         sensing.robot.xpos = xGPSintegral/loop;
         sensing.robot.ypos = yGPSintegral/loop;
 
