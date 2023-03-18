@@ -1,60 +1,35 @@
 #include "main.h"
 #include "Autons/autonSetup.h"
 
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
-
-/**
- * Runs initialization code. This occurs as soon as the program is started.
- *
- * All other competition modes are blocked by initialize; it is recommended
- * to keep execution time for this mode under a few seconds.
- */
+//first section of code that runs in the robot
 void initialize() {
-  setupScreen();
-  motorControl_t mc;
-  mc.setpistons();
-  sensing.Init();
+	//function that starts up GUI and controls it for the rest of the match
+	setupScreen();
 
-  Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
-  Task outPutting_task(outValsSDCard, "Outputting Task");
-  Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
-  Task AutonSelector_Task(AutonSelector, "Auton Selector Task");
-  sensing.set_status(37,18,270,100, 0);
+	//setting initial pistion positions and calibrating inertial sensors
+	motorControl_t mc;
+	mc.setpistons();
+	sensing.Init();
+
+	//positional tracking threads starting
+	Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
+	Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
+
+	//logging and interface threads starting up
+	Task AutonSelector_Task(AutonSelector, "Auton Selector Task");
+	Task outPutting_task(outValsSDCard, "Outputting Task");
+
+	//default values set in case of entering into operatorControl without going through autonomous first
+	sensing.set_status(37,18,270,100, 0);
 }
-/**
- * Runs while the robot is in the disabled state of Field Management System or
- * the VEX Competition Switch, following either autonomous or opcontrol. When
- * the robot is enabled, this task will exit.
- */
+
+//section of code that runs when robot is not in autonomous or driver
 void disabled() {}
 
-/**
- * Runs after initialize(), and before autonomous when connected to the Field
- * Management System or the VEX Competition Switch. This is intended for
- * competition-specific initialization routines, such as an autonomous selector
- * on the LCD.
- *
- * This task will exit when the robot is enabled and autonomous or opcontrol
- * starts.
- */
+//seperate intialization procedure that runs only when plugged into field controller
 void competition_initialize() {}
 
-/**
- * Runs the user autonomous code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the autonomous
- * mode. Alternatively, this function may be called in initialize or opcontrol
- * for non-competition testing purposes.
- *
- * If the robot is disabled or communications is lost, the autonomous task
- * will be stopped. Re-enabling the robot will restart the task, not re-start it
- * from where it left off.
- */
+//section of code that runs at start of autonomous, threads are started locally in each seperate function
 void autonomous() {
 	switch(autonType){
 		case winPointClose: // close win Point auton
@@ -78,19 +53,8 @@ void autonomous() {
 	}
 }
 
-/**
- * Runs the operator control code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the operator
- * control mode.
- *
- * If no competition control is connected, this function will run immediately
- * following initialize().
- *
- * If the robot is disabled or communications is lost, the
- * operator control task will be stopped. Re-enabling the robot will restart the
- * task, not resume it from where it left off.
- */
+
+//secotion of code used to alert driver when all conditions right to shoot
 bool vibrate = false;
 void vibrateController(void){
   while(1){
@@ -102,6 +66,8 @@ void vibrateController(void){
     delay(50);
   }
 }
+
+//Main driver control thread that runs during matches, motor control threads started locally here
 void opcontrol() {
 
 	//starting up tasks neccessary for driving

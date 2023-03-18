@@ -12,8 +12,14 @@
 
 using namespace pros;
 
+/*main motor control thread, handles:
+*communication to motors
+*PID controllers
+*simple macros that are reliant on motor information
+*/
 class motorControl_t {
 private:
+  //declaring motors and solenoids, defined at start of public
   Motor lfD;
   Motor lbD;
   Motor rfD;
@@ -27,24 +33,31 @@ private:
   ADIDigitalOut shoot1;
   ADIDigitalOut ejectPiston;
 
+  //delay used to control most functions, tuned to optimize performance while not overdrawing power or affecting calculations
   int optimalDelay = 10;
 
+  //direct voltage contoller over rides, bool used to enable these is declared publicly
   int drivePowerR;
   int drivePowerL;
   int intakePower;
 
+  //basic class to handle each individual system
   class PID_t {
   public:
     double p, i, d, p2, i2, d2;
   };
+
+  //All PID systems combined into one class
   class tunedSystems_t {
   public:
     PID_t driveFR, driveSS, turret, flyWheel;
   } PID;
 
+  //class that handles individual values for moveTo functions
+  //defined as a class because used several times seperately in three different functions
   class moveToInfoInternal_t {
   public:
-    double moveToxpos, moveToypos, targetHeading, ets, speed_limit = 100;
+    double ets;           //variable used to store differnce in angle in degrees
     double dist = 0;      // change of position
     double distR = 0;     // chagne of right postion
     double distL = 0;     // change of left position
@@ -53,20 +66,23 @@ private:
     double PIDSpeedL = 0; // PID leftside speed
     double PIDSpeedR = 0; // PID rightside speed
     double PIDFWFLAT = 0; // variable used for keeping move forward speed < 100
-    double PIDSSFLAT = 0;
-    double errtheta = 5;
-    int moveToforwardToggle = 1, Stop_type = 2;
-    double tolerance = 2;
+    double PIDSSFLAT = 0; // variable used to store the power to turn
   };
 
+  //variables used to pass information from outside threads to movement functions, declared in public
   class moveToInfoExternal_t {
   public:
-    double moveToxpos, moveToypos, targetHeading, speed_limit = 100, errtheta = 5;
-    int moveToforwardToggle = 1, Stop_type = 0;
-    double tolerance = 5;
-    bool resetMoveTo;
+    double moveToxpos, moveToypos,  // goal position, maily used in moveTo file
+    targetHeading,                  // goal final heading, maily used in rotateTo, but can be used in other functions
+    speed_limit = 100,              // max speed, 0 to 100 coorelates to 0 to 12000 mv applied to motor
+    errtheta = 5;                   // max angle difference before robot is stopped to turn to correct angle
+    int moveToforwardToggle = 1,    // controls whether driving forward ( +1) or reverse ( -1)
+    Stop_type = 0;                  // 
+    double tolerance = 5;           // distance to goal point where will return a completed value and stop the robot
+    bool resetMoveTo;               // resets all variables in moveToInternals class, useful for tracking if completed movement
   };
 
+  //conversion from inches per second to rpm needed at flywheel
   double angularVelocityCalc(int number) {
     if (number ==3 && discCountChoice == 2){
       return sensing.goalSpeed*1.5+30.842;
@@ -79,23 +95,31 @@ private:
     }
   }
 
-  bool recoilPrevent;
+  //turret controller called in turret intake thread, returns power to run motor at in mv from -12000 to 12000
   double turrControl(void) {
+    //uses a double PID, one to account for the angle difference and another to account for the velocity of the robot
+    //angular difference is denoted as Position
+    //velocity PID is denoted with velocity
+
+    /*  setting up variables needed for PID controller  */
+    //variables that output the final power to run the motors at
     static double PIDPosition = 0;
     static double PIDVelocity = 0;
-    
-    static double IPIDang = 0;
-    static double IPIDvel = 0;
 
-    static double prevPIDPosition = 0;
+    //variables that store the integrals for the PID controllers
+    static double IPIDposition = 0;
+    static double IPIDvelocity = 0;
+
+    //delta T calculation used in the Velocity PID
     static double T = 0;
     static double previousT = 0;
+    T = float(millis()) / 1000 - previousT;
+    previousT += T;
+
     static double PIDscalar = 5; //should be one, reacting to 0.2 on pid velocity P value been 0.2
     static double gyroScalar = 0.2;
     static double chassisScalar = 0.35; // 0.3;
     static double turPredicScalar = .7;
-    T = float(millis()) / 1000 - previousT;
-    previousT += T;
 
     angdiff = goalAngle - sensing.robot.turAng;
     
@@ -115,20 +139,19 @@ private:
     }
     updatedAD = true;
 
-    
 
     static double previousveldiff = 0;
     static double previousangdiff = 0;
 
     if (fabs(angdiff) < 3) {
       angdiff = 0;
-      IPIDvel = 0;
-      IPIDang = 0;
+      IPIDvelocity = 0;
+      IPIDposition = 0;
     }
 
     if (!competition::is_disabled()) {
-      IPIDang += angdiff;
-      PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDang +
+      IPIDposition += angdiff;
+      PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDposition +
                      PID.turret.d * (angdiff - previousangdiff));
       if (sensing.robot.turretLock && fabs(angdiff) < 50) {
         gyroScalar = 0;
@@ -145,15 +168,15 @@ private:
                        turPredicScalar * sensing.robot.turvelocity +
                        PIDPosition * PIDscalar;
       
-      IPIDvel += veldiff;
+      IPIDvelocity += veldiff;
       PIDVelocity =
-          (1 * veldiff + 0.01 * IPIDvel + 0.1 * (veldiff - previousveldiff));
+          (1 * veldiff + 0.01 * IPIDvelocity + 0.1 * (veldiff - previousveldiff));
       previousveldiff = veldiff;
       if (fabs(angdiff) < 4 && PIDPosition == 0 && fabs(veldiff) < 1) {
-        IPIDang = 0;
+        IPIDvelocity = 0;
       }
       if (fabs(veldiff) < 0.1) {
-        IPIDvel = 0;
+        IPIDvelocity = 0;
       }
       if (fabs(angdiff) < 3 && fabs(angdiff - previousangdiff) < 10) {
         return 0;
@@ -167,14 +190,14 @@ private:
     }
     if (isnanf(PIDVelocity)) {
       PIDVelocity = 0;
-      IPIDvel = 0;
-      IPIDang = 0;
+      IPIDvelocity = 0;
+      IPIDposition = 0;
     }
 
-    prevPIDPosition = PIDPosition;
     return PIDVelocity;
   }
   
+  //turret controller called in turret intake thread, returns power to run motor at in mv from -12000 to 12000
   double intakeControl(void) {
     static int baseSPD;
     static int jamTime = -9000;
