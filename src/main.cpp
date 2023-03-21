@@ -1,5 +1,7 @@
 #include "main.h"
 #include "Autons/autonSetup.h"
+#include "pros/rtos.h"
+#include "robotConfig.h"
 
 //first section of code that runs in the robot
 void initialize() {
@@ -81,6 +83,25 @@ void opcontrol() {
 					"My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
 	Task vibrationTask(vibrateController,"My Vibrator Controller Task");
+
+	/*// calibrating the turret velocity control
+	sensing.robot.turretLock = 0;
+	sensing.robot.xpos = 0;
+	sensing.robot.ypos = 24;
+	delay(2000);
+	int startTime = c::millis();
+	while(millis() - startTime < 10000){
+		double localTime = millis() - startTime;
+		double percent = localTime/10000;
+
+		sensing.robot.velX = 144*percent - sensing.robot.xpos;
+		sensing.robot.velY = 0;
+
+		sensing.robot.xpos = 144*percent;
+		sensing.robot.ypos = 24;
+
+		delay(20);
+	}*/
   
 	while (1) {  
 

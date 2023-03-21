@@ -155,7 +155,7 @@ private:
 
     if (!competition::is_disabled()) {
       if (fabs(angdiff) > 10) {
-        double acceleration = .7;
+        double acceleration = .5;
         if (fabs(angdiff) / fabs(angdiff - previousangdiff) >
             fabs(angdiff - previousangdiff) / acceleration) { //accelerate
           if (angdiff < 0) {
@@ -181,7 +181,6 @@ private:
         IPIDposition += angdiff;
         PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDposition +
                        PID.turret.d * (angdiff - previousangdiff));
-
         if (sensing.robot.turretLock && fabs(angdiff) < 5) {
           gyroScalar = 0;
           chassisScalar = 0;
@@ -189,7 +188,7 @@ private:
         } else {
           gyroScalar = 0.2;
           chassisScalar = 0.4;
-          turPredicScalar = .7;
+          turPredicScalar = 20;
         }
 
         double veldiff = gyroScalar * T * (sensing.robot.angAccel) -
@@ -306,7 +305,7 @@ public:
 
     PID.turret.p = 3;
     PID.turret.i = .001;
-    PID.turret.d = 10;
+    PID.turret.d = 30;
 
     PID.turret.p2 = 0.15; // 0.7
     PID.turret.i2 = 0.00000002;
@@ -987,7 +986,7 @@ public:
           flyWVolt1 = 12000;
         } else if (angularVelocityDifference1 < -topLimit) { // too fast
           angularVelocityDifferenceIntegral1 = 0;
-          flyWVolt1 = -300;
+          flyWVolt1 = -12000;
         } else {
           double prop = angularVelocityDifference1 * PID.flyWheel.p * 0;
           double integ =
