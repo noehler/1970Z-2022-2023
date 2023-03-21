@@ -304,8 +304,8 @@ public:
     PID.driveSS.i = 0.065;
     PID.driveSS.d = 42.69;
 
-    PID.turret.p = .30;
-    PID.turret.i = .01;
+    PID.turret.p = 3;
+    PID.turret.i = .001;
     PID.turret.d = 10;
 
     PID.turret.p2 = 0.15; // 0.7
@@ -871,8 +871,8 @@ public:
       logValue("GPSx", sensing.robot.GPSxpos, 4);
       logValue("GPSy", sensing.robot.GPSypos, 5);
       logValue("heading", sensing.robot.angle, 6);
-      logValue("turret Angle", sensing.robot.turAng, 7);
-      logValue("battery Level", battery::get_capacity(), 8);
+      logValue("turr ang", sensing.robot.turAng, 7);
+      logValue("batt pct", battery::get_capacity(), 8);
       logValue("lfdTemp", lfD.get_temperature(), 9);
       logValue("lbdTemp", lbD.get_temperature(), 10);
       logValue("rfdTemp", rfD.get_temperature(), 11);
@@ -881,9 +881,9 @@ public:
       logValue("turretTemp", turretMotor.get_temperature(), 14);
       logValue("fW1Temp", flyWheel1.get_temperature(), 15);
       logValue("fW2Temp", flyWheel2.get_temperature(), 16);
-      logValue("flyWheel1SPD", flyWheel1.get_actual_velocity(), 17);
-      logValue("flyWheel2SPD", flyWheel2.get_actual_velocity(), 18);
-      logValue("magFullness", sensing.robot.magFullness, 19);
+      logValue("fw1SPD", flyWheel1.get_actual_velocity(), 17);
+      logValue("fw2SPD", flyWheel2.get_actual_velocity(), 18);
+      logValue("magCount", sensing.robot.magFullness, 19);
       logValue("goalAngle", goalAngle, 20);
       logValue("goalSPD", sensing.goalSpeed, 21);
       logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
