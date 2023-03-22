@@ -438,7 +438,7 @@ class sensing_t{
             if(underRoller(1)){
                 c::optical_rgb_s color_sensor = opticalSensor.get_rgb();
                 
-                if (((color_sensor.red > 2000 && color_sensor.blue < 700 && color == false) || (!(color_sensor.red > 2000 && color_sensor.blue < 700) && color == true)) && underRoller(1)){
+                if (((color_sensor.red > 2000 && color_sensor.blue < 700 && color == true) || (color_sensor.red < 1000 && color_sensor.blue > 1200 && color == false)) && underRoller(1)){
                     return 1;
                 }
                 else{
@@ -447,7 +447,7 @@ class sensing_t{
             }else if(underRoller(2)){
                 c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
                 
-                if (((color_sensor.red > 2000 && color_sensor.blue < 700 && color == false) || (!(color_sensor.red > 2000 && color_sensor.blue < 700) && color == true)) && underRoller(2)){
+                if (((color_sensor.red > 2000 && color_sensor.blue < 700 && color == true) || (color_sensor.red < 1000 && color_sensor.blue > 1200 && color == false)) && underRoller(2)){
                     return 1;
                 }
                 else{

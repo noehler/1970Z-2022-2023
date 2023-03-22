@@ -156,6 +156,9 @@ private:
     if (!competition::is_disabled()) {
       if (fabs(angdiff) > 10) {
         double acceleration = .5;
+        if (turretMotor.get_temperature() > 45){
+          acceleration*=.2;
+        }
         if (fabs(angdiff) / fabs(angdiff - previousangdiff) >
             fabs(angdiff - previousangdiff) / acceleration) { //accelerate
           if (angdiff < 0) {
@@ -212,6 +215,8 @@ private:
         previousangdiff = angdiff;
       }
       else{
+        IPIDvelocity = 0;
+        IPIDposition = 0;
         return 0;
       }
     } else {
@@ -303,9 +308,9 @@ public:
     PID.driveSS.i = 0.065;
     PID.driveSS.d = 42.69;
 
-    PID.turret.p = 3;
-    PID.turret.i = .001;
-    PID.turret.d = 30;
+    PID.turret.p = 3.2;
+    PID.turret.i = .01;
+    PID.turret.d = 20;
 
     PID.turret.p2 = 0.15; // 0.7
     PID.turret.i2 = 0.00000002;
@@ -871,22 +876,23 @@ public:
       logValue("GPSy", sensing.robot.GPSypos, 5);
       logValue("heading", sensing.robot.angle, 6);
       logValue("turr ang", sensing.robot.turAng, 7);
-      logValue("batt pct", battery::get_capacity(), 8);
-      logValue("lfdTemp", lfD.get_temperature(), 9);
-      logValue("lbdTemp", lbD.get_temperature(), 10);
-      logValue("rfdTemp", rfD.get_temperature(), 11);
-      logValue("rbdTemp", rbD.get_temperature(), 12);
-      logValue("intakeTemp", intakeMotor.get_temperature(), 13);
-      logValue("turretTemp", turretMotor.get_temperature(), 14);
-      logValue("fW1Temp", flyWheel1.get_temperature(), 15);
-      logValue("fW2Temp", flyWheel2.get_temperature(), 16);
-      logValue("fw1SPD", flyWheel1.get_actual_velocity(), 17);
-      logValue("fw2SPD", flyWheel2.get_actual_velocity(), 18);
-      logValue("magCount", sensing.robot.magFullness, 19);
-      logValue("goalAngle", goalAngle, 20);
-      logValue("goalSPD", sensing.goalSpeed, 21);
-      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
-      logValue("time", millis(), 23);
+      logValue("angDiff", angdiff, 8);
+      logValue("batt pct", battery::get_capacity(), 9);
+      logValue("lfdTemp", lfD.get_temperature(), 10);
+      logValue("lbdTemp", lbD.get_temperature(), 11);
+      logValue("rfdTemp", rfD.get_temperature(), 12);
+      logValue("rbdTemp", rbD.get_temperature(), 13);
+      logValue("intakeTemp", intakeMotor.get_temperature(), 14);
+      logValue("turretTemp", turretMotor.get_temperature(), 15);
+      logValue("fW1Temp", flyWheel1.get_temperature(), 16);
+      logValue("fW2Temp", flyWheel2.get_temperature(), 17);
+      logValue("fw1SPD", flyWheel1.get_actual_velocity(), 18);
+      logValue("fw2SPD", flyWheel2.get_actual_velocity(), 19);
+      logValue("magCount", sensing.robot.magFullness, 20);
+      logValue("goalAngle", goalAngle, 21);
+      logValue("goalSPD", sensing.goalSpeed, 22);
+      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 23);
+      logValue("time", millis(), 24);
 
       delay(optimalDelay);
     }
@@ -920,23 +926,24 @@ public:
       logValue("GPSx", sensing.robot.GPSxpos, 4);
       logValue("GPSy", sensing.robot.GPSypos, 5);
       logValue("heading", sensing.robot.angle, 6);
-      logValue("turret Angle", sensing.robot.turAng, 7);
-      logValue("battery Level", battery::get_capacity(), 8);
-      logValue("lfdTemp", lfD.get_temperature(), 9);
-      logValue("lbdTemp", lbD.get_temperature(), 10);
-      logValue("rfdTemp", rfD.get_temperature(), 11);
-      logValue("rbdTemp", rbD.get_temperature(), 12);
-      logValue("intakeTemp", intakeMotor.get_temperature(), 13);
-      logValue("turretTemp", turretMotor.get_temperature(), 14);
-      logValue("flyWheel1Temp", flyWheel1.get_temperature(), 15);
-      logValue("flyWheel2Temp", flyWheel2.get_temperature(), 16);
-      logValue("flyWheel1SPD", flyWheel1.get_actual_velocity(), 17);
-      logValue("flyWheel2SPD", flyWheel2.get_actual_velocity(), 18);
-      logValue("magFullness", sensing.robot.magFullness, 19);
-      logValue("goalAngle", goalAngle, 20);
-      logValue("goalSPD", sensing.goalSpeed, 21);
-      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
-      logValue("time", millis(), 23);
+      logValue("turr ang", sensing.robot.turAng, 7);
+      logValue("angDiff", angdiff, 8);
+      logValue("batt pct", battery::get_capacity(), 9);
+      logValue("lfdTemp", lfD.get_temperature(), 10);
+      logValue("lbdTemp", lbD.get_temperature(), 11);
+      logValue("rfdTemp", rfD.get_temperature(), 12);
+      logValue("rbdTemp", rbD.get_temperature(), 13);
+      logValue("intakeTemp", intakeMotor.get_temperature(), 14);
+      logValue("turretTemp", turretMotor.get_temperature(), 15);
+      logValue("fW1Temp", flyWheel1.get_temperature(), 16);
+      logValue("fW2Temp", flyWheel2.get_temperature(), 17);
+      logValue("fw1SPD", flyWheel1.get_actual_velocity(), 18);
+      logValue("fw2SPD", flyWheel2.get_actual_velocity(), 19);
+      logValue("magCount", sensing.robot.magFullness, 20);
+      logValue("goalAngle", goalAngle, 21);
+      logValue("goalSPD", sensing.goalSpeed, 22);
+      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 23);
+      logValue("time", millis(), 24);
 
       delay(optimalDelay);
     }
