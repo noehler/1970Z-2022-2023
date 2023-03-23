@@ -261,10 +261,15 @@ private:
   // turret controller called in turret intake thread, returns power to run
   // motor at in mv from -12000 to 12000
   double intakeControl(void) {
+    //return variable
     static int baseSPD;
-    static int jamTime = -9000;
+
+    //setting up variables for jam detection
+    static int jamTime = -9000;//negative number so that jam can be cleared immediately
     static int startTime = millis();
     static bool switched = false;
+
+
     if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) {
       if (switched == false) {
         startTime = millis();
