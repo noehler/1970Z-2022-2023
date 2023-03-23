@@ -126,19 +126,22 @@ private:
     T = float(millis()) / 1000 - previousT;
     previousT += T;
 
+    //different multipliers to account for movement and rotation of the robot
     static double PIDscalar = 5;
     static double gyroScalar = 0.2;
     static double chassisScalar = 0.35;
     static double turPredicScalar = .7;
 
+    //modded calculation for the angle difference between the goal angle and actual angle
     angdiff = goalAngle - sensing.robot.turAng;
-
     if (angdiff > 180) {
       angdiff -= 360;
     } else if (angdiff < -180) {
       angdiff += 360;
     }
 
+    //calculation to determine if the goal position will be between +- 180 degrees relative to the robot
+    //used to make sure that turret does not over rotate in one direction and lock out due to wires running through the middle
     double robotAngleDiff = goalAngle - sensing.robot.angle;
     double turretAngle = double(sensing.turretEncoder.get_position()) / 100 +
                          180 - highTurretInitAng * 360;
@@ -148,17 +151,26 @@ private:
     if (turretAngle + angdiff < 0) {
       angdiff += 360;
     }
+    //variable used in shooting macros to account for possible mis alignment of function timing. 
+    //If not in place, macro could update the goal position and then do a check of position before value actually updated
     updatedAD = true;
 
+    //variables to calculate the derivative
     static double previousveldiff = 0;
     static double previousangdiff = 0;
 
+    //stop controller and reset all integrals if unable to move turret
     if (!competition::is_disabled()) {
-      if (fabs(angdiff) > 10) {
+      if (fabs(angdiff) > 10) {//voltage and acceleration controller
+        //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
         double acceleration = .5;
+
+        //if motor is too hot the motor will not be able to accelerate as well
         if (turretMotor.get_temperature() > 45){
           acceleration*=.2;
         }
+
+        //first term is amount of loops until target is reached, second term is amount of loops to slow down at current speed
         if (fabs(angdiff) / fabs(angdiff - previousangdiff) >
             fabs(angdiff - previousangdiff) / acceleration) { //accelerate
           if (angdiff < 0) {
@@ -166,24 +178,28 @@ private:
           } else {
             PIDPosition = 127;
           }
-          std::cout << fabs(angdiff - previousangdiff) << "\n";
-        } else {
-          if (angdiff < 0) {//deccelerate
+        } else {//deccelerate
+          if (angdiff < 0) {
             PIDPosition = 127;
           } else {
             PIDPosition = -127;
           }
-          std::cout << fabs(angdiff - previousangdiff) << "\n";
         }
+
+        //reseting integrals to get a new PID when within range to use PID
         previousangdiff = angdiff;
         IPIDposition = 0;
         IPIDvelocity = 0;
         return PIDPosition;
 
-      } else if (fabs(angdiff) > 1){
+      } else if (fabs(angdiff) > 1){//PID controller
+        //Anglular PID
         IPIDposition += angdiff;
         PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDposition +
                        PID.turret.d * (angdiff - previousangdiff));
+
+
+        //velocity PID
         if (sensing.robot.turretLock && fabs(angdiff) < 5) {
           gyroScalar = 0;
           chassisScalar = 0;
@@ -203,7 +219,9 @@ private:
         PIDVelocity = (1 * veldiff + 0.01 * IPIDvelocity +
                        0.1 * (veldiff - previousveldiff));
         previousveldiff = veldiff;
-        if (fabs(angdiff) < 4 && PIDPosition == 0 && fabs(veldiff) < 1) {
+
+        //clearing variables if within range
+        if (fabs(angdiff) < 1 && PIDPosition == 0 && fabs(veldiff) < 1) {
           IPIDvelocity = 0;
         }
         if (fabs(veldiff) < 0.1) {
@@ -214,7 +232,7 @@ private:
         }
         previousangdiff = angdiff;
       }
-      else{
+      else{//hold motor position
         IPIDvelocity = 0;
         IPIDposition = 0;
         return 0;
@@ -224,10 +242,13 @@ private:
       IPIDvelocity = 0;
       IPIDposition = 0;
     }
-
+    
+    //removing any power if overall power output is too low
     if (fabs(PIDVelocity) < 0.01) {
       return 0;
     }
+
+    //reseting variables if corrupted by nan, can be caused by sensor error
     if (isnanf(PIDVelocity)) {
       PIDVelocity = 0;
       IPIDvelocity = 0;
