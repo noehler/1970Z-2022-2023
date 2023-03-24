@@ -41,7 +41,7 @@ void autonomous() {
     		closeWinPoint();
 			break;
 		case winPointFar://    far win Point auton
-    		farWinPoint();                        
+    		farWinPoint();
 			break;
 		case winPointBoth://   both roller win point
     		winPointAuton();
