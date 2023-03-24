@@ -44,12 +44,6 @@ private:
   int drivePowerL;
   int intakePower;
 
-  // basic class to handle each individual system
-  class PID_t {
-  public:
-    double p, i, d, p2, i2, d2;
-  };
-
   // All PID systems combined into one class
   class tunedSystems_t {
   public:
@@ -96,11 +90,11 @@ private:
   // conversion from inches per second to rpm needed at flywheel
   double angularVelocityCalc(int number) {
     if (number == 3 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.6 + 10;
+      return sensing.goalSpeed * 1.32 + 53;
     } else if (number == 2 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.4 + 10;
+      return sensing.goalSpeed * 1.22 + 47;
     } else {
-      return sensing.goalSpeed * 1.1 + 35;
+      return sensing.goalSpeed * 1.1 + 38;
     }
   }
 
@@ -145,10 +139,10 @@ private:
     double robotAngleDiff = goalAngle - sensing.robot.angle;
     double turretAngle = double(sensing.turretEncoder.get_position()) / 100 +
                          180 - highTurretInitAng * 360;
-    if (turretAngle + angdiff > 360) {
+    if (turretAngle + angdiff > 405) {
       angdiff -= 360;
     }
-    if (turretAngle + angdiff < 0) {
+    if (turretAngle + angdiff < -45) {
       angdiff += 360;
     }
     //variable used in shooting macros to account for possible mis alignment of function timing. 
@@ -167,7 +161,7 @@ private:
 
         //if motor is too hot the motor will not be able to accelerate as well
         if (turretMotor.get_temperature() > 45){
-          acceleration*=.2;
+          acceleration*=.3;
         }
 
         //first term is amount of loops until target is reached, second term is amount of loops to slow down at current speed
@@ -918,8 +912,9 @@ public:
       logValue("goalAngle", goalAngle, 21);
       logValue("goalSPD", sensing.goalSpeed, 22);
       logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 23);
-      logValue("rollerG", sensing.rollerIsGood(), 24);
-      logValue("time", millis(), 25);
+      //logging color from rollerGood
+      logValue("rollerGood", sensing.rollerIsGood(),27);
+      logValue("time", millis(), 28);
 
       delay(optimalDelay);
     }
@@ -1193,11 +1188,11 @@ public:
   void raiseAScore(int number) {
     if (number == 3) {
       shoot3.set_value(true);
-      delay(300);
+      delay(700);
       shoot3.set_value(false);
     } else {
       shoot1.set_value(true);
-      delay(300);
+      delay(700);
       shoot1.set_value(false);
     }
   }
@@ -1233,6 +1228,11 @@ public:
       delay(300);
     }
     intakeRunning = 0;
+  }
+
+  //used to update pid and sensor values to adapt do different field conditions
+  void field_update(void){
+    PID.turret = fieldPID();
   }
 
   // expansion

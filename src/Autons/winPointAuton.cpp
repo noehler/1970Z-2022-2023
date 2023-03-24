@@ -60,9 +60,6 @@ void winPointAuton(void){
     mc.driveToRoller(10000, 0);
     
     movevoltage(&mc, 0, 0);
-    while(1){
-
-    }
 }
 
 void closeWinPoint(void){
@@ -110,10 +107,6 @@ void closeWinPoint(void){
     delay(1000);
     shootdisks(&mc, overallStartTime);
 
-    while(1){
-        delay(2000);
-    }
-
 }
 
 void farWinPoint(void){
@@ -128,7 +121,7 @@ void farWinPoint(void){
     sensing.set_status(128.5,55,180,100, color);
     movevoltage(&mc, 0, 0);
     delay(20);
-    shootdisks(&mc, overallStartTime, 0,4,5000,5000);
+    shootdisks(&mc, overallStartTime, 0,4,7000,5000);
 
     intake(&mc);
     moveto(&mc,100, 55, 80);
@@ -151,7 +144,4 @@ void farWinPoint(void){
     mc.driveToRoller(5000,false);
 
     movevoltage(&mc, 0, 0);
-    while(1){
-        delay(2000);
-    }
 }

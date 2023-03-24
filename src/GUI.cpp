@@ -1,5 +1,6 @@
 #include "Autons/autonSetup.h"
 #include "display/lv_core/lv_obj.h"
+#include "display/lv_objx/lv_btn.h"
 #include "display/lv_objx/lv_label.h"
 #include "display/lv_objx/lv_slider.h"
 #include "main.h"
@@ -20,7 +21,7 @@ lv_obj_t *tab1;
 lv_obj_t * colorBtn;
 lv_obj_t * turrSlider;
 lv_obj_t * posBtn;
-lv_obj_t * CalibrateBtn;
+lv_obj_t * fieldBtn;
 lv_obj_t * outLabels[20];
 
 
@@ -163,6 +164,22 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
     return LV_RES_OK;
 }
 
+int current_field =0;
+lv_res_t fieldSwitchClick(lv_obj_t * btn){
+    uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
+    //std::cout << id;
+    int num_fields = 2;
+    current_field++;
+    if (current_field == num_fields){
+        current_field = 0;
+    }
+
+    preMatchCheck();
+    updateScreen[0] = true;
+
+    return LV_RES_OK;
+}
+
 void setupScreen(void){
     /*Create a Tab view object*/
     lv_obj_t *tabview;
@@ -178,9 +195,13 @@ void setupScreen(void){
     setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(180, 180, 80), LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(180, 180, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), colorBtn), colorBtn);
     lv_btn_set_action(colorBtn, LV_BTN_ACTION_CLICK, colorSwitchClick);
     
-    posBtn = createBtn(tab1, 10,80,120,30,1,"Auton Type");
+    posBtn = createBtn(tab1, 10,100,120,30,1,"Auton Type");
     setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 80), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), posBtn), posBtn);
     lv_btn_set_action(posBtn, LV_BTN_ACTION_CLICK, autonSwitchClick);
+
+    fieldBtn = createBtn(tab1, 10,60,120,30,2,"Field Number");
+    setBtnStyle(createBtnStyle(&lv_style_plain, LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(0, 200, 80), LV_COLOR_MAKE(0, 80, 0), LV_COLOR_MAKE(0, 200, 0), LV_COLOR_MAKE(100, 100, 100), LV_COLOR_MAKE(0, 0, 0), fieldBtn), fieldBtn);
+    lv_btn_set_action(fieldBtn, LV_BTN_ACTION_CLICK, fieldSwitchClick);
 
     checklistLabel = lv_label_create(tab1, NULL); //create label and puts it on the screen
     lv_label_set_text(checklistLabel, "making"); //sets label text
@@ -210,7 +231,7 @@ void setupScreen(void){
 }
 
 void preMatchCheck(void){
-    char buffer[70];
+    char buffer[100];
     if(colorSet){
         sprintf(buffer, "Color Set: Done\n");
     }
@@ -224,6 +245,9 @@ void preMatchCheck(void){
     else{
         sprintf(buffer + strlen(buffer), "Auton Set: X\n"); 
     }
+
+    sprintf(buffer + strlen(buffer), "Field: %d\n", current_field); 
+
     
     if(pros::battery::get_capacity() > 80){
         sprintf(buffer + strlen(buffer), "Battery: Good\n");

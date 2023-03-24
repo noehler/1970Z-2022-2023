@@ -208,9 +208,4 @@ void skillsAutonomous(void){
     movevoltage(&mc, 0,0);
     delay(500);
     mc.explode();
-
-    while(1){
-        delay(200);
-    }
-
 }

@@ -1,6 +1,7 @@
 #include "main.h"
 #include "Autons/autonSetup.h"
 #include "devFuncs.h"
+#include "output.h"
 #include "pros/rtos.h"
 #include "robotConfig.h"
 
@@ -34,6 +35,7 @@ void competition_initialize() {}
 
 //section of code that runs at start of autonomous, threads are started locally in each seperate function
 void autonomous() {
+	logMessage("start of autonomous");
 	switch(autonType){
 		case winPointClose: // close win Point auton
     		closeWinPoint();
@@ -51,6 +53,7 @@ void autonomous() {
 			break;
 		
 	}
+	logMessage("end of autonomous");
 	while(1){
 		delay(20);
 	}
@@ -72,6 +75,7 @@ void vibrateController(void){
 
 //Main driver control thread that runs during matches, motor control threads started locally here
 void opcontrol() {
+	logMessage("start of operator control");
 	//starting up tasks neccessary for driving
 	motorControl_t motorControl;
 
@@ -85,6 +89,12 @@ void opcontrol() {
 	Task vibrationTask(vibrateController,"My Vibrator Controller Task");
   
 	while (1) {  
+		if (master.get_digital_new_press(DIGITAL_L2)){
+			logMessage("shoot 1");
+		}
+		if (master.get_digital_new_press(DIGITAL_L1)){
+			logMessage("shoot 3");
+		}
 
 		//adjusts goal speed for single vs double shot
 		if (master.get_digital_new_press(DIGITAL_A)){

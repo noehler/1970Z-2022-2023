@@ -11,5 +11,6 @@ extern void preMatchCheck(void);
 extern lv_obj_t * turrSlider;
 extern lv_obj_t * outLabels[20];
 extern lv_obj_t * icon;
+extern int current_field;
 
 #endif 

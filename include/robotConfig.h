@@ -441,8 +441,10 @@ class sensing_t{
         bool rollerIsGood(void){
             if(underRoller(1)){
                 c::optical_rgb_s color_sensor = opticalSensor.get_rgb();
-                
-                if (((color_sensor.red > 3800 && color_sensor.blue < 1300 && color == true) || (color_sensor.red < 1200 && color_sensor.blue > 1500 && color == false)) && underRoller(1)){
+                logValue("r", color_sensor.red,24);
+                logValue("b", color_sensor.blue,25);
+                logValue("prox", opticalSensor.get_proximity(),26);
+                if (((color_sensor.red > 3800 && color == true) || (color_sensor.red < 1200 && color == false)) && underRoller(1)){
                     return 1;
                 }
                 else{
@@ -450,8 +452,11 @@ class sensing_t{
                 }
             }else if(underRoller(2)){
                 c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
+                logValue("r", color_sensor.red,24);
+                logValue("b", color_sensor.blue,25);
+                logValue("prox", opticalSensor2.get_proximity(),26);
                 
-                if (((color_sensor.red > 2000 && color_sensor.blue < 800 && color == true) || (color_sensor.red < 500 && color_sensor.blue > 800 && color == false)) && underRoller(2)){
+                if (((color_sensor.red > 2000 && color == true) || (color_sensor.red < 500 && color == false)) && underRoller(2)){
                     return 1;
                 }
                 else{
@@ -459,6 +464,10 @@ class sensing_t{
                 }
             }
             else{
+                c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
+                logValue("r", 0,24);
+                logValue("b", 0,25);
+                logValue("prox", opticalSensor2.get_proximity(),26);
                 return 0;
             }
             

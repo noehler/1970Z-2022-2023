@@ -1,4 +1,5 @@
 #include "Autons/autonSetup.h"
+#include "GUI.h"
 #include "main.h"
 #include "pros/misc.hpp"
 
@@ -64,7 +65,7 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
                 loops++;
             }
         }
-        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) +fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 +  + fabs(sensing.robot.angAccel)*2< 30){
+        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2))  < 5 && fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 +  + fabs(sensing.robot.angAccel)*2< 30){
             std::cout<<"good turret"<<"\n";
             break;
             //flywheel speed check
@@ -141,6 +142,9 @@ void AutonSelector(void){
             }else{
                 master.print(1, 0, "skills");
             }
+
+            delay(50);
+            master.print(2, 0, "Field: %d", current_field);
 
             updateScreen[0] = false;
         }

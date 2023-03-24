@@ -21,10 +21,23 @@ double outVals[40] = {420.69,420.69,420.69,420.69,420.69,
                     420.69,420.69,420.69,420.69,420.69};
 char outNames[40][50];
 
+bool messageToLog = false;
+char logMessageText[100];
+
 void logValue(std::string name, double value, int position){
-    char buffer[name.length() + 1];
     strcpy(outNames[position], name.c_str()); 
     outVals[position] = value;
+}
+
+PID_t fieldPID(void){
+    PID_t temp;
+    return temp;
+}
+
+//function to prepare a string to be outputted to SD Card next output cycle
+void logMessage(std::string message){
+    sprintf(logMessageText, "%s", message.c_str());
+    messageToLog = true;
 }
 
 int startRecord(void){
@@ -122,6 +135,11 @@ void outValsSDCard(void){
                 else{
                     break;
                 }
+                
+            }
+            if (messageToLog){
+                fprintf(usd_file_write,",%s", logMessageText);
+                messageToLog = false;
             }
             fprintf(usd_file_write,"\n");
             fclose(usd_file_write);
