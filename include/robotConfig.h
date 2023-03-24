@@ -318,15 +318,17 @@ class sensing_t{
             }
 
             //delay to allow for other tasks to run
-            delay(10);
+            delay(5);
             }
         }
 
         bool SSOSTTT_bool = true;
         void SSOSTTT(void){//singSameOldSongTimeTurretTwister       //(itterative Turret Angle calculation)
             SSOSTTT_bool = true;
+            //acceleration due to gravity in inches per second
             float g = 386.08858267717;
-            double a = -pow(g,2)*.25;
+            // constant based around acceleration due to gravity in inches per second devided squared by four -(g^2)/4
+            double a = -37266.393609;
             targetAngleOffest = 0;
             //chaIntAng = 0;
             while(!competition::is_disabled() && SSOSTTT_bool == true){
@@ -382,19 +384,21 @@ class sensing_t{
                 master.print(2, 0, "DistFailed");
                 robot.magFullness = 3;
                 }
-                else if (dist < 40){
+                else if (dist < 30){
                     robot.magFullness = 3;
                 }
                 else if (dist < 80){
                     robot.magFullness = 2;
                 }
-                else if (dist < 130){
+                else if (dist < 100){
                     robot.magFullness = 1;
                 }
                 else{
                     robot.magFullness = 0;
                 }
-
+                if (V_disk < 160){
+                    V_disk = 160;
+                }
                 goalSpeed = V_disk;
                 if (!robot.turretLock){
                     goalAngle = turretPosChoice(Tar_ang *180/M_PI + 0*targetAngleOffest+0*turOfCenterOffset);
@@ -416,7 +420,7 @@ class sensing_t{
 
         bool underRoller(int sensorNum){
             if (sensorNum == 1){
-                if (opticalSensor.get_proximity() > 180){
+                if (opticalSensor.get_proximity() > 200){
                     return 1;
                 }
                 else{
@@ -424,7 +428,7 @@ class sensing_t{
                 }
             }
             else{
-                if (opticalSensor2.get_proximity() > 180){
+                if (opticalSensor2.get_proximity() > 200){
                     return 1;
                 }
                 else{
@@ -438,7 +442,7 @@ class sensing_t{
             if(underRoller(1)){
                 c::optical_rgb_s color_sensor = opticalSensor.get_rgb();
                 
-                if (((color_sensor.red > 2000 && color_sensor.blue < 700 && color == true) || (color_sensor.red < 1000 && color_sensor.blue > 1200 && color == false)) && underRoller(1)){
+                if (((color_sensor.red > 3800 && color_sensor.blue < 1300 && color == true) || (color_sensor.red < 1200 && color_sensor.blue > 1500 && color == false)) && underRoller(1)){
                     return 1;
                 }
                 else{
@@ -447,7 +451,7 @@ class sensing_t{
             }else if(underRoller(2)){
                 c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
                 
-                if (((color_sensor.red > 2000 && color_sensor.blue < 700 && color == true) || (color_sensor.red < 1000 && color_sensor.blue > 1200 && color == false)) && underRoller(2)){
+                if (((color_sensor.red > 2000 && color_sensor.blue < 800 && color == true) || (color_sensor.red < 500 && color_sensor.blue > 800 && color == false)) && underRoller(2)){
                     return 1;
                 }
                 else{

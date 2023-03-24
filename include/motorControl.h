@@ -96,11 +96,11 @@ private:
   // conversion from inches per second to rpm needed at flywheel
   double angularVelocityCalc(int number) {
     if (number == 3 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.5 + 30.842;
+      return sensing.goalSpeed * 1.6 + 10;
     } else if (number == 2 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.30 + 3.805;
+      return sensing.goalSpeed * 1.4 + 10;
     } else {
-      return sensing.goalSpeed * 1.14 + 30;
+      return sensing.goalSpeed * 1.1 + 35;
     }
   }
 
@@ -207,7 +207,7 @@ private:
         } else {
           gyroScalar = 0.2;
           chassisScalar = 0.4;
-          turPredicScalar = 20;
+          turPredicScalar = 3;
         }
 
         double veldiff = gyroScalar * T * (sensing.robot.angAccel) -
@@ -227,7 +227,7 @@ private:
         if (fabs(veldiff) < 0.1) {
           IPIDvelocity = 0;
         }
-        if (fabs(angdiff) < 3 && fabs(angdiff - previousangdiff) < 10) {
+        if (fabs(angdiff) < 1 && fabs(angdiff - previousangdiff) < 10) {
           return 0;
         }
         previousangdiff = angdiff;
@@ -237,7 +237,7 @@ private:
         IPIDposition = 0;
         return 0;
       }
-    } else {
+    } else {//resetting intergrals and holding if angle diff < 1
       PIDVelocity = 0;
       IPIDvelocity = 0;
       IPIDposition = 0;
@@ -270,38 +270,38 @@ private:
     static bool switched = false;
 
 
-    if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) {
+    if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) { //intake
       if (switched == false) {
         startTime = millis();
         switched = true;
       }
-      if (millis() - jamTime > 500) {
+      if (millis() - jamTime > 500) {//normal operation
         baseSPD = 12000;
-      } else {
+      } else { //reverse to clear jam
         baseSPD = -12000;
         startTime = millis();
       }
-      if (millis() - startTime > 250 && millis() - jamTime > 500 &&
+      if (millis() - startTime > 250 && millis() - jamTime > 500 && //start jam movement if motor is too slow and long enough after motor started moving
           fabs(intakeMotor.get_actual_velocity()) < 5) {
         jamTime = millis();
       }
 
-    } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) ||
+    } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) || //outtake
                intakeRunning == 2) {
       baseSPD = -12000;
       switched = false;
 
-    } else if (intakeRunning == 3) {
+    } else if (intakeRunning == 3) { //run at set speed
       switched = false;
-      if (intakeMotor.get_actual_velocity() < intakespdTar && baseSPD < 12000) {
+      if (intakeMotor.get_actual_velocity() < intakespdTar && baseSPD < 12000) {// increase force because too slow
         baseSPD += 100;
-      } else if (intakeMotor.get_actual_velocity() > intakespdTar &&
+      } else if (intakeMotor.get_actual_velocity() > intakespdTar && //decrease force because too fast
                  baseSPD > -12000) {
         baseSPD -= 100;
-      } else {
+      } else {  //maintain speed because just right
         baseSPD = baseSPD;
       }
-    } else {
+    } else { //stop
       baseSPD = 0;
       switched = false;
     }
@@ -336,7 +336,7 @@ public:
 
     PID.turret.p = 3.2;
     PID.turret.i = .01;
-    PID.turret.d = 20;
+    PID.turret.d = 30;
 
     PID.turret.p2 = 0.15; // 0.7
     PID.turret.i2 = 0.00000002;
@@ -918,7 +918,8 @@ public:
       logValue("goalAngle", goalAngle, 21);
       logValue("goalSPD", sensing.goalSpeed, 22);
       logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 23);
-      logValue("time", millis(), 24);
+      logValue("rollerG", sensing.rollerIsGood(), 24);
+      logValue("time", millis(), 25);
 
       delay(optimalDelay);
     }
@@ -969,7 +970,8 @@ public:
       logValue("goalAngle", goalAngle, 21);
       logValue("goalSPD", sensing.goalSpeed, 22);
       logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 23);
-      logValue("time", millis(), 24);
+      logValue("rollerG", sensing.rollerIsGood(), 24);
+      logValue("time", millis(), 25);
 
       delay(optimalDelay);
     }

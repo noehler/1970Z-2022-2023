@@ -77,7 +77,7 @@ void closeWinPoint(void){
     sensing.set_status(37,18,270,100, color);
     movevoltage(&mc, 0, 0);
     delay(20);
-    mc.driveToRoller(2500);
+    mc.driveToRoller(3000);
     
     //move out of roller
     moveto(&mc, 37, 16,100,0,20,-1);
@@ -92,17 +92,17 @@ void closeWinPoint(void){
     //shooting
     movevoltage(&mc, 0, 0);
     delay(200);
-    shootdisks(&mc, overallStartTime);
+    shootdisks(&mc, overallStartTime,false,4,12000,6000);
     
     //picking up disc
     intake(&mc);
-    moveto(&mc, 60, 36,50);
-    intakeWaitForDiscs(&mc, 10000,overallStartTime);
+    moveto(&mc, 60, 36,60);
+    intakeWaitForDiscs(&mc, 4000,overallStartTime);
     if (sensing.robot.magFullness != 3){
         moveto(&mc, 54, 30,100,5,5,-1);
-        mc.waitPosTime(10000,overallStartTime);
-        moveto(&mc, 72, 48,50);
-        intakeWaitForDiscs(&mc, 10000,overallStartTime);
+        mc.waitPosTime(1000,overallStartTime);
+        moveto(&mc, 72, 48,60);
+        intakeWaitForDiscs(&mc, 3000,overallStartTime);
     }
     
     //shooting
@@ -125,20 +125,20 @@ void farWinPoint(void){
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
 
-    sensing.set_status(128.5,54.5,180,100, color);
+    sensing.set_status(128.5,55,180,100, color);
     movevoltage(&mc, 0, 0);
     delay(20);
-    shootdisks(&mc, overallStartTime, 0,4,10000,3000);
+    shootdisks(&mc, overallStartTime, 0,4,5000,5000);
 
     intake(&mc);
-    moveto(&mc,100, 54.5, 100);
-    intakeWaitForDiscs(&mc, 7000, overallStartTime,3,6000);
+    moveto(&mc,100, 55, 80);
+    intakeWaitForDiscs(&mc, 7000, overallStartTime,3,10000);
 
     movevoltage(&mc, 0, 0);
     shootdisks(&mc, overallStartTime, 0,4,10000,3000);
     delay(20);
 
-    moveto(&mc,128, 54.5, 100,5,5,-1);
+    moveto(&mc,128, 55, 100,5,5,-1);
     mc.waitPosTime(4000, overallStartTime);
 
     intake(&mc);

@@ -19,13 +19,15 @@ void tuneSensors(void){
                     
         logValue("1r", color_sensor.red, 0);
         logValue("1b", color_sensor.blue, 1);
+        logValue("1d", opticalSensor.get_proximity(), 2);
         color_sensor = opticalSensor2.get_rgb();
 
-        logValue("2r", color_sensor.red, 2);
-        logValue("2b", color_sensor.blue, 3);
+        logValue("2r", color_sensor.red, 3);
+        logValue("2b", color_sensor.blue, 4);
+        logValue("2d", opticalSensor2.get_proximity(), 5);
 
-        logValue("dist", distSense.get(), 4);
-
+        logValue("dist", distSense.get(), 6);
+        delay(20);
     }
     
     

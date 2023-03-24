@@ -75,14 +75,14 @@ void skillsAutonomous(void){
 
     //first triple stack
     intake(&mc);
-    moveto(&mc, 46,35,30,3, 5,1);                                        //John: maybe errtheta too big, and maybe too far of distance to travel, I would like to test some manuver to knock over stacks
+    moveto(&mc, 46,35,60,3, 5,1);                                        //John: maybe errtheta too big, and maybe too far of distance to travel, I would like to test some manuver to knock over stacks
     
     intakeWaitForDiscs(&mc,5000,overallStartTime);
     if(sensing.robot.magFullness != 3){
         moveto(&mc, 40,33,100,5,10,-1);
         mc.waitPosTime(3000,overallStartTime);
 
-        moveto(&mc, 48,40,30,3);
+        moveto(&mc, 48,40,60,3);
         intakeWaitForDiscs(&mc,3000,overallStartTime);
     }
     delay(600);
@@ -99,13 +99,13 @@ void skillsAutonomous(void){
 
     //second triple stack
     intake(&mc);
-    moveto(&mc, 72,33,40,3); 
+    moveto(&mc, 72,33,60,3); 
     intakeWaitForDiscs(&mc,3000,overallStartTime);
     if(sensing.robot.magFullness != 3){
         moveto(&mc, 60,36,100,5,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
         mc.waitPosTime(3000,overallStartTime);
 
-        moveto(&mc, 72,36,30,3,5);                                  //John: maybe lower error theta to avoid side of the robot contact disks=
+        moveto(&mc, 72,36,60,3,5);                                  //John: maybe lower error theta to avoid side of the robot contact disks=
         intakeWaitForDiscs(&mc,3000,overallStartTime);
     }
     
@@ -125,7 +125,7 @@ void skillsAutonomous(void){
     mc.waitPosTime(4000,overallStartTime);
     
     intake(&mc);
-    moveto(&mc, 108,84,40,3, 5);                                  //John: maybe lower error theta to avoid side of the robot contact disks             //fixed?
+    moveto(&mc, 108,84,60,3, 5);                                  //John: maybe lower error theta to avoid side of the robot contact disks             //fixed?
     mc.waitPosTime(8000,overallStartTime);
     
     //shoot second triple stack
@@ -139,7 +139,7 @@ void skillsAutonomous(void){
 
     //picking up last 3 stack
     intake(&mc);
-    moveto(&mc, 108,114,30,3, 5);
+    moveto(&mc, 108,114,60,3, 5);
     mc.waitPosTime(9000,overallStartTime,1);                                     //John: too long of wait time             //fixed?
     
     //shooting last triple stack
