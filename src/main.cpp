@@ -78,7 +78,6 @@ void opcontrol() {
 	logMessage("start of operator control");
 	//starting up tasks neccessary for driving
 	motorControl_t motorControl;
-
 	Task drive_Task(drive_ControllerWrapper, (void *)&motorControl,
 					"My Driver Controller Task");
 	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void *)&motorControl,

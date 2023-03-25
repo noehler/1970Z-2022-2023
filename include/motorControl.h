@@ -90,11 +90,11 @@ private:
   // conversion from inches per second to rpm needed at flywheel
   double angularVelocityCalc(int number) {
     if (number == 3 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.32 + 59;
+      return sensing.goalSpeed * 1.4 + 55.0*discMults[2][0];
     } else if (number == 2 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.22 + 47;
+      return sensing.goalSpeed * 1.28 + 42*discMults[1][0];
     } else {
-      return sensing.goalSpeed * 1.1 + 38;
+      return sensing.goalSpeed * 1.12 + 35*discMults[0][0];
     }
   }
 

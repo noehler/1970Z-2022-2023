@@ -120,16 +120,18 @@ void farWinPoint(void){
 
     sensing.set_status(128.5,55,180,100, color);
     movevoltage(&mc, 0, 0);
-    delay(20);
-    shootdisks(&mc, overallStartTime, 0,4,7000,5000);
+    delay(2000);
+    shootdisks(&mc, overallStartTime, 0,4,10000,10000);
 
     intake(&mc);
     moveto(&mc,100, 55, 80);
-    intakeWaitForDiscs(&mc, 7000, overallStartTime,3,10000);
+    intakeWaitForDiscs(&mc, 3500, overallStartTime,3,7000);
 
-    movevoltage(&mc, 0, 0);
-    shootdisks(&mc, overallStartTime, 0,4,10000,3000);
-    delay(20);
+    if(sensing.robot.magFullness != 0){
+        movevoltage(&mc, 0, 0);
+        shootdisks(&mc, overallStartTime, 0,4,10000,3000);
+        delay(20);
+    }
 
     moveto(&mc,128, 55, 100,5,5,-1);
     mc.waitPosTime(4000, overallStartTime);
@@ -139,8 +141,8 @@ void farWinPoint(void){
     mc.waitPosTime(4000, overallStartTime);
 
     rotateto(&mc, 0);
-    waitRotate(&mc, 1500, overallStartTime);
-
+    waitRotate(&mc, 1000, overallStartTime);
+    
     mc.driveToRoller(5000,false);
 
     movevoltage(&mc, 0, 0);

@@ -1,6 +1,7 @@
 #include "Autons/autonSetup.h"
 #include "GUI.h"
 #include "main.h"
+#include "output.h"
 #include "pros/misc.hpp"
 
 autonTypes_t autonType = noAuton;
@@ -19,6 +20,9 @@ double distto (double x, double y){
 
 
 void moveto(void *mc, double xTo, double yTo, double speedLimit, double tolerance, double errtheta, int forward){
+    char temp[50];
+    sprintf(temp,"move To (%f, %f)", xTo,yTo);
+    logMessage(temp);
     //moveto frame parameters
     ((motorControl_t*) mc)->driveType = 0;
     ((motorControl_t*) mc)->move.moveToxpos = xTo;
@@ -56,7 +60,7 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
     double gpsIntegY = 0;
     double loops = 0;
     ((motorControl_t*) mc)->updatedAD = false;
-    while(millis() - starttime <maxTime && millis() - overallStartTime < overallMaxTime){
+    while(millis() - starttime < maxTime/* && millis() - overallStartTime < overallMaxTime*/){
         //time out
         if (calibrapePos){
             if (sensing.GPS_sensor.get_error() < 0.012){
@@ -65,8 +69,8 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
                 loops++;
             }
         }
-        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2))  < 5 && fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 +  + fabs(sensing.robot.angAccel)*2< 30){
-            std::cout<<"good turret"<<"\n";
+        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) < 5 && fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 + fabs(sensing.robot.angAccel)*2 < 30){
+            logMessage("turret good exit");
             break;
             //flywheel speed check
             //turret heading check
@@ -79,8 +83,10 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
     }
     if (number!=1){//second batch
     ((motorControl_t*) mc)->raiseAScore(3);
+        logMessage("shoot 3");
     } else {
     ((motorControl_t*) mc)->raiseAScore(1);
+        logMessage("shoot 1");
     }
     delay(300);
     sensing.robot.turretLock = true;
@@ -96,13 +102,14 @@ void movevoltage(void *mc, double L, double R){
     ((motorControl_t*) mc)->leftSpd = L;
 }
 void rotateto(void *mc,double ang, double range){
-    
+    logMessage("rotate");
     ((motorControl_t*) mc)->driveType = 1;
     ((motorControl_t*) mc)->HeadingTarget = ang;
     ((motorControl_t*) mc)->move.errtheta = range;
 }
 
 void intakeWaitForDiscs(void *mc, int maxTime, int overallStartTime, int goalAmt, int overallMaxTime){
+    logMessage("collecting discs");
     int startTime = millis();
     while(distto(((motorControl_t*) mc)->move.moveToxpos, ((motorControl_t*) mc)->move.moveToypos) > ((motorControl_t*) mc)->move.tolerance && sensing.robot.magFullness < goalAmt && millis()-startTime < maxTime && millis() - overallStartTime < overallMaxTime){
         delay(10);

@@ -1,7 +1,9 @@
 #include "Autons/autonSetup.h"
 #include "main.h"
+#include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.h"
+#include "robotConfig.h"
 #include <fstream>
 
 
@@ -60,18 +62,51 @@ int startRecord(void){
     }
 }
 
+char errorMessage[20];
+double discMults[3][2] = {{1,0}, {1,0}, {1,0}};
+void sidecarGUI(bool showError){
+    static bool prevShow = 0;
+    static int multChange[2] = {0,1};
+    if (sidecar.get_digital(DIGITAL_B)){
+        multChange[0] = 1;
+    }
+    else if (sidecar.get_digital(DIGITAL_A)){
+        multChange[0] = 2;
+    }
+    else if (sidecar.get_digital(DIGITAL_X)){
+        multChange[0] = 3;
+    }
+
+    discMults[multChange[0]-1][0] += double(sidecar.get_analog(ANALOG_RIGHT_Y))/2048;
+
+    if (discMults[0][0] != discMults[0][1] || discMults[1][0] != discMults[1][1] || discMults[2][0] != discMults[2][1] || multChange[0] != multChange[1]){
+        discMults[0][1] = discMults[0][0];
+        discMults[1][1] = discMults[1][0];
+        discMults[2][1] = discMults[2][0];
+        multChange[1] = multChange[0];
+        char changeOut[10];
+        sprintf(changeOut," Change %d",multChange[0]);
+        delay(50);
+        sidecar.clear();
+        delay(50);
+        sidecar.print(0,0,"%.2f | %s", discMults[0][0], errorMessage);
+        delay(50);
+        sidecar.print(1,0,"%.2f | %s", discMults[1][0], errorMessage);
+        delay(50);
+        sidecar.print(2,0,"%.2f | %s", discMults[2][0], changeOut);
+    }
+}
+
 int waitTime = 0;
 int lastWarnTime = 0;
 bool showing = true;
-char errorMessage[30];
 void warnScreenUpdate(void){
     if (sidecar.is_connected()){
-        if (c::millis()-lastWarnTime <waitTime && millis() > waitTime){
+        
+        if (c::millis()-lastWarnTime < waitTime && millis() > waitTime){
             if (updateScreen[1]){
                 showing = true;
                 updateScreen[1] = false;
-                delay(50);
-                sidecar.print(0, 0, errorMessage);
             }
             delay(50);
             sidecar.rumble(".-");
@@ -83,6 +118,7 @@ void warnScreenUpdate(void){
                 sidecar.clear();
             }
         }
+        sidecarGUI(showing);
     }
 }
 
@@ -95,7 +131,7 @@ void warn(std::string message, int messageShowTime){
 
 void outValsSDCard(void){
     while(1){
-        if (usd::is_installed() && outVals[1] != 420.69){
+        if (usd::is_installed() && outVals[0] != 420.69 && !competition::is_disabled()){
             static int fileNum;
             static bool headerMade = false;
         
@@ -154,6 +190,6 @@ void outValsSDCard(void){
             }
         }
         warnScreenUpdate();
-        delay(20);
+        delay(40);
     }
 }

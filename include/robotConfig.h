@@ -384,7 +384,7 @@ class sensing_t{
                 master.print(2, 0, "DistFailed");
                 robot.magFullness = 3;
                 }
-                else if (dist < 30){
+                else if (dist < 40){
                     robot.magFullness = 3;
                 }
                 else if (dist < 80){
