@@ -14,7 +14,7 @@ extern void movevoltage(void *mc, double L, double R);
 extern void rotateto(void *mc,double ang, double range = 3);
 extern void intakeWaitForDiscs(void *mc, int maxTime, int overallStartTime, int goalAmt = 3, int overallMaxTime = 55000);
 extern void waitRotate(void *mc, int maxTime, int overallStartTime, int overallMaxTime = 55000);
-
+extern void waitPosTime(void *mc, int maxTime, int overallStartTime, int overallMaxTime = 55000);
 extern void AutonSelector(void);
 
 

@@ -30,7 +30,7 @@ void skillsAutonomous(void){
     
     //move to lineup disk
     moveto(&mc, 48, 23,100,5,10,-1);
-    mc.waitPosTime(2500,overallStartTime);
+    waitPosTime(&mc,2500,overallStartTime);
     //line up with disk and roller might need a hold on drive motor
     rotateto(&mc, 180);
     startTime = millis();
@@ -80,7 +80,7 @@ void skillsAutonomous(void){
     intakeWaitForDiscs(&mc,5000,overallStartTime);
     if(sensing.robot.magFullness != 3){
         moveto(&mc, 40,33,100,5,10,-1);
-        mc.waitPosTime(3000,overallStartTime);
+        waitPosTime(&mc,3000,overallStartTime);
 
         moveto(&mc, 48,40,60,3);
         intakeWaitForDiscs(&mc,3000,overallStartTime);
@@ -95,7 +95,7 @@ void skillsAutonomous(void){
 
     //lining up for 2nd triple stack
     moveto(&mc, 36,33,100,3,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
-    mc.waitPosTime(3000,overallStartTime);
+    waitPosTime(&mc,3000,overallStartTime);
 
     //second triple stack
     intake(&mc);
@@ -103,7 +103,7 @@ void skillsAutonomous(void){
     intakeWaitForDiscs(&mc,3000,overallStartTime);
     if(sensing.robot.magFullness != 3){
         moveto(&mc, 60,36,100,5,10,-1);                                  //John: maybe lower error theta to avoid side of the robot contact disks
-        mc.waitPosTime(3000,overallStartTime);
+        waitPosTime(&mc,3000,overallStartTime);
 
         moveto(&mc, 72,36,60,3,5);                                  //John: maybe lower error theta to avoid side of the robot contact disks=
         intakeWaitForDiscs(&mc,3000,overallStartTime);
@@ -122,11 +122,11 @@ void skillsAutonomous(void){
     //collecting first of row of discs
     intake(&mc);
     moveto(&mc, 84,60,60,3);                                  //John: maybe lower error theta to avoid side of the robot contact disks
-    mc.waitPosTime(4000,overallStartTime);
+    waitPosTime(&mc,4000,overallStartTime);
     
     intake(&mc);
     moveto(&mc, 108,84,60,3, 5);                                  //John: maybe lower error theta to avoid side of the robot contact disks             //fixed?
-    mc.waitPosTime(8000,overallStartTime);
+    waitPosTime(&mc,8000,overallStartTime);
     
     //shoot second triple stack
     movevoltage(&mc, 0,0);
@@ -140,7 +140,7 @@ void skillsAutonomous(void){
     //picking up last 3 stack
     intake(&mc);
     moveto(&mc, 108,114,60,3, 5);
-    mc.waitPosTime(9000,overallStartTime,1);                                     //John: too long of wait time             //fixed?
+    waitPosTime(&mc,9000,overallStartTime,1);                                     //John: too long of wait time             //fixed?
     
     //shooting last triple stack
     movevoltage(&mc, 0,0);
@@ -170,7 +170,7 @@ void skillsAutonomous(void){
     
     //move to lineup disk
     moveto(&mc, 144-48, 144-23,100,5,10,-1);
-    mc.waitPosTime(2500,overallStartTime);
+    waitPosTime(&mc,2500,overallStartTime);
     //line up with disk and roller might need a hold on drive motor
     rotateto(&mc, 0);
     startTime = millis();

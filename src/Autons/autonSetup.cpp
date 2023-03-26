@@ -97,7 +97,7 @@ void intake(void *mc){
 }
 void movevoltage(void *mc, double L, double R){
     
-    ((motorControl_t*) mc)->driveType = 3;
+    ((motorControl_t*) mc)->driveType = 2;
     ((motorControl_t*) mc)->rightSpd = R;
     ((motorControl_t*) mc)->leftSpd = L;
 }
@@ -106,6 +106,17 @@ void rotateto(void *mc,double ang, double range){
     ((motorControl_t*) mc)->driveType = 1;
     ((motorControl_t*) mc)->HeadingTarget = ang;
     ((motorControl_t*) mc)->move.errtheta = range;
+}
+
+//macro to wait for 
+void waitPosTime(void *mc, int maxTime, int overallStartTime,
+                int overallMaxTime) {
+    int startTime = millis();
+    ((motorControl_t*) mc)->move.resetMoveTo = false;
+    while (millis() - startTime < maxTime && ((motorControl_t*) mc)->move.resetMoveTo == false &&
+            millis() - overallStartTime < overallMaxTime) {
+        delay(20);
+    }
 }
 
 void intakeWaitForDiscs(void *mc, int maxTime, int overallStartTime, int goalAmt, int overallMaxTime){

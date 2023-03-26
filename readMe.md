@@ -18,4 +18,4 @@ If you end up using our code or taking inspiriation, please cite our team and gi
 
 
 Final Note:
-We have everything defined in inches(sorry, but we find this to be the best measurement system for the vex field as it is designed around imperial units), so if you work in meters you will need to adapt these equations for your own purposes. For help in these you can view the derivations in our notebook at [insert link here].
+We have everything defined in inches(sorry, but we find this to be the best measurement system for the vex field as it is designed around imperial units), so if you work in meters you will need to adapt these equations for your own purposes. For help in these you can view the derivations in our notebook at https://docs.google.com/presentation/d/1FmJD_Pho6WI_0ih5AKZskUccD2cFSXojwjuPjT29E38/edit?usp=sharing.

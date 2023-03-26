@@ -24,7 +24,7 @@ void winPointAuton(void){
     
     //move to lineup disk
     moveto(&mc, 48, 23,100,5,90,-1);
-    mc.waitPosTime(1000,overallStartTime);
+    waitPosTime(&mc,1000,overallStartTime);
 
     //shooting
     movevoltage(&mc, 0, 0);
@@ -44,7 +44,7 @@ void winPointAuton(void){
     
     intake(&mc);
     moveto(&mc, 128, 104,100, 5,50);
-    mc.waitPosTime(3000, overallStartTime);
+    waitPosTime(&mc,3000, overallStartTime);
 
     //trying to clear disks
     mc.intakeRunning = 2;
@@ -84,7 +84,7 @@ void closeWinPoint(void){
     
     //move to lineup disk
     moveto(&mc, 48, 24,100,5,10,-1);
-    mc.waitPosTime(2500,overallStartTime);
+    waitPosTime(&mc,2500,overallStartTime);
 
     //shooting
     movevoltage(&mc, 0, 0);
@@ -97,7 +97,7 @@ void closeWinPoint(void){
     intakeWaitForDiscs(&mc, 4000,overallStartTime);
     if (sensing.robot.magFullness != 3){
         moveto(&mc, 54, 30,100,5,5,-1);
-        mc.waitPosTime(1000,overallStartTime);
+        waitPosTime(&mc,1000,overallStartTime);
         moveto(&mc, 72, 48,60);
         intakeWaitForDiscs(&mc, 3000,overallStartTime);
     }
@@ -134,11 +134,11 @@ void farWinPoint(void){
     }
 
     moveto(&mc,128, 55, 100,5,5,-1);
-    mc.waitPosTime(4000, overallStartTime);
+    waitPosTime(&mc,4000, overallStartTime);
 
     intake(&mc);
     moveto(&mc,128, 108, 100);
-    mc.waitPosTime(4000, overallStartTime);
+    waitPosTime(&mc,4000, overallStartTime);
 
     rotateto(&mc, 0);
     waitRotate(&mc, 1000, overallStartTime);
