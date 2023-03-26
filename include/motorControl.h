@@ -186,7 +186,7 @@ private:
         IPIDvelocity = 0;
         return PIDPosition;
 
-      } else if (fabs(angdiff) > 1){//PID controller
+      } else if (fabs(angdiff) > 1){//PID controller in case of overheat
         //Anglular PID
         IPIDposition += angdiff;
         PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDposition +
@@ -287,9 +287,9 @@ private:
 
     } else if (intakeRunning == 3) { //run at set speed
       switched = false;
-      if (intakeMotor.get_actual_velocity() < intakespdTar && baseSPD < 12000) {// increase force because too slow
+      if (intakeMotor.get_actual_velocity() < intakespdTarget && baseSPD < 12000) {// increase force because too slow
         baseSPD += 100;
-      } else if (intakeMotor.get_actual_velocity() > intakespdTar && //decrease force because too fast
+      } else if (intakeMotor.get_actual_velocity() > intakespdTarget && //decrease force because too fast
                  baseSPD > -12000) {
         baseSPD -= 100;
       } else {  //maintain speed because just right
@@ -303,13 +303,14 @@ private:
   }
 
 public:
-  bool updatedAD = false;
-  double angdiff;
+  bool updatedAD = false; //variable to account for difference in timings between threads, comparisons only rake place when all values are update
+  double angdiff; // diffence in angle between turret and goal
   int discCountChoice = 2; // 1 for single shot, 2 for automatic decision
-  double intakespdTar = 0;
-  int intakeRunning;
-  double diffFlyWheelW;
-  double diffFlyWheelW2;
+  double intakespdTarget = 0;
+  int intakeRunning; // variable to control switch between types of intake contol. 0 for stop, 1 for intake, 2 for outtake, 3 for goal speed
+  double diffFlyWheelW; // difference in goal speed of flywheel verse actual speed
+  double diffFlyWheelW2; // difference in goal speed of flywheel verse actual speed
+
   // Constructor to assign values to the motors and PID values
   motorControl_t(void)
       : lfD(5, E_MOTOR_GEARSET_06, true), lbD(4, E_MOTOR_GEARSET_06, false),
@@ -319,7 +320,8 @@ public:
         turretMotor(6, E_MOTOR_GEARSET_06, true),
         intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
-
+    
+    //setting PID values begining of motorcontrol class
     PID.driveFR.p = 4;
     PID.driveFR.i = 0.1;
     PID.driveFR.d = 5;
@@ -332,7 +334,7 @@ public:
     PID.turret.i = .01;
     PID.turret.d = 30;
 
-    PID.turret.p2 = 0.15; // 0.7
+    PID.turret.p2 = 0.15;
     PID.turret.i2 = 0.00000002;
     PID.turret.d2 = 14;
 
@@ -343,147 +345,21 @@ public:
     PID.flyWheel.i2 = 0.0221515;
     PID.flyWheel.d2 = 1.05928;
   }
+
+  // class to set variables need to control moveTo function
   moveToInfoExternal_t move;
-  double DistToTravel = 0;
+
+  //Function to rotate To a set angle
   double HeadingTarget = 0;
-  void driveDist(bool resetIntegs) {
-    double currentheading = sensing.robot.angle * M_PI / 180;
-    move.targetHeading = currentheading;
-    lfD.tare_position();
-    lbD.tare_position();
-    rfD.tare_position();
-    rbD.tare_position();
-    moveToInfoInternal_t moveI;
+  void rotateTo(bool resetIntegs) {
+    static moveToInfoInternal_t moveI;
+
+    //setting integrals to 0 at start and reset
     static double IPIDSS = 0;
     static double previousets = 0;
-    static double IPIDfw = 0;
-    static double previouset = 0;
-    if (resetIntegs) {
-      IPIDSS = 0;
-      previousets = 0;
-      IPIDfw = 0;
-      previouset = 0;
-    }
-    moveI.dist = 0;      // change of position
-    moveI.distR = 0;     // chagne of right postion
-    moveI.distL = 0;     // change of left position
-    moveI.PIDSS = 0;     // PID turning speed
-    moveI.PIDFW = 0;     // PID moveforward speed
-    moveI.PIDSpeedL = 0; // PID leftside speed
-    moveI.PIDSpeedR = 0; // PID rightside speed
-    moveI.PIDFWFLAT = 0; // variable used for keeping move forward speed < 100
-    moveI.PIDSSFLAT = 0;
-    double distTraveled = 0;
-    currentheading = sensing.robot.angle * M_PI / 180;
-    /*
-    function logic:
-    find errors of position, turn to target if robot cannot move in a arc to
-    it, than move to target in a arc. tracking center of robot is at the
-    center of two tracking wheels do not recomand using this funciton with
-    SpinTo() function. perferd to have a sperate thread for calculating live
-    position, than just take out codes from line 41 to line 48
-    */
-    double dist = DistToTravel - distTraveled;
-    double et = dist * 10; ///////////////////////////////////////////////////////////////////////what
-                           ///is this?
-
-    moveI.ets = move.targetHeading - currentheading;
-    if (moveI.ets < -M_PI) {
-      moveI.ets += 2 * M_PI;
-    }
-    if (moveI.ets > M_PI) {
-      moveI.ets -= 2 * M_PI;
-    }
-
-    moveI.ets = moveI.ets * 180 / M_PI;
-    IPIDSS += moveI.ets;
-    IPIDfw += et;
-    if (move.moveToforwardToggle == 1) {
-      moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
-                    PID.driveSS.d * (moveI.ets - previousets);
-    } else {
-      moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
-                    PID.driveSS.d * (moveI.ets - previousets);
-    }
-    if (fabs(moveI.ets) < move.errtheta) {
-      if (move.moveToforwardToggle == 1) {
-        moveI.PIDFW = move.moveToforwardToggle *
-                      (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
-                       PID.driveFR.d * (et - previouset));
-      } else {
-        moveI.PIDFW = move.moveToforwardToggle *
-                      (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
-                       PID.driveFR.d * (et - previouset));
-      }
-    } else {
-      moveI.PIDFW = 0;
-    }
-    previousets = moveI.ets;
-    previouset = et;
-    moveI.PIDSSFLAT = moveI.PIDSS;
-    moveI.PIDFWFLAT = moveI.PIDFW;
-    if (moveI.PIDFWFLAT >= move.speed_limit) {
-      moveI.PIDFWFLAT = move.speed_limit;
-    }
-    if (moveI.PIDFWFLAT <= -move.speed_limit) {
-      moveI.PIDFWFLAT = -move.speed_limit;
-    }
-    if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
-      moveI.PIDSSFLAT = 2 * move.speed_limit;
-    }
-    if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
-      moveI.PIDSSFLAT = -2 * move.speed_limit;
-    }
-    if (move.moveToforwardToggle) {
-      moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
-      moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
-    } else {
-      moveI.PIDSpeedR = -moveI.PIDFWFLAT - moveI.PIDSSFLAT;
-      moveI.PIDSpeedL = -moveI.PIDFWFLAT + moveI.PIDSSFLAT;
-    }
-
-    if (fabs(dist) < move.tolerance) {
-      move.Stop_type = 1;
-      leftSpd = 0;
-      rightSpd = 0;
-    } else {
-      leftSpd = -moveI.PIDSpeedL;
-      rightSpd = -moveI.PIDSpeedR;
-    }
-    distTraveled += double(lfD.get_position() + lbD.get_position() +
-                           rfD.get_position() + rbD.get_position()) /
-                    8 / 180 * M_PI * 1.375;
-    lfD.tare_position();
-    lbD.tare_position();
-    rfD.tare_position();
-    rbD.tare_position();
-  }
-
-  void rotateTo(bool resetIntegs) {
-    double currentheading = sensing.robot.angle * M_PI / 180;
-    moveToInfoInternal_t moveI;
-    double IPIDSS = 0;
-    double previousets = 0;
-    double IPIDfw = 0;
-    double previouset = 0;
-    IPIDSS = 0;
-    previousets = 0;
-    IPIDfw = 0;
-    previouset = 0;
-    moveI.PIDSS = 0;     // PID turning speed
-    moveI.PIDSpeedL = 0; // PID leftside speed
-    moveI.PIDSpeedR = 0; // PID rightside speed
-    moveI.PIDSSFLAT = 0;
-    bool finished = false;
-    bool resetMoveToSS = false;
-    /*
-    function logic:
-    find errors of position, turn to target if robot cannot move in a arc to
-    it, than move to target in a arc. tracking center of robot is at the
-    center of two tracking wheels do not recomand using this funciton with
-    SpinTo() function. perferd to have a sperate thread for calculating live
-    position, than just take out codes from line 41 to line 48
-    */
+    static bool finished = false;
+    static bool resetMoveToSS = false;
+    
     if (resetIntegs == true) {
       resetMoveToSS = true;
     }
@@ -494,7 +370,9 @@ public:
       IPIDSS = 0;
       moveI.ets = 0;
     }
-    currentheading = sensing.robot.angle;
+
+    //calculating proportional difference
+    double currentheading = sensing.robot.angle;
     moveI.ets = HeadingTarget - currentheading;
     while (moveI.ets < -180) {
       moveI.ets += 360;
@@ -502,12 +380,18 @@ public:
     while (moveI.ets > 180) {
       moveI.ets -= 360;
     }
+
+    //updating proportional
     IPIDSS += moveI.ets;
 
+    //PID calculation
     moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
                   PID.driveSS.d * (moveI.ets - previousets);
 
+    //setting values for derivative calculation
     previousets = moveI.ets;
+
+    // setting value inbetween limits of what motors can see
     moveI.PIDSSFLAT = moveI.PIDSS;
     if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
       moveI.PIDSSFLAT = 2 * move.speed_limit;
@@ -516,33 +400,32 @@ public:
       moveI.PIDSSFLAT = -2 * move.speed_limit;
     }
 
-    if (moveI.PIDSSFLAT > 127) {
-      moveI.PIDSSFLAT = 127;
-    }
-    if (moveI.PIDSSFLAT < -127) {
-      moveI.PIDSSFLAT = -127;
-    }
+    //outputting speeds to turn at
     moveI.PIDSpeedR = moveI.PIDSSFLAT;
     moveI.PIDSpeedL = -moveI.PIDSSFLAT;
     if (fabs(moveI.ets) < move.errtheta &&
         fabs(lfD.get_actual_velocity()) + fabs(rfD.get_actual_velocity()) <
-            40) {
+            40) {//angle is within range and speed is low enough
       resetMoveToSS = true;
       leftSpd = 0;
       rightSpd = 0;
-    } else {
+    } else {//need to keep turning
       leftSpd = moveI.PIDSpeedL * 12000 / 127;
       rightSpd = moveI.PIDSpeedR * 12000 / 127;
     }
   }
 
+  //function to travel to specific point
   void moveTo(bool resetIntegs) {
+    //setting up variables and setting intially to 0
     static moveToInfoInternal_t moveI;
     static double IPIDSS = 0;
     static double previousets = 0;
     static double IPIDfw = 0;
     static double previouset = 0;
     double turnOrMoveMult = 1;
+
+    //resetting variables when neccessary
     if (resetIntegs == true) {
       move.resetMoveTo = true;
     }
@@ -560,12 +443,9 @@ public:
       // variable for for calculating first turning.
       move.resetMoveTo = false;
     }
+
+
     double currentheading = sensing.robot.angle / 180 * M_PI;
-    if (currentheading == PROS_ERR_F) {
-      // JLO - handle error and exit, we can't continue
-      std::cout << "\n headingFudge";
-      return;
-    }
     /*
     function logic:
     find errors of position, turn to target if robot cannot move in a arc to
@@ -577,8 +457,9 @@ public:
     double etx = move.moveToxpos - sensing.robot.xpos; // change of x
     double ety = move.moveToypos - sensing.robot.ypos; // change of y
     double dist = sqrt(pow(etx, 2) + pow(ety, 2));
-    double et = dist * 10;
+    double et = dist * 10;  //total distance needed to cover multiplied by constant to make it more pronounced
 
+    //calculating necessary heading needed to go towards point and making sure that returned value is not undefined or impossible
     move.targetHeading = atan(ety / etx);
     if (etx < 0) {
       move.targetHeading += M_PI;
@@ -588,6 +469,8 @@ public:
     if (move.moveToforwardToggle == -1) {
       move.targetHeading += M_PI;
     }
+
+    //calculating rotational difference and ensuring between +- 180
     moveI.ets = move.targetHeading - currentheading;
     if (moveI.ets < -M_PI) {
       moveI.ets += 2 * M_PI;
@@ -596,39 +479,41 @@ public:
       moveI.ets -= 2 * M_PI;
     }
 
+    //changing from radians to degreees
     moveI.ets = moveI.ets * 180 / M_PI;
     IPIDSS += moveI.ets;
     IPIDfw += et;
-    if (move.moveToforwardToggle == 1) {
-      moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
-                    PID.driveSS.d * (moveI.ets - previousets);
-    } else {
-      moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
-                    PID.driveSS.d * (moveI.ets - previousets);
-    }
 
-    if (fabs(moveI.ets) < move.errtheta * turnOrMoveMult) {
-      if (fabs(moveI.ets - previousets) < 4) {
+    //calculating turning PID
+    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
+                  PID.driveSS.d * (moveI.ets - previousets);
+
+    //checking if withing range for no turning or only turning
+    if (fabs(moveI.ets) < move.errtheta * turnOrMoveMult) {//if small enough distance to move forward
+      if (fabs(moveI.ets - previousets) < 4) {//if slow enough reset turn integral and turning back on forward motion
         IPIDSS = 0;
         turnOrMoveMult = 1;
       }
-      if (move.moveToforwardToggle == 1) {
-        moveI.PIDFW = move.moveToforwardToggle *
-                      (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
-                       PID.driveFR.d * (et - previouset));
-      } else {
-        moveI.PIDFW = move.moveToforwardToggle *
-                      (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
-                       PID.driveFR.d * (et - previouset));
-      }
+
+      //calculating forward motion
+      moveI.PIDFW = move.moveToforwardToggle *
+                    (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
+                      PID.driveFR.d * (et - previouset));
     } else {
+      //slow motion down significantly to allow for greater influence of turning
       turnOrMoveMult = .2;
       moveI.PIDFW = 0;
     }
+
+    //setting variables for derivative calculation 
     previousets = moveI.ets;
     previouset = et;
+
+    // lowering speed of turning when moving slower so that it runs at the same percentage difference
     moveI.PIDSSFLAT = moveI.PIDSS * move.speed_limit / 100;
     moveI.PIDFWFLAT = moveI.PIDFW * move.speed_limit / 100;
+
+    //making sure that speeds outputted do not exceed capabilities of the motor
     if (moveI.PIDFWFLAT >= move.speed_limit) {
       moveI.PIDFWFLAT = move.speed_limit;
     }
@@ -641,8 +526,12 @@ public:
     if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
       moveI.PIDSSFLAT = -2 * move.speed_limit;
     }
+
+    //changing from percent to millivolts for motor input
     rightSpd = (moveI.PIDFWFLAT + moveI.PIDSSFLAT) * 12000 / 127;
     leftSpd = (moveI.PIDFWFLAT - moveI.PIDSSFLAT) * 12000 / 127;
+
+    //stopping and reseting varialbes 
     if (dist < move.tolerance) {
       move.resetMoveTo = true;
       leftSpd = 0;
@@ -650,6 +539,7 @@ public:
     }
   }
 
+  //set pistions to correct starting position to ensure that there is no early expansion or shooting at start of match
   void setpistons(void) {
     shoot3.set_value(false);
     shoot1.set_value(false);
@@ -657,47 +547,35 @@ public:
     boomShackalacka.set_value(false);
   }
 
+  //function to better follow paths generated by Bezier curves
+  //NOT FUNCTIONAL AT THE MOMENT
   void tailGater(bez_Return_t temp) {
-    // rotateTo(atan((temp.returnPoints[0][1] - temp.returnPoints[1][1]) /
-    // (temp.returnPoints[0][0] - temp.returnPoints[1][0])) * 180 / M_PI);
-    bool finished = false;
-    int current = 0;
-    double errorCurveInteg = 0;
-    double radiusScalar = 0;
-    double radiusDifference = 9.45 / 2;
+    //setting up intial variables that do not change
+    static bool finished = false;
+    static int current = 0;
+    static double errorCurveInteg = 0;
+    static double radiusScalar = 0;
+    static double radiusDifference = 9.45 / 2;
 
     // setting starting to nan so they get set to 0 by if statements
-    double integralSS = NAN;
-    double integralFW = NAN;
-    double prevET = NAN;
-    double prevETS = NAN;
+    static double integralSS = NAN;
+    static double integralFW = NAN;
+    static double prevET = NAN;
+    static double prevETS = NAN;
     while (finished == false) {
       while (1) {
+        //calculating distance to next point
         double et =
             sqrt(pow(sensing.robot.xpos - temp.returnPoints[current][0], 2) +
                  pow(sensing.robot.ypos - temp.returnPoints[current][1], 2));
 
-        if (et < 3 /*move.tolerance*/) { ///////////////land mine
+        if (et < 3 ) { ///////////////land mine
           current++;
           if (current == temp.length + 1) {
             finished = true;
           }
           break; // path finished exit
         }
-        // checking if closer to other point
-        /*if (et > 6){
-          double bET = et;
-          for (int i = current; i<temp.length; i++){
-            double tempet = sqrt(pow(sensing.robot.xpos -
-        temp.returnPoints[i][0],2) + pow(sensing.robot.ypos -
-        temp.returnPoints[i][1],2)); if (tempet < et){ current = i; et = tempet;
-            }
-          }
-          if (bET != et){
-            integralSS = 0;
-            integralFW = 0;
-          }
-        }   */
 
         delay(10);
 
@@ -810,29 +688,22 @@ public:
     rbD.brake();
   }
 
-  void waitPosTime(int maxTime, int overallStartTime,
-                   int overallMaxTime = 55000) {
-    int startTime = millis();
-    move.resetMoveTo = false;
-    while (millis() - startTime < maxTime && move.resetMoveTo == false &&
-           millis() - overallStartTime < overallMaxTime) {
-      delay(20);
-    }
-  }
-  // 0 = moveTo, 1 = rotateTo, 2 = driveDist, 3 driveVoltage
-  int driveType = 0;
-  bool autoDriveRun = true;
-  double leftSpd = 0;
-  double rightSpd = 0;
+  //Auton drive controller and variables associated with it
+  int driveType = 0;// 0 = moveTo, 1 = rotateTo, 2 = driveVoltage
+  double leftSpd = 0; //variables to dodo direct voltage control for elsewhere in the class
+  double rightSpd = 0;//variables to dodo direct voltage control for elsewhere in the class
   void autonDriveController(void) {
-    autoDriveRun = true;
-    while (!competition::is_disabled() && competition::is_autonomous() &&
-           autoDriveRun == true) {
+    //check to ensure that thread stops when auton stops to ensure no interference with driver control
+    while (!competition::is_disabled() && competition::is_autonomous()) {
+
+      //setting drive type to impossible number to ensure that variables are reset at start of function
       static int prevdriveType = 1000;
       bool resetIntegs = false;
       if (driveType != prevdriveType) {
         resetIntegs = true;
       }
+      //resets all integrals at when changing from one drive type to another
+
       switch (driveType) {
       case 0: // moveTo
         moveTo(resetIntegs);
@@ -840,13 +711,12 @@ public:
       case 1: // rotateTo
         rotateTo(resetIntegs);
         break;
-      case 2: // drivevDist
-        driveDist(resetIntegs);
-        break;
-      case 3: // driveVoltage
+      case 2: // driveVoltage
         break;
       }
       prevdriveType = driveType;
+
+      //ensuring that inputs do not exceed the capabilities of the motor
       if (leftSpd > 12000) {
         leftSpd = 12000;
       }
@@ -860,6 +730,8 @@ public:
       if (rightSpd < -12000) {
         rightSpd = -12000;
       }
+
+      //changing how the motor controls deceleration and stopping
       if (move.Stop_type == 1) {
         lfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
         lbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
@@ -876,6 +748,8 @@ public:
         rfD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
         rbD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
       }
+
+      //driving or stopping the motor
       if (drivePowerL == 0 && drivePowerR == 0) {
         lfD.brake();
         lbD.brake();
@@ -888,6 +762,7 @@ public:
         rbD.move_voltage(rightSpd);
       }
 
+      //outpuutting for match review
       logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
       logValue("ODOx", sensing.robot.odoxpos, 2);
@@ -924,10 +799,10 @@ public:
     rbD.brake();
   }
 
+  // Operator control drive controller
   void driveController() {
     while (!competition::is_disabled()) {
-      double leftSpd;
-      double rightSpd;
+      //setting variables and converting them to millivolts
       double leftSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) +
                           master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
       double rightSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) -
@@ -941,6 +816,7 @@ public:
       rfD.move_voltage(rightSpd);
       rbD.move_voltage(rightSpd);
 
+      //logging variables for match review
       logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
       logValue("ODOx", sensing.robot.odoxpos, 2);
@@ -1073,10 +949,8 @@ public:
       } else {
         static double IPIDang = 0;
         static double IPIDang2 = 0;
-        if (competition::is_disabled()) {
-          IPIDang = 0;
-          IPIDang2 = 0;
-        }
+
+        //calculating how diffence in speed as input for PID and as tool to know when to shoot
         double flyWVolt;
         double flyWVolt2;
         double flyWheelW = flyWheel1.get_actual_velocity();
@@ -1090,6 +964,7 @@ public:
         static double prevFWdiffSPD2 =
             angularVelocityCalc(sensing.robot.magFullness);
 
+        //updating Integral and derivative, calculating PID
         IPIDang += diffFlyWheelW;
         IPIDang2 += diffFlyWheelW2;
         double prop = PID.flyWheel.p * diffFlyWheelW;
@@ -1098,10 +973,11 @@ public:
         double integ2 = IPIDang2 * PID.flyWheel.i2;
         double deriv = PID.flyWheel.d * (diffFlyWheelW - prevFWdiffSPD);
         double deriv2 = PID.flyWheel.d2 * (diffFlyWheelW2 - prevFWdiffSPD2);
-
         prevFWdiffSPD = diffFlyWheelW;
         prevFWdiffSPD2 = diffFlyWheelW2;
 
+
+        //converting to millivolts and ensuring that it does not exceed the capabilities of the motors
         flyWVolt = 12000.0 / 127 * (prop + integ + deriv);
         flyWVolt2 = 12000.0 / 127 * (prop2 + integ2 + deriv2);
 
@@ -1114,7 +990,6 @@ public:
         if (fabs(diffFlyWheelW) < 1 && flyWVolt == 0) {
           IPIDang = 0;
         }
-
         if (flyWVolt2 > 12000) {
           flyWVolt2 = 12000;
         }
@@ -1125,6 +1000,8 @@ public:
           IPIDang2 = 0;
         }
 
+
+        //checking for not a number returns, happens often when motor is disconnected
         if (isnanf(flyWVolt)) {
           flyWVolt = 0;
           prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
@@ -1144,28 +1021,26 @@ public:
     }
   }
 
-  // power controller for differential motors between intake and turret
-  bool runTurretIntake = true;
+  // power controller for that run intake and turret
+  bool runTurretIntake = true;//variable to properly stop the thread
   void turretIntakeController() {
     runTurretIntake = true;
     while (!competition::is_disabled() && runTurretIntake == true) {
 
       turretMotor.set_brake_mode(E_MOTOR_BRAKE_HOLD);
-      if (!competition::is_autonomous()) {
-        ejectPiston.set_value(
-            master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
-        if (master.get_digital(E_CONTROLLER_DIGITAL_A) &&
+      if (!competition::is_autonomous()) {//control pistons in driver control
+        if (master.get_digital(E_CONTROLLER_DIGITAL_A) &&//expand
             master.get_digital(E_CONTROLLER_DIGITAL_X) &&
             master.get_digital(E_CONTROLLER_DIGITAL_B) &&
             master.get_digital(E_CONTROLLER_DIGITAL_Y)) {
           boomShackalacka.set_value(true);
           shoot3.set_value(false);
         } else {
-          boomShackalacka.set_value(false);
+          boomShackalacka.set_value(false); //operate 
           shoot1.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
           shoot3.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1));
           ejectPiston.set_value(
-              master.get_digital(pros::E_CONTROLLER_DIGITAL_X));
+          master.get_digital(pros::E_CONTROLLER_DIGITAL_X));//operates piston to remove a disc stuck after flywheel
         }
       }
 
@@ -1185,6 +1060,7 @@ public:
     intakeMotor.brake();
   }
 
+  // actuates the pistons during autonomous
   void raiseAScore(int number) {
     if (number == 3) {
       shoot3.set_value(true);
@@ -1197,23 +1073,27 @@ public:
     }
   }
 
+  // moves to roller and spins it to correct orientation
   void driveToRoller(double time,
                      bool reverseOut = true) { // changing to let move to take
                                                // over the initial moveto
     bool finished = false;
-    driveType = 3;
+    driveType = 2;//manual voltage control
+
     int startTime = millis();
-    while (!sensing.underRoller(1) && !sensing.underRoller(2) &&
+    while (!sensing.underRoller(1) && !sensing.underRoller(2) && //drive to roller until under roller
            millis() - startTime < time) {
       leftSpd = 8000;
       rightSpd = 8000;
       delay(20);
     }
+    //run with constant power to ensure contact with roller
     leftSpd = 6000;
     rightSpd = 6000;
-    intakeRunning = 3;
-    intakespdTar = 180;
-    while (finished == false && millis() - startTime < time) {
+
+    intakeRunning = 3;//speed control for intake
+    intakespdTarget = 180;
+    while (finished == false && millis() - startTime < time) {//wait until roller is flipped
       static int pwr = 8000;
       if (sensing.rollerIsGood()) {
         finished = true;
@@ -1221,6 +1101,7 @@ public:
       }
       delay(20);
     }
+
     if (reverseOut) {
       leftSpd = -8000;
       rightSpd = -8000;
@@ -1238,12 +1119,13 @@ public:
   // expansion
   void explode(void) {
     boomShackalacka.set_value(true);
-    driveType = 3;
+    driveType = 2;
     rightSpd = 0;
     leftSpd = 0;
   }
 };
 
+//wrappers that exist to start threads inside a class
 extern void drive_ControllerWrapper(void *mControl);
 extern void turretIntake_ControllerWrapper(void *mControl);
 extern void fly_ControllerWrapper(void *mControl);
