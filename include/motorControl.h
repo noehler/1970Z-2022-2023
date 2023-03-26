@@ -1111,11 +1111,6 @@ public:
     intakeRunning = 0;
   }
 
-  //used to update pid and sensor values to adapt do different field conditions
-  void field_update(void){
-    PID.turret = fieldPID();
-  }
-
   // expansion
   void explode(void) {
     boomShackalacka.set_value(true);

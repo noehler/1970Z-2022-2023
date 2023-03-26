@@ -123,6 +123,7 @@ lv_res_t colorSwitchClick(lv_obj_t * btn){
     return LV_RES_OK;
 }
 
+//button to change which auton is ran
 lv_res_t autonSwitchClick(lv_obj_t * btn){
     uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
     //std::cout << id;
@@ -164,6 +165,7 @@ lv_res_t autonSwitchClick(lv_obj_t * btn){
     return LV_RES_OK;
 }
 
+//button to change which field data is pulled from SD card, useful if different conditions are present per field (lighting, color, disc compression)
 int current_field =0;
 lv_res_t fieldSwitchClick(lv_obj_t * btn){
     uint8_t id = lv_obj_get_free_num(btn); //id usefull when there are multiple buttons
@@ -180,6 +182,7 @@ lv_res_t fieldSwitchClick(lv_obj_t * btn){
     return LV_RES_OK;
 }
 
+//sets up the screen at start of program
 void setupScreen(void){
     /*Create a Tab view object*/
     lv_obj_t *tabview;
@@ -230,6 +233,7 @@ void setupScreen(void){
     }
 }
 
+//Checklist to ensure that all variables that need to be set are set in pre auton
 void preMatchCheck(void){
     char buffer[100];
     if(colorSet){

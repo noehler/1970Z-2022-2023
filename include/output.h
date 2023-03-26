@@ -11,6 +11,5 @@ extern double discMults[3][2];
 extern void logValue(std::string name, double value, int position);
 extern void outValsSDCard(void);
 extern void warn(std::string message, int messageShowTime = 5000);
-extern PID_t fieldPID(void);
 extern void logMessage(std::string message);
 #endif

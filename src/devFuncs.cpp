@@ -9,6 +9,7 @@ public:
     PID_t driveFR, driveSS, turret, flyWheel;
 } PID;
 
+//outputting distances and colors for update at tournament
 void tuneSensors(void){
     
     Optical opticalSensor(14);

@@ -38,17 +38,20 @@ class beziers_t{
                 length+=1;
             }
             
+            //making a returnable variable to hold all information
             bez_Return_t temp;
             for (int i = 0; i< 10; i++){
                 temp.basePoints[i][0] = inputPoints[i][0];
                 temp.basePoints[i][1] = inputPoints[i][1];
             }
             temp.length = precision;
-
+            
+            //generating path between points
             double vectors[100][2];
             for (int i = 0; i < precision; i++){
                 double t = double(i)/precision;
                 double weight[length];
+                //using pre calculated functions described in notebook to calculate each point
                 if (length == 4){
                     weight[0] = 1-3*t + 3*pow(t,2) - pow(t,3);
                     weight[1] = 3*t - 6*pow(t,2) + 3 * pow(t,3);
@@ -88,12 +91,14 @@ class beziers_t{
                     outValsSDCard();
                     break;
                 }
-                
+
+                //calculating points by adding up weights
                 for (int j = 0; j < length; j++){
                     temp.returnPoints[i][0] += weight[j] * inputPoints[j][0];
                     temp.returnPoints[i][1] += weight[j] * inputPoints[j][1];
                 }
                 
+                //calculating speed to travel at and radius of the arc calculated
                 if (i > 0){
                     double dx = temp.returnPoints[i][0] - temp.returnPoints[i-1][0];
                     double dy = temp.returnPoints[i][1] - temp.returnPoints[i-1][1];
@@ -120,11 +125,6 @@ class beziers_t{
                         temp.returnVelocity[i] = 100;
                     }
                 }
-                
-
-                logValue("xG", temp.returnPoints[i][0], 0);
-                logValue("yG", temp.returnPoints[i][1], 1);
-                outValsSDCard();
                 
             }
 

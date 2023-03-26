@@ -10,15 +10,12 @@ int color = true;//0 is blue, 1 is red, 2 is driver skill
 
 bool updateScreen[2] = {1,1};
 
-void autonNotSetup(void){
-    
-}
-
+//macro for pythagorean theorum because used so much in macros
 double distto (double x, double y){
     return sqrt(pow(x,2)+pow(y,2));
- }
+}
 
-
+//sets all variables for correct use of MoveTo function
 void moveto(void *mc, double xTo, double yTo, double speedLimit, double tolerance, double errtheta, int forward){
     char temp[50];
     sprintf(temp,"move To (%f, %f)", xTo,yTo);
@@ -33,14 +30,7 @@ void moveto(void *mc, double xTo, double yTo, double speedLimit, double toleranc
     ((motorControl_t*) mc)->move.moveToforwardToggle = forward;
 }
 
-double pickPos(double posInput, int run){
-    if (run == 0){
-        return posInput;
-    }
-    else{
-        return 144 - posInput;
-    }
-}
+//wait until shooter is lined up, robot is still, speed is right, or timout to shoot
 void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, int overallMaxTime, int maxTime){
     if (number == 4){
         number = sensing.robot.magFullness;
@@ -91,16 +81,22 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
     delay(300);
     sensing.robot.turretLock = true;
 }
+
+//start intake, lock turret
 void intake(void *mc){
     ((motorControl_t*) mc)->intakeRunning = 1;
     sensing.robot.turretLock = true;
 }
+
+//run drive at set voltage
 void movevoltage(void *mc, double L, double R){
     
     ((motorControl_t*) mc)->driveType = 2;
     ((motorControl_t*) mc)->rightSpd = R;
     ((motorControl_t*) mc)->leftSpd = L;
 }
+
+//set parameters to rotate to set angle
 void rotateto(void *mc,double ang, double range){
     logMessage("rotate");
     ((motorControl_t*) mc)->driveType = 1;
@@ -108,7 +104,7 @@ void rotateto(void *mc,double ang, double range){
     ((motorControl_t*) mc)->move.errtheta = range;
 }
 
-//macro to wait for 
+//macro to wait for correct position or time
 void waitPosTime(void *mc, int maxTime, int overallStartTime,
                 int overallMaxTime) {
     int startTime = millis();
@@ -119,6 +115,7 @@ void waitPosTime(void *mc, int maxTime, int overallStartTime,
     }
 }
 
+//wait until magazine is filled or time is reached
 void intakeWaitForDiscs(void *mc, int maxTime, int overallStartTime, int goalAmt, int overallMaxTime){
     logMessage("collecting discs");
     int startTime = millis();
@@ -127,6 +124,7 @@ void intakeWaitForDiscs(void *mc, int maxTime, int overallStartTime, int goalAmt
     }
 }
 
+//wait until specific angle is reached or time is reached
 void waitRotate(void *mc, int maxTime, int overallStartTime, int overallMaxTime){
     int startTime = millis();
     while(fabs(sensing.robot.angle-((motorControl_t*) mc)->HeadingTarget)+fabs(sensing.robot.velW)>= ((motorControl_t*) mc)->move.errtheta && millis() - startTime <maxTime && millis() - overallStartTime < overallMaxTime){
@@ -134,6 +132,7 @@ void waitRotate(void *mc, int maxTime, int overallStartTime, int overallMaxTime)
     }
 }
 
+//updates screen to match current selection of auton
 void AutonSelector(void){    
     while(competition::is_disabled()){
         

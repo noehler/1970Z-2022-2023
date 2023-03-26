@@ -57,7 +57,7 @@ void skillsAutonomous(void){
     //drive to roller
     moveto(&mc, 0, 23,100,10,5,1); 
     startTime = millis();
-    while((sensing.robot.xpos>pickPos(18, 0) || sensing.robot.xpos<pickPos(18, 1))&&millis()-startTime<1000){//disguesting picpos
+    while((sensing.robot.xpos>18 || sensing.robot.xpos<126)&&millis()-startTime<1000){//disguesting picpos
         delay(10);
     }
     //get the roller
@@ -67,7 +67,7 @@ void skillsAutonomous(void){
     //out of roller
     moveto(&mc, 20,23,50,5,10,-1);
     startTime = millis();
-    while((sensing.robot.xpos<pickPos(18, 0) || sensing.robot.xpos>pickPos(18, 1))&&millis()-startTime<1000){
+    while((sensing.robot.xpos<18 || sensing.robot.xpos>126)&&millis()-startTime<1000){
         //time out
         //robot pos check
         delay(10);
@@ -193,7 +193,7 @@ void skillsAutonomous(void){
     //drive to roller
     moveto(&mc, 144-0, 144-24,100,10,5,1);
     startTime = millis();
-    while((sensing.robot.xpos>pickPos(18, 0) || sensing.robot.xpos<pickPos(18, 1))&&millis()-startTime<1000){
+    while((sensing.robot.xpos>18 || sensing.robot.xpos<126)&&millis()-startTime<1000){
         delay(10);
     }
     //get the roller

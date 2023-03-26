@@ -1,6 +1,8 @@
 #include "main.h"
 
 using namespace pros;
+
+//starting sensing class
 sensing_t sensing;
 
 double targetAngleOffest = 0;
@@ -8,6 +10,7 @@ double chaIntAng = 0;
 double goalAngle = 0;
 bool highTurretInitAng = 0;
 
+//wrappers to start Tasks inside the classes
 void odometry_Wrapper(void* sensing) {
     ((sensing_t*) sensing)->odometry();
 }
@@ -20,7 +23,7 @@ void GPS_Wrapper(void* sensing){
     ((sensing_t*) sensing)->GPS_tracking();
 }
 
-
+//get input from terminal on computer
 double getNum(std::string Output){
   std::string tempDist;
   double realNum;

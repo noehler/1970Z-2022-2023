@@ -9,9 +9,7 @@
 
 using namespace pros;
 
-//global Variables
-
-//local to file
+//variables for logging and outputting
 char filename[25];
 double outVals[40] = {420.69,420.69,420.69,420.69,420.69,
                     420.69,420.69,420.69,420.69,420.69,
@@ -23,17 +21,14 @@ double outVals[40] = {420.69,420.69,420.69,420.69,420.69,
                     420.69,420.69,420.69,420.69,420.69};
 char outNames[40][50];
 
+//message output for log files
 bool messageToLog = false;
 char logMessageText[100];
 
+//variable to safely fill the outNum and outName lists
 void logValue(std::string name, double value, int position){
     strcpy(outNames[position], name.c_str()); 
     outVals[position] = value;
-}
-
-PID_t fieldPID(void){
-    PID_t temp;
-    return temp;
 }
 
 //function to prepare a string to be outputted to SD Card next output cycle
@@ -42,6 +37,7 @@ void logMessage(std::string message){
     messageToLog = true;
 }
 
+//locates the next open file name
 int startRecord(void){
     int fileNum;
     for (int i = 1; ; i++)
@@ -62,11 +58,14 @@ int startRecord(void){
     }
 }
 
+//updates screen of second controller with updated variables and warnings
 char errorMessage[20];
 double discMults[3][2] = {{1,0}, {1,0}, {1,0}};
 void sidecarGUI(bool showError){
     static bool prevShow = 0;
     static int multChange[2] = {0,1};
+    
+    //update variables
     if (sidecar.get_digital(DIGITAL_B)){
         multChange[0] = 1;
     }
@@ -76,16 +75,20 @@ void sidecarGUI(bool showError){
     else if (sidecar.get_digital(DIGITAL_X)){
         multChange[0] = 3;
     }
-
     discMults[multChange[0]-1][0] += double(sidecar.get_analog(ANALOG_RIGHT_Y))/2048;
 
-    if (discMults[0][0] != discMults[0][1] || discMults[1][0] != discMults[1][1] || discMults[2][0] != discMults[2][1] || multChange[0] != multChange[1]){
+    if (discMults[0][0] != discMults[0][1] || discMults[1][0] != discMults[1][1] || discMults[2][0] != discMults[2][1] || multChange[0] != multChange[1]){//detects change so only sends data to controller when has to
+        //setting all variables to current
         discMults[0][1] = discMults[0][0];
         discMults[1][1] = discMults[1][0];
         discMults[2][1] = discMults[2][0];
         multChange[1] = multChange[0];
+
+        //indicator of what variables are being changed
         char changeOut[10];
         sprintf(changeOut," Change %d",multChange[0]);
+
+        //clear and print to screen
         delay(50);
         sidecar.clear();
         delay(50);
@@ -97,31 +100,31 @@ void sidecarGUI(bool showError){
     }
 }
 
+//determines is last warning pushed should still be shown or cleared
 int waitTime = 0;
 int lastWarnTime = 0;
 bool showing = true;
 void warnScreenUpdate(void){
-    if (sidecar.is_connected()){
+    if (sidecar.is_connected()){//only run if second controller is connected
         
-        if (c::millis()-lastWarnTime < waitTime && millis() > waitTime){
+        if (c::millis()-lastWarnTime < waitTime && millis() > waitTime){//if should show
             if (updateScreen[1]){
                 showing = true;
                 updateScreen[1] = false;
             }
             delay(50);
-            sidecar.rumble(".-");
+            sidecar.rumble(".-");//rumble when showing
         }
         else{
-            if (showing){
+            if (showing){//remove warning
                 showing = false;
-                delay(50);
-                sidecar.clear();
             }
         }
-        sidecarGUI(showing);
+        sidecarGUI(showing);//update screen
     }
 }
 
+//variable to safely send a warning message
 void warn(std::string message, int messageShowTime){
     lastWarnTime = millis();
     waitTime = messageShowTime;
@@ -129,9 +132,11 @@ void warn(std::string message, int messageShowTime){
     updateScreen[1] = true;
 }
 
+//outputting to SD card in seperate thread so if there is a corrupted card it will not end what the robot is actually doing
 void outValsSDCard(void){
     while(1){
         if (usd::is_installed() && outVals[0] != 420.69 && !competition::is_disabled()){
+            //making file and initally printing names of colums on top
             static int fileNum;
             static bool headerMade = false;
         
@@ -156,6 +161,8 @@ void outValsSDCard(void){
                 fprintf(usd_file_write,"\n");
                 headerMade = true;
             }
+
+            //outputting data to screen and sdCard
             for (int i = 0; i < 40; i++){
                 if (outVals[i] != 420.69){
                     fprintf(usd_file_write,"%f", outVals[i]);
@@ -173,6 +180,7 @@ void outValsSDCard(void){
                 }
                 
             }
+            //log new messages after all other data outputted
             if (messageToLog){
                 fprintf(usd_file_write,",%s", logMessageText);
                 messageToLog = false;
@@ -181,6 +189,7 @@ void outValsSDCard(void){
             fclose(usd_file_write);
         }
         else{
+            //update screen if no SD card present
             for (int i = 0; i < 20; i++){
                 if (outVals[i] != 420.69){
                     char buffer[20];
@@ -189,7 +198,7 @@ void outValsSDCard(void){
                 }
             }
         }
-        warnScreenUpdate();
+        warnScreenUpdate();//update second controller screen
         delay(40);
     }
 }
