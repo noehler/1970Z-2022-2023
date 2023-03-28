@@ -9,8 +9,8 @@ void drive_ControllerWrapper(void* mControl) {
         ((motorControl_t*) mControl)->autonDriveController();
     }
 }
-void turretIntake_ControllerWrapper(void* mControl) {
-    ((motorControl_t*) mControl)->turretIntakeController();
+void intake_ControllerWrapper(void* mControl) {
+    ((motorControl_t*) mControl)->intakeController();
 }
 void fly_ControllerWrapper(void* mControl) {
     ((motorControl_t*) mControl)->flyController();

@@ -121,7 +121,7 @@ public:
         rightEncoderFB({{9, 'C', 'D'}, true}), encoderLR({{9, 'A', 'B'}, true}),
         turretEncoder(8), inertial2(7), upLoaded({22, 'E'}),
         deckLoaded({22, 'C'}), holeLoaded({22, 'G'}), inertial(21),
-        opticalSensor(14), opticalSensor2(11), discSearch(3), distSense(20),
+        opticalSensor(14), opticalSensor2(11), discSearch(15), distSense(20),
         GPS_sensor(12) {}
 
   // called at start of pre Auton, calibrates inerials and other sensors along
@@ -451,9 +451,9 @@ public:
   bool rollerIsGood(void) {
     if (underRoller(1)) {
       c::optical_rgb_s color_sensor = opticalSensor.get_rgb();
-      logValue("r", color_sensor.red, 24);
-      logValue("b", color_sensor.blue, 25);
-      logValue("prox", opticalSensor.get_proximity(), 26);
+      logValue("r", color_sensor.red, 23);
+      logValue("b", color_sensor.blue, 24);
+      logValue("prox", opticalSensor.get_proximity(), 25);
       if (((color_sensor.red > 3800 && color == true) ||
            (color_sensor.red < 1200 && color == false)) &&
           underRoller(1)) {
@@ -463,9 +463,9 @@ public:
       }
     } else if (underRoller(2)) {
       c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
-      logValue("r", color_sensor.red, 24);
-      logValue("b", color_sensor.blue, 25);
-      logValue("prox", opticalSensor2.get_proximity(), 26);
+      logValue("r", color_sensor.red, 23);
+      logValue("b", color_sensor.blue, 24);
+      logValue("prox", opticalSensor2.get_proximity(), 25);
 
       if (((color_sensor.red > 2000 && color == true) ||
            (color_sensor.red < 500 && color == false)) &&
@@ -476,9 +476,9 @@ public:
       }
     } else {
       c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
-      logValue("r", 0, 24);
-      logValue("b", 0, 25);
-      logValue("prox", opticalSensor2.get_proximity(), 26);
+      logValue("r", 0, 23);
+      logValue("b", 0, 24);
+      logValue("prox", opticalSensor2.get_proximity(), 25);
       return 0;
     }
   }

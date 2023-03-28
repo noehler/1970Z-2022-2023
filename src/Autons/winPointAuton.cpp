@@ -7,7 +7,7 @@ void winPointAuton(void){
 
     motorControl_t mc;
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
-	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &mc, "Intake and Turret Controller Task");
+	Task turret_Intake_Task(intake_ControllerWrapper, (void*) &mc, "Intake Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
 
@@ -67,7 +67,7 @@ void closeWinPoint(void){
 
     motorControl_t mc;
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
-	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &mc, "Intake and Turret Controller Task");
+	Task turret_Intake_Task(intake_ControllerWrapper, (void*) &mc, "Intake Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
 
@@ -114,7 +114,7 @@ void farWinPoint(void){
 
     motorControl_t mc;
 	Task drive_Task(drive_ControllerWrapper, (void*) &mc, "My Driver Controller Task");
-	Task turret_Intake_Task(turretIntake_ControllerWrapper, (void*) &mc, "Intake and Turret Controller Task");
+	Task turret_Intake_Task(intake_ControllerWrapper, (void*) &mc, "Intake Controller Task");
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
 

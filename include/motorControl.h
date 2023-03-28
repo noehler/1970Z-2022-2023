@@ -22,12 +22,12 @@ class motorControl_t {
 private:
   // declaring motors and solenoids, defined at start of public
   Motor lfD;
+  Motor lmD;
   Motor lbD;
   Motor rfD;
+  Motor rmD;
   Motor rbD;
   Motor flyWheel1;
-  Motor flyWheel2;
-  Motor turretMotor;
   Motor intakeMotor;
   ADIDigitalOut boomShackalacka;
   ADIDigitalOut shoot3;
@@ -100,160 +100,6 @@ private:
 
   // turret controller called in turret intake thread, returns power to run
   // motor at in mv from -12000 to 12000
-  double turrControl(void) {
-    // uses a double PID, one to account for the angle difference and another to
-    // account for the velocity of the robot angular difference is denoted as
-    // Position velocity PID is denoted with velocity
-
-    /*  setting up variables needed for PID controller  */
-    // variables that output the final power to run the motors at
-    static double PIDPosition = 0;
-    static double PIDVelocity = 0;
-
-    // variables that store the integrals for the PID controllers
-    static double IPIDposition = 0;
-    static double IPIDvelocity = 0;
-
-    // delta T calculation used in the Velocity PID
-    static double T = 0;
-    static double previousT = 0;
-    T = float(millis()) / 1000 - previousT;
-    previousT += T;
-
-    //different multipliers to account for movement and rotation of the robot
-    static double PIDscalar = 5;
-    static double gyroScalar = 0.2;
-    static double chassisScalar = 0.35;
-    static double turPredicScalar = .7;
-
-    //modded calculation for the angle difference between the goal angle and actual angle
-    angdiff = goalAngle - sensing.robot.turAng;
-    if (angdiff > 180) {
-      angdiff -= 360;
-    } else if (angdiff < -180) {
-      angdiff += 360;
-    }
-
-    //calculation to determine if the goal position will be between +- 180 degrees relative to the robot
-    //used to make sure that turret does not over rotate in one direction and lock out due to wires running through the middle
-    double robotAngleDiff = goalAngle - sensing.robot.angle;
-    double turretAngle = double(sensing.turretEncoder.get_position()) / 100 +
-                         180 - highTurretInitAng * 360;
-    if (turretAngle + angdiff > 405) {
-      angdiff -= 360;
-    }
-    if (turretAngle + angdiff < -45) {
-      angdiff += 360;
-    }
-    //variable used in shooting macros to account for possible mis alignment of function timing. 
-    //If not in place, macro could update the goal position and then do a check of position before value actually updated
-    updatedAD = true;
-
-    //variables to calculate the derivative
-    static double previousveldiff = 0;
-    static double previousangdiff = 0;
-
-    //stop controller and reset all integrals if unable to move turret
-    if (!competition::is_disabled()) {
-      if (fabs(angdiff) > 10) {//voltage and acceleration controller
-        //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
-        double acceleration = .5;
-
-        //if motor is too hot the motor will not be able to accelerate as well
-        if (turretMotor.get_temperature() > 45){
-          acceleration*=.3;
-        }
-
-        //first term is amount of loops until target is reached, second term is amount of loops to slow down at current speed
-        if (fabs(angdiff) / fabs(angdiff - previousangdiff) >
-            fabs(angdiff - previousangdiff) / acceleration) { //accelerate
-          if (angdiff < 0) {
-            PIDPosition = -127;
-          } else {
-            PIDPosition = 127;
-          }
-        } else {//deccelerate
-          if (angdiff < 0) {
-            PIDPosition = 127;
-          } else {
-            PIDPosition = -127;
-          }
-        }
-
-        //reseting integrals to get a new PID when within range to use PID
-        previousangdiff = angdiff;
-        IPIDposition = 0;
-        IPIDvelocity = 0;
-        return PIDPosition;
-
-      } else if (fabs(angdiff) > 1){//PID controller in case of overheat
-        //Anglular PID
-        IPIDposition += angdiff;
-        PIDPosition = (PID.turret.p * angdiff + PID.turret.i * IPIDposition +
-                       PID.turret.d * (angdiff - previousangdiff));
-
-
-        //velocity PID
-        if (sensing.robot.turretLock && fabs(angdiff) < 5) {
-          gyroScalar = 0;
-          chassisScalar = 0;
-          turPredicScalar = 0;
-        } else {
-          gyroScalar = 0.2;
-          chassisScalar = 0.4;
-          turPredicScalar = 3;
-        }
-
-        double veldiff = gyroScalar * T * (sensing.robot.angAccel) -
-                         sensing.robot.velW * chassisScalar +
-                         turPredicScalar * sensing.robot.turvelocity +
-                         PIDPosition * PIDscalar;
-
-        IPIDvelocity += veldiff;
-        PIDVelocity = (1 * veldiff + 0.01 * IPIDvelocity +
-                       0.1 * (veldiff - previousveldiff));
-        previousveldiff = veldiff;
-
-        //clearing variables if within range
-        if (fabs(angdiff) < 1 && PIDPosition == 0 && fabs(veldiff) < 1) {
-          IPIDvelocity = 0;
-        }
-        if (fabs(veldiff) < 0.1) {
-          IPIDvelocity = 0;
-        }
-        if (fabs(angdiff) < 1 && fabs(angdiff - previousangdiff) < 10) {
-          return 0;
-        }
-        previousangdiff = angdiff;
-      }
-      else{//hold motor position
-        IPIDvelocity = 0;
-        IPIDposition = 0;
-        return 0;
-      }
-    } else {//resetting intergrals and holding if angle diff < 1
-      PIDVelocity = 0;
-      IPIDvelocity = 0;
-      IPIDposition = 0;
-    }
-    
-    //removing any power if overall power output is too low
-    if (fabs(PIDVelocity) < 0.01) {
-      return 0;
-    }
-
-    //reseting variables if corrupted by nan, can be caused by sensor error
-    if (isnanf(PIDVelocity)) {
-      PIDVelocity = 0;
-      IPIDvelocity = 0;
-      IPIDposition = 0;
-    }
-
-    return PIDVelocity;
-  }
-
-  // turret controller called in turret intake thread, returns power to run
-  // motor at in mv from -12000 to 12000
   double intakeControl(void) {
     //return variable
     static int baseSPD;
@@ -313,11 +159,9 @@ public:
 
   // Constructor to assign values to the motors and PID values
   motorControl_t(void)
-      : lfD(5, E_MOTOR_GEARSET_06, true), lbD(4, E_MOTOR_GEARSET_06, false),
-        rfD(2, E_MOTOR_GEARSET_06, false), rbD(1, E_MOTOR_GEARSET_06, true),
+      : lfD(1, E_MOTOR_GEARSET_06, true), lmD(2, E_MOTOR_GEARSET_06, true), lbD(3, E_MOTOR_GEARSET_06, false),
+        rfD(9, E_MOTOR_GEARSET_06, false), rmD(8, E_MOTOR_GEARSET_06, false), rbD(7, E_MOTOR_GEARSET_06, true),
         flyWheel1(13, E_MOTOR_GEARSET_06, false),
-        flyWheel2(16, E_MOTOR_GEARSET_06, true),
-        turretMotor(6, E_MOTOR_GEARSET_06, true),
         intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
     
@@ -734,31 +578,41 @@ public:
       //changing how the motor controls deceleration and stopping
       if (move.Stop_type == 1) {
         lfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+        lmD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
         lbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
         rfD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
+        rmD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
         rbD.set_brake_mode(E_MOTOR_BRAKE_HOLD);
       } else if (move.Stop_type == 0) {
         lfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+        lmD.set_brake_mode(E_MOTOR_BRAKE_COAST);
         lbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
         rfD.set_brake_mode(E_MOTOR_BRAKE_COAST);
+        rmD.set_brake_mode(E_MOTOR_BRAKE_COAST);
         rbD.set_brake_mode(E_MOTOR_BRAKE_COAST);
       } else {
         lfD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+        lmD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
         lbD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
         rfD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+        rmD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
         rbD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
       }
 
       //driving or stopping the motor
       if (drivePowerL == 0 && drivePowerR == 0) {
         lfD.brake();
+        lmD.brake();
         lbD.brake();
         rfD.brake();
+        rmD.brake();
         rbD.brake();
       } else {
         lfD.move_voltage(leftSpd);
+        lmD.move_voltage(leftSpd);
         lbD.move_voltage(leftSpd);
         rfD.move_voltage(rightSpd);
+        rmD.move_voltage(rightSpd);
         rbD.move_voltage(rightSpd);
       }
 
@@ -774,28 +628,29 @@ public:
       logValue("angDiff", angdiff, 8);
       logValue("batt pct", battery::get_capacity(), 9);
       logValue("lfdTemp", lfD.get_temperature(), 10);
-      logValue("lbdTemp", lbD.get_temperature(), 11);
-      logValue("rfdTemp", rfD.get_temperature(), 12);
-      logValue("rbdTemp", rbD.get_temperature(), 13);
-      logValue("intakeTemp", intakeMotor.get_temperature(), 14);
-      logValue("turretTemp", turretMotor.get_temperature(), 15);
-      logValue("fW1Temp", flyWheel1.get_temperature(), 16);
-      logValue("fW2Temp", flyWheel2.get_temperature(), 17);
+      logValue("lmdTemp", lmD.get_temperature(), 11);
+      logValue("lbdTemp", lbD.get_temperature(), 12);
+      logValue("rfdTemp", rfD.get_temperature(), 13);
+      logValue("rmdTemp", rmD.get_temperature(), 14);
+      logValue("rbdTemp", rbD.get_temperature(), 15);
+      logValue("intakeTemp", intakeMotor.get_temperature(), 16);
+      logValue("fW1Temp", flyWheel1.get_temperature(), 17);
       logValue("fw1SPD", flyWheel1.get_actual_velocity(), 18);
-      logValue("fw2SPD", flyWheel2.get_actual_velocity(), 19);
-      logValue("magCount", sensing.robot.magFullness, 20);
-      logValue("goalAngle", goalAngle, 21);
-      logValue("goalSPD", sensing.goalSpeed, 22);
-      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 23);
+      logValue("magCount", sensing.robot.magFullness, 19);
+      logValue("goalAngle", goalAngle, 20);
+      logValue("goalSPD", sensing.goalSpeed, 21);
+      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
       //logging color from rollerGood
-      logValue("rollerGood", sensing.rollerIsGood(),27);
-      logValue("time", millis(), 28);
+      logValue("rollerGood", sensing.rollerIsGood(),26);
+      logValue("time", millis(), 27);
 
       delay(optimalDelay);
     }
     lfD.brake();
+    lmD.brake();
     lbD.brake();
     rfD.brake();
+    rmD.brake();
     rbD.brake();
   }
 
@@ -812,11 +667,13 @@ public:
       rightSpd = rightSpdRaw * 12000 / 127;
 
       lfD.move_voltage(leftSpd);
+      lmD.move_voltage(leftSpd);
       lbD.move_voltage(leftSpd);
       rfD.move_voltage(rightSpd);
+      rmD.move_voltage(rightSpd);
       rbD.move_voltage(rightSpd);
 
-      //logging variables for match review
+      //outpuutting for match review
       logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
       logValue("ODOx", sensing.robot.odoxpos, 2);
@@ -828,21 +685,21 @@ public:
       logValue("angDiff", angdiff, 8);
       logValue("batt pct", battery::get_capacity(), 9);
       logValue("lfdTemp", lfD.get_temperature(), 10);
-      logValue("lbdTemp", lbD.get_temperature(), 11);
-      logValue("rfdTemp", rfD.get_temperature(), 12);
-      logValue("rbdTemp", rbD.get_temperature(), 13);
-      logValue("intakeTemp", intakeMotor.get_temperature(), 14);
-      logValue("turretTemp", turretMotor.get_temperature(), 15);
-      logValue("fW1Temp", flyWheel1.get_temperature(), 16);
-      logValue("fW2Temp", flyWheel2.get_temperature(), 17);
+      logValue("lmdTemp", lmD.get_temperature(), 11);
+      logValue("lbdTemp", lbD.get_temperature(), 12);
+      logValue("rfdTemp", rfD.get_temperature(), 13);
+      logValue("rmdTemp", rmD.get_temperature(), 14);
+      logValue("rbdTemp", rbD.get_temperature(), 15);
+      logValue("intakeTemp", intakeMotor.get_temperature(), 16);
+      logValue("fW1Temp", flyWheel1.get_temperature(), 17);
       logValue("fw1SPD", flyWheel1.get_actual_velocity(), 18);
-      logValue("fw2SPD", flyWheel2.get_actual_velocity(), 19);
-      logValue("magCount", sensing.robot.magFullness, 20);
-      logValue("goalAngle", goalAngle, 21);
-      logValue("goalSPD", sensing.goalSpeed, 22);
-      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 23);
-      logValue("rollerG", sensing.rollerIsGood(), 24);
-      logValue("time", millis(), 25);
+      logValue("magCount", sensing.robot.magFullness, 19);
+      logValue("goalAngle", goalAngle, 20);
+      logValue("goalSPD", sensing.goalSpeed, 21);
+      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
+      //logging color from rollerGood
+      logValue("rollerGood", sensing.rollerIsGood(),26);
+      logValue("time", millis(), 27);
 
       delay(optimalDelay);
     }
@@ -859,13 +716,10 @@ public:
 
     // setting up PID controller values
     double angularVelocityDifferenceIntegral1 = 0;
-    double angularVelocityDifferenceIntegral2 = 0;
     double prevAngularVelocityDifference1 = 0;
-    double prevAngularVelocityDifference2 = 0;
-
+    
     while (!competition::is_disabled()) {
-      if (flyWheel1.get_temperature() < 45 &&
-          flyWheel2.get_temperature() < 45) {
+      if (flyWheel1.get_temperature() < 45) {
         double flyWVolt1, flyWVolt2;
         double goalAngularVelocity = angularVelocityCalc(sensing.goalSpeed);
         double holdPower1 = (18.48 * goalAngularVelocity) + 687.6;
@@ -875,15 +729,10 @@ public:
         // is too high
         double angularVelocityDifference1 =
             goalAngularVelocity - flyWheel1.get_actual_velocity();
-        double angularVelocityDifference2 =
-            goalAngularVelocity - flyWheel2.get_actual_velocity();
 
         // checking nanf
         if (angularVelocityDifferenceIntegral1 == NAN) {
           angularVelocityDifferenceIntegral1 = 0;
-        }
-        if (angularVelocityDifferenceIntegral2 == NAN) {
-          angularVelocityDifferenceIntegral2 = 0;
         }
 
         // flywheel1 controller
@@ -901,7 +750,7 @@ public:
             angularVelocityDifferenceIntegral1 += angularVelocityDifference1;
           }
           double deriv =
-              (prevAngularVelocityDifference2 - angularVelocityDifference2) *
+              (prevAngularVelocityDifference1 - angularVelocityDifference1) *
               PID.flyWheel.d * 0;
           double PIDVAL = (prop + integ + deriv) * 12000 / 127 * 0;
           angularVelocityDifferenceIntegral1 += angularVelocityDifference1;
@@ -914,38 +763,9 @@ public:
           }
         }
 
-        // flywheel2 controller
-        if (angularVelocityDifference2 > bottomLimit) { // not fast enough
-          angularVelocityDifferenceIntegral2 = 0;
-          flyWVolt2 = 12000;
-        } else if (angularVelocityDifference2 < -topLimit) { // too fast
-          angularVelocityDifferenceIntegral2 = 0;
-          flyWVolt2 = -200;
-        } else {
-          double prop = angularVelocityDifference2 * PID.flyWheel.p * 0;
-          double integ =
-              angularVelocityDifferenceIntegral2 * PID.flyWheel.i * 0;
-          if (!(integ > 60)) {
-            angularVelocityDifferenceIntegral2 += angularVelocityDifference2;
-          }
-          double deriv =
-              (prevAngularVelocityDifference2 - angularVelocityDifference2) *
-              PID.flyWheel.d * 0;
-          double PIDVAL = (prop + integ + deriv) * 12000 / 127 * 0;
-          flyWVolt2 = holdPower2 + PIDVAL;
-          if (flyWVolt2 > 12000) {
-            flyWVolt2 = 12000;
-          }
-          if (flyWVolt2 < -12000) {
-            flyWVolt2 = -12000;
-          }
-        }
-
         prevAngularVelocityDifference1 = angularVelocityDifference1;
-        prevAngularVelocityDifference2 = angularVelocityDifference2;
 
         flyWheel1.move_voltage(flyWVolt1);
-        flyWheel2.move_voltage(flyWVolt2);
       } else {
         static double IPIDang = 0;
         static double IPIDang2 = 0;
@@ -954,14 +774,9 @@ public:
         double flyWVolt;
         double flyWVolt2;
         double flyWheelW = flyWheel1.get_actual_velocity();
-        double flyWheelW2 = flyWheel2.get_actual_velocity();
         diffFlyWheelW =
             angularVelocityCalc(sensing.robot.magFullness) - flyWheelW;
-        diffFlyWheelW2 =
-            angularVelocityCalc(sensing.robot.magFullness) - flyWheelW2;
         static double prevFWdiffSPD =
-            angularVelocityCalc(sensing.robot.magFullness);
-        static double prevFWdiffSPD2 =
             angularVelocityCalc(sensing.robot.magFullness);
 
         //updating Integral and derivative, calculating PID
@@ -972,14 +787,11 @@ public:
         double integ = IPIDang * PID.flyWheel.i;
         double integ2 = IPIDang2 * PID.flyWheel.i2;
         double deriv = PID.flyWheel.d * (diffFlyWheelW - prevFWdiffSPD);
-        double deriv2 = PID.flyWheel.d2 * (diffFlyWheelW2 - prevFWdiffSPD2);
         prevFWdiffSPD = diffFlyWheelW;
-        prevFWdiffSPD2 = diffFlyWheelW2;
 
 
         //converting to millivolts and ensuring that it does not exceed the capabilities of the motors
         flyWVolt = 12000.0 / 127 * (prop + integ + deriv);
-        flyWVolt2 = 12000.0 / 127 * (prop2 + integ2 + deriv2);
 
         if (flyWVolt > 12000) {
           flyWVolt = 12000;
@@ -1007,14 +819,8 @@ public:
           prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
           IPIDang = 0;
         }
-        if (isnanf(flyWVolt2)) {
-          flyWVolt2 = 0;
-          prevFWdiffSPD2 = angularVelocityCalc(sensing.robot.magFullness);
-          IPIDang2 = 0;
-        }
 
         flyWheel1.move_voltage(flyWVolt);
-        flyWheel2.move_voltage(flyWVolt2);
       }
 
       delay(optimalDelay);
@@ -1023,11 +829,10 @@ public:
 
   // power controller for that run intake and turret
   bool runTurretIntake = true;//variable to properly stop the thread
-  void turretIntakeController() {
+  void intakeController() {
     runTurretIntake = true;
     while (!competition::is_disabled() && runTurretIntake == true) {
 
-      turretMotor.set_brake_mode(E_MOTOR_BRAKE_HOLD);
       if (!competition::is_autonomous()) {//control pistons in driver control
         if (master.get_digital(E_CONTROLLER_DIGITAL_A) &&//expand
             master.get_digital(E_CONTROLLER_DIGITAL_X) &&
@@ -1045,18 +850,11 @@ public:
       }
 
       double intakeSpd = intakeControl();
-      double turrSpd = -turrControl() * 12000 / 127;
-      if (turrSpd == 0) {
-        turretMotor.brake();
-      } else {
-        turretMotor.move_voltage(turrSpd);
-      }
 
       intakeMotor.move_voltage(intakeSpd);
 
       delay(optimalDelay);
     }
-    turretMotor.brake();
     intakeMotor.brake();
   }
 
@@ -1122,7 +920,7 @@ public:
 
 //wrappers that exist to start threads inside a class
 extern void drive_ControllerWrapper(void *mControl);
-extern void turretIntake_ControllerWrapper(void *mControl);
+extern void intake_ControllerWrapper(void *mControl);
 extern void fly_ControllerWrapper(void *mControl);
 
 #endif
