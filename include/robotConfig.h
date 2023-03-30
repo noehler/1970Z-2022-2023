@@ -96,10 +96,6 @@ public:
   Rotation turretEncoder;
   Imu inertial2;
 
-  ADIAnalogIn upLoaded;
-  ADIAnalogIn deckLoaded;
-  ADIAnalogIn holeLoaded;
-
   Imu inertial;
 
   Optical opticalSensor;
@@ -119,10 +115,9 @@ public:
   sensing_t(void)
       : leftEncoderFB({{9, 'E', 'F'}, true}),
         rightEncoderFB({{9, 'C', 'D'}, true}), encoderLR({{9, 'A', 'B'}, true}),
-        turretEncoder(8), inertial2(7), upLoaded({22, 'E'}),
-        deckLoaded({22, 'C'}), holeLoaded({22, 'G'}), inertial(21),
-        opticalSensor(14), opticalSensor2(11), discSearch(15), distSense(20),
-        GPS_sensor(12) {}
+        turretEncoder(8), inertial2(20), inertial(19),
+        opticalSensor(15), opticalSensor2(15), discSearch(15), distSense(15),
+        GPS_sensor(15) {}
 
   // called at start of pre Auton, calibrates inerials and other sensors along
   // with setting intial values

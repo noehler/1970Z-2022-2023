@@ -161,8 +161,8 @@ public:
   motorControl_t(void)
       : lfD(1, E_MOTOR_GEARSET_06, true), lmD(2, E_MOTOR_GEARSET_06, true), lbD(3, E_MOTOR_GEARSET_06, false),
         rfD(9, E_MOTOR_GEARSET_06, false), rmD(8, E_MOTOR_GEARSET_06, false), rbD(7, E_MOTOR_GEARSET_06, true),
-        flyWheel1(13, E_MOTOR_GEARSET_06, false),
-        intakeMotor(10, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
+        flyWheel1(6, E_MOTOR_GEARSET_06, true),
+        intakeMotor(4, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
         shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
     
     //setting PID values begining of motorcontrol class
