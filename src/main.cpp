@@ -24,7 +24,7 @@ void initialize() {
 	Task outPutting_task(outValsSDCard, "Outputting Task");
 
 	//default values set in case of entering into operatorControl without going through autonomous first
-	sensing.set_status(37,18,270,100, 0);
+	sensing.set_status(37,11.5,90,100, 0);
 }
 
 //section of code that runs when robot is not in autonomous or driver
@@ -35,6 +35,7 @@ void competition_initialize() {}
 
 //section of code that runs at start of autonomous, threads are started locally in each seperate function
 void autonomous() {
+	autonType = winPointBoth;
 	logMessage("start of autonomous");
 	switch(autonType){
 		case winPointClose: // close win Point auton
@@ -64,12 +65,11 @@ void autonomous() {
 bool vibrate = false;
 void vibrateController(void){
   while(1){
-    while(!vibrate){
-      delay(20);
-    }
-    vibrate = false;
-    master.rumble(".");
-    delay(50);
+    while(vibrate){
+		master.rumble(".");
+		delay(400);
+	}
+	delay(200);
   }
 }
 
@@ -86,6 +86,7 @@ void opcontrol() {
 					"My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
 	Task vibrationTask(vibrateController,"My Vibrator Controller Task");
+	motorControl.autoAim = false;
   
 	while (1) {  
 		if (master.get_digital_new_press(DIGITAL_L2)){
@@ -96,38 +97,49 @@ void opcontrol() {
 		}
 
 		//adjusts goal speed for single vs double shot
-		if (master.get_digital_new_press(DIGITAL_A)){
+		if (master.get_digital_new_press(DIGITAL_LEFT)){
 			motorControl.discCountChoice = 2;
 		}
-		if (master.get_digital_new_press(DIGITAL_B)){
+		if (master.get_digital_new_press(DIGITAL_DOWN)){
 			motorControl.discCountChoice = 1;
 		}
 
-		//adjusts goal angle to shoot at goal or able to intake
-		sensing.SSOSTTT_bool = true;
-		static bool autoAim = false;
-		static int aimSpot = 0;
-		if (master.get_digital_new_press(DIGITAL_UP)) {
-			autoAim = !autoAim;
-		}
-		if (autoAim == false) {
-			sensing.robot.turretLock = true;
-			goalAngle = sensing.robot.angle + 180;
-		} else {
-			sensing.robot.turretLock = false;
-		}
-
-		//code to alert driver when angle and speed of turret are correct
-		static bool turretGood = false;
-		if(fabs(motorControl.diffFlyWheelW) <35 && motorControl.angdiff < 3 && sensing.robot.turretLock == false){
-			if (turretGood == false){
-				vibrate = true;
+		//robot aims at goal and shoots when ready
+		static bool pressedA = false;
+		static bool run = true;
+		if (master.get_digital(DIGITAL_A)){
+			if (pressedA == false){
+				pressedA = true;
+				run = true;
 			}
-			turretGood = true;
 		}
 		else{
-			turretGood = false;
+			pressedA = false;
 		}
+		
+		if (run){
+			motorControl.autoAim = !motorControl.autoAim;
+			run = false;
+		}
+		
+		//intercept adjustment
+		/*if (master.get_digital(DIGITAL_UP)){
+			motorControl.slope+=.005;
+		}
+		else if (master.get_digital(DIGITAL_DOWN)){
+			motorControl.slope-=.005;
+		}
+		logValue("slope", motorControl.slope, 0);*/
+		
+		//code to alert driver when angle and speed of turret are correct
+		static bool turretGood = false;
+		if(fabs(motorControl.diffFlyWheelW) <35 && motorControl.angdiff < 3){
+			vibrate = true;
+		}
+		else{
+			vibrate = false;
+		}
+
 
 		//code to change goal shooting position
 		if (color != 2){

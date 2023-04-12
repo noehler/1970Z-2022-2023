@@ -11,13 +11,13 @@ void winPointAuton(void){
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void*) &sensing, "turret angle Task");
 
-    sensing.set_status(37,18,270,100, color);
+	sensing.set_status(37,11.5,90,100, color);
     movevoltage(&mc, 0, 0);
     delay(20);
-    mc.driveToRoller(2500);
+    mc.driveToRoller(2500, 1, -1);
     
     //move out of roller
-    moveto(&mc, 37, 16,100,0,20,-1);
+    moveto(&mc, 37, 16,100,0,20,1);
     while(sensing.robot.ypos<16){/////////////////////////////////////////////////////////////////////////////////////no time limit bomb
         delay(10);
     }
@@ -27,20 +27,23 @@ void winPointAuton(void){
     waitPosTime(&mc,1000,overallStartTime);
 
     //shooting
+    mc.autoAim = true;
     movevoltage(&mc, 0, 0);
     delay(200);
     shootdisks(&mc, overallStartTime);
-    
+    mc.autoAim = false;
+
     //move to lineup roller
     intake(&mc);
     moveto(&mc, 128, 105,60, 5,50);
     intakeWaitForDiscs(&mc, 9000,overallStartTime);
 
     //shooting
+    mc.autoAim = true;
     movevoltage(&mc, 0, 0);
     delay(200);
     shootdisks(&mc, overallStartTime);
-
+    mc.autoAim = false;
     
     intake(&mc);
     moveto(&mc, 128, 104,100, 5,50);
@@ -87,9 +90,12 @@ void closeWinPoint(void){
     waitPosTime(&mc,2500,overallStartTime);
 
     //shooting
+    mc.autoAim = true;
     movevoltage(&mc, 0, 0);
     delay(200);
-    shootdisks(&mc, overallStartTime,false,4,12000,6000);
+    shootdisks(&mc, overallStartTime,false,1,12000,6000);
+    shootdisks(&mc, overallStartTime,false,1,12000,6000);
+    mc.autoAim = false;
     
     //picking up disc
     intake(&mc);
@@ -103,9 +109,11 @@ void closeWinPoint(void){
     }
     
     //shooting
+    mc.autoAim = true;
     movevoltage(&mc, 0, 0);
     delay(1000);
     shootdisks(&mc, overallStartTime);
+    mc.autoAim = false;
 
 }
 

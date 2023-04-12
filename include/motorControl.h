@@ -31,8 +31,8 @@ private:
   Motor intakeMotor;
   ADIDigitalOut boomShackalacka;
   ADIDigitalOut shoot3;
-  ADIDigitalOut shoot1;
-  ADIDigitalOut ejectPiston;
+  ADIDigitalOut raise_magazine;
+  ADIDigitalOut raise_intake;
 
   // delay used to control most functions, tuned to optimize performance while
   // not overdrawing power or affecting calculations
@@ -90,11 +90,11 @@ private:
   // conversion from inches per second to rpm needed at flywheel
   double angularVelocityCalc(int number) {
     if (number == 3 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.4 + 55.0*discMults[2][0];
+      return sensing.goalSpeed * 1.4 + 84.5;
     } else if (number == 2 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.28 + 42*discMults[1][0];
+      return sensing.goalSpeed * 1.28 + 42;
     } else {
-      return sensing.goalSpeed * 1.12 + 35*discMults[0][0];
+      return sensing.goalSpeed * 2.215 + 63.5;
     }
   }
 
@@ -104,35 +104,12 @@ private:
     //return variable
     static int baseSPD;
 
-    //setting up variables for jam detection
-    static int jamTime = -9000;//negative number so that jam can be cleared immediately
-    static int startTime = millis();
-    static bool switched = false;
-
 
     if (master.get_digital(E_CONTROLLER_DIGITAL_R2) || intakeRunning == 1) { //intake
-      if (switched == false) {
-        startTime = millis();
-        switched = true;
-      }
-      if (millis() - jamTime > 500) {//normal operation
-        baseSPD = 12000;
-      } else { //reverse to clear jam
-        baseSPD = -12000;
-        startTime = millis();
-      }
-      if (millis() - startTime > 250 && millis() - jamTime > 500 && //start jam movement if motor is too slow and long enough after motor started moving
-          fabs(intakeMotor.get_actual_velocity()) < 5) {
-        jamTime = millis();
-      }
-
-    } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) || //outtake
-               intakeRunning == 2) {
+      baseSPD = 12000;
+    } else if (master.get_digital(E_CONTROLLER_DIGITAL_R1) || intakeRunning == 2) { //outtake
       baseSPD = -12000;
-      switched = false;
-
     } else if (intakeRunning == 3) { //run at set speed
-      switched = false;
       if (intakeMotor.get_actual_velocity() < intakespdTarget && baseSPD < 12000) {// increase force because too slow
         baseSPD += 100;
       } else if (intakeMotor.get_actual_velocity() > intakespdTarget && //decrease force because too fast
@@ -143,7 +120,6 @@ private:
       }
     } else { //stop
       baseSPD = 0;
-      switched = false;
     }
     return baseSPD;
   }
@@ -155,20 +131,21 @@ public:
   double intakespdTarget = 0;
   int intakeRunning; // variable to control switch between types of intake contol. 0 for stop, 1 for intake, 2 for outtake, 3 for goal speed
   double diffFlyWheelW; // difference in goal speed of flywheel verse actual speed
-  double diffFlyWheelW2; // difference in goal speed of flywheel verse actual speed
+  bool autoAim = false;
+  double slope = 2.215;
 
   // Constructor to assign values to the motors and PID values
   motorControl_t(void)
       : lfD(1, E_MOTOR_GEARSET_06, true), lmD(2, E_MOTOR_GEARSET_06, true), lbD(3, E_MOTOR_GEARSET_06, false),
         rfD(9, E_MOTOR_GEARSET_06, false), rmD(8, E_MOTOR_GEARSET_06, false), rbD(7, E_MOTOR_GEARSET_06, true),
         flyWheel1(6, E_MOTOR_GEARSET_06, true),
-        intakeMotor(4, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'B'}}),
-        shoot3({{22, 'A'}}), shoot1({{22, 'C'}}), ejectPiston({{22, 'D'}}) {
+        intakeMotor(4, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'D'}}),
+        shoot3({{22, 'A'}}), raise_magazine({{22, 'B'}}), raise_intake({{22,'C'}}) {
     
     //setting PID values begining of motorcontrol class
-    PID.driveFR.p = 4;
-    PID.driveFR.i = 0.1;
-    PID.driveFR.d = 5;
+    PID.driveFR.p = .5;
+    PID.driveFR.i = 0.01;
+    PID.driveFR.d = 7;
 
     PID.driveSS.p = 11;
     PID.driveSS.i = 0.065;
@@ -188,6 +165,34 @@ public:
     PID.flyWheel.p2 = 1.84413;
     PID.flyWheel.i2 = 0.0221515;
     PID.flyWheel.d2 = 1.05928;
+  }
+
+  //calibrate flywheel voltage
+  void calibrateVoltage(void){
+    while(1){
+      double voltage = 1200000;
+      while (fabs(voltage) > 12000){
+        voltage = getNum("Millivotls: ");
+      }
+      flyWheel1.move_voltage(voltage);
+      
+      bool trackable = getNum("1 if steady: ");
+
+      if (trackable == 1){
+        int startTime = millis();
+        while(millis() - startTime < 5000){
+          logValue("time", millis(), 0);
+          logValue("voltage", voltage, 1);
+          logValue("rpm", flyWheel1.get_actual_velocity(), 2);
+          delay(20);
+        }
+    
+        logValue("empty", 0, 0);
+        logValue("empty", 0, 1);
+        logValue("empty", 0, 2);
+        delay(200);
+      }
+    }
   }
 
   // class to set variables need to control moveTo function
@@ -386,8 +391,8 @@ public:
   //set pistions to correct starting position to ensure that there is no early expansion or shooting at start of match
   void setpistons(void) {
     shoot3.set_value(false);
-    shoot1.set_value(false);
-    ejectPiston.set_value(false);
+    raise_intake.set_value(false);
+    raise_magazine.set_value(false);
     boomShackalacka.set_value(false);
   }
 
@@ -616,6 +621,8 @@ public:
         rbD.move_voltage(rightSpd);
       }
 
+      angdiff = goalAngle - sensing.robot.angle;
+      updatedAD = true;
       //outpuutting for match review
       logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
@@ -658,13 +665,21 @@ public:
   void driveController() {
     while (!competition::is_disabled()) {
       //setting variables and converting them to millivolts
-      double leftSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) +
-                          master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-      double rightSpdRaw = master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y) -
-                           master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+      double fwdSPD = double(master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)) * 12000 / 127;
+      double turnSPD;
+      static bool prevAutoAim;
+      if (autoAim && abs(master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)) < 3){
+        HeadingTarget = goalAngle;
+        rotateTo(prevAutoAim != autoAim);
+        turnSPD = leftSpd;
+      }
+      else{
+        turnSPD = double(master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)) * 12000 / 127;
+      }
+      prevAutoAim = autoAim;
 
-      leftSpd = leftSpdRaw * 12000 / 127;
-      rightSpd = rightSpdRaw * 12000 / 127;
+      leftSpd = fwdSPD + turnSPD;
+      rightSpd = fwdSPD - turnSPD;
 
       lfD.move_voltage(leftSpd);
       lmD.move_voltage(leftSpd);
@@ -673,6 +688,8 @@ public:
       rmD.move_voltage(rightSpd);
       rbD.move_voltage(rightSpd);
 
+      angdiff = goalAngle - sensing.robot.angle;
+      updatedAD = true;
       //outpuutting for match review
       logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
@@ -707,10 +724,9 @@ public:
 
   // voltage controller for flywheel motors
   void flyController() {
-    double maxSpeed = 610;
 
     // speed needed to accelerate
-    double bottomLimit = 10;
+    double bottomLimit = 25;
     // speed needed to decelerate
     double topLimit = 30;
 
@@ -720,14 +736,13 @@ public:
     
     while (!competition::is_disabled()) {
       if (flyWheel1.get_temperature() < 45) {
-        double flyWVolt1, flyWVolt2;
+        double flyWVolt1;
         double goalAngularVelocity = angularVelocityCalc(sensing.goalSpeed);
-        double holdPower1 = (18.48 * goalAngularVelocity) + 687.6;
-        double holdPower2 = (17.57 * goalAngularVelocity) + 883.2;
+        double holdPower1 = (17.45 * goalAngularVelocity) + 994;
 
         // positive values means acceleration is needed and negative means speed
         // is too high
-        double angularVelocityDifference1 =
+        diffFlyWheelW =
             goalAngularVelocity - flyWheel1.get_actual_velocity();
 
         // checking nanf
@@ -736,34 +751,28 @@ public:
         }
 
         // flywheel1 controller
-        if (angularVelocityDifference1 > bottomLimit) { // not fast enough
+        if (diffFlyWheelW > bottomLimit) { // not fast enough
           angularVelocityDifferenceIntegral1 = 0;
           flyWVolt1 = 12000;
-        } else if (angularVelocityDifference1 < -topLimit) { // too fast
+        } else if (diffFlyWheelW < -topLimit) { // too fast
           angularVelocityDifferenceIntegral1 = 0;
           flyWVolt1 = -12000;
         } else {
-          double prop = angularVelocityDifference1 * PID.flyWheel.p * 0;
+          double prop = diffFlyWheelW * PID.flyWheel.p * 0;
           double integ =
               angularVelocityDifferenceIntegral1 * PID.flyWheel.i * 0;
           if (!(integ > 60)) {
-            angularVelocityDifferenceIntegral1 += angularVelocityDifference1;
+            angularVelocityDifferenceIntegral1 += diffFlyWheelW;
           }
           double deriv =
-              (prevAngularVelocityDifference1 - angularVelocityDifference1) *
+              (prevAngularVelocityDifference1 - diffFlyWheelW) *
               PID.flyWheel.d * 0;
           double PIDVAL = (prop + integ + deriv) * 12000 / 127 * 0;
-          angularVelocityDifferenceIntegral1 += angularVelocityDifference1;
+          angularVelocityDifferenceIntegral1 += diffFlyWheelW;
           flyWVolt1 = holdPower1 + PIDVAL;
-          if (flyWVolt2 > 12000) {
-            flyWVolt2 = 12000;
-          }
-          if (flyWVolt2 < -12000) {
-            flyWVolt2 = -12000;
-          }
         }
 
-        prevAngularVelocityDifference1 = angularVelocityDifference1;
+        prevAngularVelocityDifference1 = diffFlyWheelW;
 
         flyWheel1.move_voltage(flyWVolt1);
       } else {
@@ -772,7 +781,6 @@ public:
 
         //calculating how diffence in speed as input for PID and as tool to know when to shoot
         double flyWVolt;
-        double flyWVolt2;
         double flyWheelW = flyWheel1.get_actual_velocity();
         diffFlyWheelW =
             angularVelocityCalc(sensing.robot.magFullness) - flyWheelW;
@@ -781,9 +789,7 @@ public:
 
         //updating Integral and derivative, calculating PID
         IPIDang += diffFlyWheelW;
-        IPIDang2 += diffFlyWheelW2;
         double prop = PID.flyWheel.p * diffFlyWheelW;
-        double prop2 = PID.flyWheel.p2 * diffFlyWheelW2;
         double integ = IPIDang * PID.flyWheel.i;
         double integ2 = IPIDang2 * PID.flyWheel.i2;
         double deriv = PID.flyWheel.d * (diffFlyWheelW - prevFWdiffSPD);
@@ -802,16 +808,6 @@ public:
         if (fabs(diffFlyWheelW) < 1 && flyWVolt == 0) {
           IPIDang = 0;
         }
-        if (flyWVolt2 > 12000) {
-          flyWVolt2 = 12000;
-        }
-        if (flyWVolt2 < -12000) {
-          flyWVolt2 = -12000;
-        }
-        if (fabs(diffFlyWheelW2) < 1 && flyWVolt2 == 0) {
-          IPIDang2 = 0;
-        }
-
 
         //checking for not a number returns, happens often when motor is disconnected
         if (isnanf(flyWVolt)) {
@@ -842,10 +838,9 @@ public:
           shoot3.set_value(false);
         } else {
           boomShackalacka.set_value(false); //operate 
-          shoot1.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));
+          raise_intake.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));//operates piston to raise intake
           shoot3.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1));
-          ejectPiston.set_value(
-          master.get_digital(pros::E_CONTROLLER_DIGITAL_X));//operates piston to remove a disc stuck after flywheel
+          raise_magazine.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_UP));//operates piston lift magazine pressure
         }
       }
 
@@ -860,20 +855,22 @@ public:
 
   // actuates the pistons during autonomous
   void raiseAScore(int number) {
-    if (number == 3) {
+    if (number == 3){
       shoot3.set_value(true);
-      delay(700);
+      delay(1000);
       shoot3.set_value(false);
-    } else {
-      shoot1.set_value(true);
-      delay(700);
-      shoot1.set_value(false);
+    }
+    else{
+      intakeRunning = 2;
+      delay(1000);
+      intakeRunning = 0;
     }
   }
 
   // moves to roller and spins it to correct orientation
+  //fwd == 1 || -1
   void driveToRoller(double time,
-                     bool reverseOut = true) { // changing to let move to take
+                     bool reverseOut = true, int fwd = 1) { // changing to let move to take
                                                // over the initial moveto
     bool finished = false;
     driveType = 2;//manual voltage control
@@ -881,13 +878,13 @@ public:
     int startTime = millis();
     while (!sensing.underRoller(1) && !sensing.underRoller(2) && //drive to roller until under roller
            millis() - startTime < time) {
-      leftSpd = 8000;
-      rightSpd = 8000;
+      leftSpd = 8000*fwd;
+      rightSpd = 8000*fwd;
       delay(20);
     }
     //run with constant power to ensure contact with roller
-    leftSpd = 6000;
-    rightSpd = 6000;
+    leftSpd = 6000*fwd;
+    rightSpd = 6000*fwd;
 
     intakeRunning = 3;//speed control for intake
     intakespdTarget = 180;
@@ -901,8 +898,8 @@ public:
     }
 
     if (reverseOut) {
-      leftSpd = -8000;
-      rightSpd = -8000;
+      leftSpd = -8000*fwd;
+      rightSpd = -8000*fwd;
       intakeRunning = 1;
       delay(300);
     }

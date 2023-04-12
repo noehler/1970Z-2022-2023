@@ -3,6 +3,7 @@
 #include "main.h"
 #include "output.h"
 #include "pros/misc.hpp"
+#include "robotConfig.h"
 
 autonTypes_t autonType = noAuton;
 
@@ -32,13 +33,12 @@ void moveto(void *mc, double xTo, double yTo, double speedLimit, double toleranc
 
 //wait until shooter is lined up, robot is still, speed is right, or timout to shoot
 void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, int overallMaxTime, int maxTime){
+    ((motorControl_t*) mc)->driveType = 1;
+    ((motorControl_t*) mc)->HeadingTarget = goalAngle;
     if (number == 4){
         number = sensing.robot.magFullness;
     }
-    ((motorControl_t*) mc)->intakeRunning = 2;
-    sensing.robot.turretLock = false;
-    delay(200);
-    ((motorControl_t*) mc)->intakeRunning = 0;
+    ((motorControl_t*) mc)->autoAim = true;
     delay(20);
     if (number!=1){
     ((motorControl_t*) mc)->discCountChoice = 2;
@@ -51,6 +51,7 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
     double loops = 0;
     ((motorControl_t*) mc)->updatedAD = false;
     while(millis() - starttime < maxTime/* && millis() - overallStartTime < overallMaxTime*/){
+        ((motorControl_t*) mc)->HeadingTarget = goalAngle;
         //time out
         if (calibrapePos){
             if (sensing.GPS_sensor.get_error() < 0.012){
@@ -59,7 +60,7 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
                 loops++;
             }
         }
-        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW) + fabs(((motorControl_t*) mc)->diffFlyWheelW2)) < 5 && fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 + fabs(sensing.robot.angAccel)*2 < 30){
+        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW)) < 5 && fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 + fabs(sensing.robot.angAccel)*2 < 30){
             logMessage("turret good exit");
             break;
             //flywheel speed check
@@ -79,13 +80,13 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
         logMessage("shoot 1");
     }
     delay(300);
-    sensing.robot.turretLock = true;
+    ((motorControl_t*) mc)->autoAim = false;
 }
 
 //start intake, lock turret
 void intake(void *mc){
     ((motorControl_t*) mc)->intakeRunning = 1;
-    sensing.robot.turretLock = true;
+    ((motorControl_t*) mc)->autoAim = false;
 }
 
 //run drive at set voltage

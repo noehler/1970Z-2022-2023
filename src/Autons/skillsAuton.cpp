@@ -16,7 +16,7 @@ void skillsAutonomous(void){
     sensing.set_status(37,18,270,100, 1);
     sensing.goal.xpos = 124;
     sensing.goal.ypos = 20;
-    sensing.robot.turretLock = true;
+    mc.autoAim = false;
     movevoltage(&mc, 0, 0);
     delay(50);
     //move to roller
@@ -90,7 +90,7 @@ void skillsAutonomous(void){
     //shoot first triple stack
     movevoltage(&mc, 0,0);
     shootdisks(&mc,overallStartTime);
-    sensing.robot.turretLock = true;
+    mc.autoAim = false;
     delay(700);
 
     //lining up for 2nd triple stack
@@ -112,7 +112,7 @@ void skillsAutonomous(void){
     //shoot second triple stack
     movevoltage(&mc, 0,0);
     shootdisks(&mc,overallStartTime);
-    sensing.robot.turretLock = true;
+    mc.autoAim = false;
     delay(300);
 
     //moving back to line up with discs
@@ -131,7 +131,7 @@ void skillsAutonomous(void){
     //shoot second triple stack
     movevoltage(&mc, 0,0);
     shootdisks(&mc,overallStartTime);
-    sensing.robot.turretLock = true;
+    mc.autoAim = false;
     delay(300);
 
     sensing.goal.xpos = 20;
@@ -148,7 +148,7 @@ void skillsAutonomous(void){
     shootdisks(&mc,overallStartTime);
     delay(300);
 
-    sensing.robot.turretLock = true;
+    mc.autoAim = false;
 
     //move to roller
     moveto(&mc, 108, 150);
@@ -204,7 +204,7 @@ void skillsAutonomous(void){
     sensing.goal.xpos = 72;
     sensing.goal.ypos = 72;
 
-    sensing.robot.turretLock = false;
+    mc.autoAim = false;
     movevoltage(&mc, 0,0);
     delay(500);
     mc.explode();

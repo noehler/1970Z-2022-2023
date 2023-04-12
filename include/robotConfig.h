@@ -5,6 +5,7 @@
 #include "GUI.h"
 #include "api.h"
 #include "output.h"
+#include "pros/adi.hpp"
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 
@@ -27,7 +28,6 @@ public:
       GPSxpos, GPSypos,    // seperate position outputs for each tracking system
       angle, turAng, turvelw, velX, velY, velW, turvelocity, odovelW, imuvelw,
       angAccel, xAccel, yAccel;
-  bool turretLock = false;
   int magFullness;
 };
 
@@ -93,15 +93,13 @@ public:
   ADIEncoder leftEncoderFB;
   ADIEncoder rightEncoderFB;
   ADIEncoder encoderLR;
-  Rotation turretEncoder;
+  ADIPotentiometer potentiometer;
   Imu inertial2;
 
   Imu inertial;
 
   Optical opticalSensor;
   Optical opticalSensor2;
-  Distance distSense;
-
   Vision discSearch;
 
   GPS GPS_sensor;
@@ -113,22 +111,15 @@ public:
 
   // called at the start of class, defines sensors
   sensing_t(void)
-      : leftEncoderFB({{9, 'E', 'F'}, true}),
-        rightEncoderFB({{9, 'C', 'D'}, true}), encoderLR({{9, 'A', 'B'}, true}),
-        turretEncoder(8), inertial2(20), inertial(19),
-        opticalSensor(15), opticalSensor2(15), discSearch(15), distSense(15),
+      : leftEncoderFB({{5, 'E', 'F'}, false}),
+        rightEncoderFB({{5, 'C', 'D'}, false}), encoderLR({{5, 'A', 'B'}, false}),
+        inertial2(20), inertial(19),
+        opticalSensor(15), opticalSensor2(15), discSearch(15), potentiometer({22, 'e'}),
         GPS_sensor(15) {}
 
   // called at start of pre Auton, calibrates inerials and other sensors along
   // with setting intial values
   void Init(void) {
-    // turret encoder aways starts between 0 and 360, mods it to be +-180
-    if (double(turretEncoder.get_position()) / 100 > 180) {
-      highTurretInitAng = true;
-    } else {
-      highTurretInitAng = false;
-    }
-
     // calibrating inertial sensors
     static bool inertialsSet = false;
     if (!inertialsSet) {
@@ -172,7 +163,7 @@ public:
     robot.ypos = ypos;
     robot.odoxpos = xpos;
     robot.odoypos = ypos;
-    robot.zpos = 8.5;
+    robot.zpos = 8;
     chaIntAng = heading;
     color = colorPT;
     goal.xpos = 20;
@@ -223,6 +214,7 @@ public:
 
   //odometry task used to track position with tracking wheels placed under robot
   void odometry(void) {
+
     while (1) {
       static double odoHeading = 0;
       static double odomposx = 0;
@@ -237,8 +229,8 @@ public:
       double Arc3 = -distTraveled(
           &encoderLR);   // backEncoderFB travel, to right of robot is positive
 
-      double a = 4.8125; // distance between two tracking wheels
-      double b = -3.625; // distance from tracking center to back tracking
+      double a = 4.59; // distance between two tracking wheels
+      double b = -2.40625; // distance from tracking center to back tracking
                          // wheel, positive direction is to the back of robot
       double P1 = (Arc1 - Arc2);
       double Delta_y, Delta_x;
@@ -316,12 +308,9 @@ public:
       robot.odoxpos += Delta_x;
       robot.odoypos += Delta_y;
 
-      //updating turret values because needs to be done
-      robot.turvelw = double(turretEncoder.get_velocity()) / 100;
       // note:division of one hundred is due to the angle is messured in
       // centideg
-      robot.turAng =
-          double(turretEncoder.get_angle()) / 100 + 180 + robot.angle;
+      robot.turAng = robot.angle;
       while (robot.turAng > 360) {
         robot.turAng -= 360;
       }
@@ -391,15 +380,15 @@ public:
       double turOfCenterOffset = 0; // offcenter offset, not tested yet
       // outputting calculated values
 
-      double dist = distSense.get();
-      if (dist == PROS_ERR) {
+      double angle = potentiometer.get_angle();
+      if (angle == PROS_ERR) {
         master.print(2, 0, "DistFailed");
         robot.magFullness = 3;
-      } else if (dist < 40) {
+      } else if (angle < 260) {
         robot.magFullness = 3;
-      } else if (dist < 80) {
+      } else if (angle < 280) {
         robot.magFullness = 2;
-      } else if (dist < 100) {
+      } else if (angle < 290) {
         robot.magFullness = 1;
       } else {
         robot.magFullness = 0;
@@ -408,12 +397,8 @@ public:
         V_disk = 160;
       }
       goalSpeed = V_disk;
-      if (!robot.turretLock) {
-        goalAngle = (Tar_ang * 180 / M_PI + 0 * targetAngleOffest +
-                     0 * turOfCenterOffset);
-      } else {
-        goalAngle = robot.angle + 180;
-      }
+      goalAngle = (Tar_ang * 180 / M_PI + 0 * targetAngleOffest +
+                    0 * turOfCenterOffset);
 
       while (goalAngle > 180) {
         goalAngle -= 360;
