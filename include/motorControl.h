@@ -149,9 +149,9 @@ public:
     PID.driveFR.i = 0.01;
     PID.driveFR.d = 7;
 
-    PID.driveSS.p = 11;
+    PID.driveSS.p = 4;
     PID.driveSS.i = 0.065;
-    PID.driveSS.d = 42.69;
+    PID.driveSS.d = 6;
 
     PID.turret.p = 3.2;
     PID.turret.i = .01;
@@ -205,33 +205,56 @@ public:
   void rotateTo(bool resetIntegs) {
     double powerOutput;
     angdiff = HeadingTarget - sensing.robot.angle;
+    while(angdiff > 180){
+      angdiff-=360;
+    }
+    while(angdiff < -180){
+      angdiff+=360;
+    }
     static double previousangdiff = angdiff;
     static double integral = 0;
     if (resetIntegs){
       previousangdiff = angdiff;
     }
-    if (fabs(angdiff) > move.errtheta+5) {//voltage and acceleration controller
+    if (fabs(angdiff) > move.errtheta+3) {//voltage and acceleration controller
       //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
-      double acceleration = .5;
+      double acceleration = .15;
 
       //if motor is too hot the motor will not be able to accelerate as well
-      if (intakeMotor.get_temperature() > 45){
-        acceleration*=.3;
+      double motordecreaseConstant = .8;
+      if (lfD.get_temperature() > 45){
+        acceleration*=motordecreaseConstant;
+      }
+      if (lmD.get_temperature() > 45){
+        acceleration*=motordecreaseConstant;
+      }
+      if (lbD.get_temperature() > 45){
+        acceleration*=motordecreaseConstant;
+      }
+      if (rfD.get_temperature() > 45){
+        acceleration*=motordecreaseConstant;
+      }
+      if (rmD.get_temperature() > 45){
+        acceleration*=motordecreaseConstant;
+      }
+      if (rbD.get_temperature() > 45){
+        acceleration*=motordecreaseConstant;
       }
 
       //first term is amount of loops until target is reached, second term is amount of loops to slow down at current speed
+      double basePWR = 9000;
       if (fabs(angdiff) / fabs(angdiff - previousangdiff) >
           fabs(angdiff - previousangdiff) / acceleration) { //accelerate
         if (angdiff < 0) {
-          powerOutput = -100;
+          powerOutput = -basePWR;
         } else {
-          powerOutput = 100;
+          powerOutput = basePWR;
         }
       } else {//deccelerate
         if (angdiff < 0) {
-          powerOutput = 100;
+          powerOutput = basePWR;
         } else {
-          powerOutput = -100;
+          powerOutput = -basePWR;
         }
       }
 
@@ -240,18 +263,21 @@ public:
       integral = 0;
 
     } else if (fabs(angdiff) > move.errtheta){//PID controller in small ranges
-      powerOutput = angdiff * PID.driveSS.p + integral * PID.driveSS.i + (angdiff - previousangdiff)*PID.driveSS.d;
+      powerOutput = (angdiff * PID.driveSS.p + integral * PID.driveSS.i + (angdiff - previousangdiff)*PID.driveSS.d)* 12000 / 127;
       integral += angdiff;
-      if (fabs(powerOutput) >100){
-        powerOutput = 0;
+      if (powerOutput >12000){
+        powerOutput = 12000;
+      }
+      else if (powerOutput <-12000){
+        powerOutput = -12000;
       }
     }
     else{
       powerOutput = 0;
       integral = 0;
     }
-    leftSpd = powerOutput;
-    rightSpd = -powerOutput;
+    leftSpd = -powerOutput;
+    rightSpd = powerOutput;
   }
 
   //function to travel to specific point
@@ -660,6 +686,7 @@ public:
       static bool prevAutoAim;
       if (autoAim && abs(master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X)) < 3){
         HeadingTarget = goalAngle;
+        move.errtheta = 1;
         rotateTo(prevAutoAim != autoAim);
         turnSPD = leftSpd;
       }
@@ -671,12 +698,21 @@ public:
       leftSpd = fwdSPD + turnSPD;
       rightSpd = fwdSPD - turnSPD;
 
-      lfD.move_voltage(leftSpd);
-      lmD.move_voltage(leftSpd);
-      lbD.move_voltage(leftSpd);
-      rfD.move_voltage(rightSpd);
-      rmD.move_voltage(rightSpd);
-      rbD.move_voltage(rightSpd);
+      if (leftSpd == 0 && rightSpd == 0) {
+        lfD.brake();
+        lmD.brake();
+        lbD.brake();
+        rfD.brake();
+        rmD.brake();
+        rbD.brake();
+      } else {
+        lfD.move_voltage(leftSpd);
+        lmD.move_voltage(leftSpd);
+        lbD.move_voltage(leftSpd);
+        rfD.move_voltage(rightSpd);
+        rmD.move_voltage(rightSpd);
+        rbD.move_voltage(rightSpd);
+      }
 
       angdiff = goalAngle - sensing.robot.angle;
       updatedAD = true;
