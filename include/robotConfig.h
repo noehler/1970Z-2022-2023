@@ -26,7 +26,7 @@ public:
   double xpos, ypos, zpos, // seperate position outputs for each tracking system
       odoxpos, odoypos,    // seperate position outputs for each tracking system
       GPSxpos, GPSypos,    // seperate position outputs for each tracking system
-      angle, turAng, turvelw, velX, velY, velW, turvelocity, odovelW, imuvelw,
+      angle,odoangle, turAng, turvelw, velX, velY, velW, turvelocity, odovelW, imuvelw,
       angAccel, xAccel, yAccel;
   int magFullness;
 };
@@ -165,6 +165,7 @@ public:
     robot.odoypos = ypos;
     robot.zpos = 8;
     chaIntAng = heading;
+    robot.odoangle = chaIntAng;
     color = colorPT;
     goal.xpos = 20;
     goal.ypos = 124;
@@ -213,6 +214,9 @@ public:
   }
 
   //odometry task used to track position with tracking wheels placed under robot
+  double arc1g;
+  double arc2g;
+  double arc3g;
   void odometry(void) {
 
     while (1) {
@@ -229,7 +233,12 @@ public:
       double Arc3 = -distTraveled(
           &encoderLR);   // backEncoderFB travel, to right of robot is positive
 
-      double a = 4.59; // distance between two tracking wheels
+      arc1g += Arc1;
+      arc2g += Arc2;
+      arc3g += Arc3;
+
+
+      double a = 4.67881905; // distance between two tracking wheels
       double b = -2.40625; // distance from tracking center to back tracking
                          // wheel, positive direction is to the back of robot
       double P1 = (Arc1 - Arc2);
@@ -251,6 +260,7 @@ public:
 
       //checking if calculated angle difference to inertial angle difference is too large and resetting if is too large
       double angle_error = odoHeading - radRotation;
+      angle_error = 0;
       if (angle_error > M_PI) {
         angle_error -= 2 * M_PI;
       } else if (angle_error < -M_PI) {
@@ -287,6 +297,7 @@ public:
             Arc1 * sin(odoHeading) - (Arc3 * sin(odoHeading + (M_PI / 2)));
       }
       odoHeading += Delta_heading;
+      robot.odoangle +=Delta_heading*180/M_PI;
       odoHeading = mod(2 * M_PI, odoHeading);
       static float T = 0;
       static double previousT = 0;
@@ -379,20 +390,18 @@ public:
       double V_disk = P2 / P3;
       double turOfCenterOffset = 0; // offcenter offset, not tested yet
       // outputting calculated values
-
+      
       double angle = potentiometer.get_angle();
-      if (angle == PROS_ERR) {
-        master.print(2, 0, "DistFailed");
-        robot.magFullness = 3;
-      } else if (angle < 260) {
-        robot.magFullness = 3;
-      } else if (angle < 280) {
-        robot.magFullness = 2;
-      } else if (angle < 290) {
-        robot.magFullness = 1;
-      } else {
+      if (angle > 220) {
         robot.magFullness = 0;
+      } else if (angle >210) {
+        robot.magFullness = 1;
+      } else if (angle > 200) {
+        robot.magFullness = 2;
+      } else {
+        robot.magFullness = 3;
       }
+
       if (V_disk < 160) {
         V_disk = 160;
       }

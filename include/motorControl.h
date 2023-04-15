@@ -29,7 +29,8 @@ private:
   Motor rbD;
   Motor flyWheel1;
   Motor intakeMotor;
-  ADIDigitalOut boomShackalacka;
+  ADIDigitalOut expansion;
+  ADIDigitalOut blocker;
   ADIDigitalOut shoot3;
   ADIDigitalOut raise_magazine;
   ADIDigitalOut raise_intake;
@@ -89,13 +90,14 @@ private:
 
   // conversion from inches per second to rpm needed at flywheel
   double angularVelocityCalc(int number) {
-    if (number == 3 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.4 + 84.5;
-    } else if (number == 2 && discCountChoice == 2) {
-      return sensing.goalSpeed * 1.28 + 42;
+    if (lockSpeed == true) {
+      return 500;
     } else {
       return sensing.goalSpeed * 2.215 + 63.5;
     }
+    //triple shot equation = v*1.4 + 84.5
+    //double shot equation = v*1.28 + 42
+    //single shot equation = v*2.215 + 63.5
   }
 
   // turret controller called in turret intake thread, returns power to run
@@ -127,7 +129,7 @@ private:
 public:
   bool updatedAD = false; //variable to account for difference in timings between threads, comparisons only rake place when all values are update
   double angdiff; // diffence in angle between turret and goal
-  int discCountChoice = 2; // 1 for single shot, 2 for automatic decision
+  int lockSpeed = 1;
   double intakespdTarget = 0;
   int intakeRunning; // variable to control switch between types of intake contol. 0 for stop, 1 for intake, 2 for outtake, 3 for goal speed
   double diffFlyWheelW; // difference in goal speed of flywheel verse actual speed
@@ -139,7 +141,7 @@ public:
       : lfD(1, E_MOTOR_GEARSET_06, true), lmD(2, E_MOTOR_GEARSET_06, true), lbD(3, E_MOTOR_GEARSET_06, false),
         rfD(9, E_MOTOR_GEARSET_06, false), rmD(8, E_MOTOR_GEARSET_06, false), rbD(7, E_MOTOR_GEARSET_06, true),
         flyWheel1(6, E_MOTOR_GEARSET_06, true),
-        intakeMotor(4, E_MOTOR_GEARSET_06, true), boomShackalacka({{22, 'D'}}),
+        intakeMotor(4, E_MOTOR_GEARSET_06, true), expansion({{22, 'D'}}), blocker({{22, 'F'}}),
         shoot3({{22, 'A'}}), raise_magazine({{22, 'B'}}), raise_intake({{22,'C'}}) {
     
     //setting PID values begining of motorcontrol class
@@ -201,67 +203,55 @@ public:
   //Function to rotate To a set angle
   double HeadingTarget = 0;
   void rotateTo(bool resetIntegs) {
-    static moveToInfoInternal_t moveI;
-
-    //setting integrals to 0 at start and reset
-    static double IPIDSS = 0;
-    static double previousets = 0;
-    static bool finished = false;
-    static bool resetMoveToSS = false;
-    
-    if (resetIntegs == true) {
-      resetMoveToSS = true;
+    double powerOutput;
+    angdiff = HeadingTarget - sensing.robot.angle;
+    static double previousangdiff = angdiff;
+    static double integral = 0;
+    if (resetIntegs){
+      previousangdiff = angdiff;
     }
-    if (resetMoveToSS) {
-      moveI.ets = 0;
-      moveI.PIDSS = 0;
-      moveI.PIDSSFLAT = 0;
-      IPIDSS = 0;
-      moveI.ets = 0;
-    }
+    if (fabs(angdiff) > move.errtheta+5) {//voltage and acceleration controller
+      //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
+      double acceleration = .5;
 
-    //calculating proportional difference
-    double currentheading = sensing.robot.angle;
-    moveI.ets = HeadingTarget - currentheading;
-    while (moveI.ets < -180) {
-      moveI.ets += 360;
-    }
-    while (moveI.ets > 180) {
-      moveI.ets -= 360;
-    }
+      //if motor is too hot the motor will not be able to accelerate as well
+      if (intakeMotor.get_temperature() > 45){
+        acceleration*=.3;
+      }
 
-    //updating proportional
-    IPIDSS += moveI.ets;
+      //first term is amount of loops until target is reached, second term is amount of loops to slow down at current speed
+      if (fabs(angdiff) / fabs(angdiff - previousangdiff) >
+          fabs(angdiff - previousangdiff) / acceleration) { //accelerate
+        if (angdiff < 0) {
+          powerOutput = -100;
+        } else {
+          powerOutput = 100;
+        }
+      } else {//deccelerate
+        if (angdiff < 0) {
+          powerOutput = 100;
+        } else {
+          powerOutput = -100;
+        }
+      }
 
-    //PID calculation
-    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
-                  PID.driveSS.d * (moveI.ets - previousets);
+      //storing value for velocity calculation
+      previousangdiff = angdiff;
+      integral = 0;
 
-    //setting values for derivative calculation
-    previousets = moveI.ets;
-
-    // setting value inbetween limits of what motors can see
-    moveI.PIDSSFLAT = moveI.PIDSS;
-    if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
-      moveI.PIDSSFLAT = 2 * move.speed_limit;
+    } else if (fabs(angdiff) > move.errtheta){//PID controller in small ranges
+      powerOutput = angdiff * PID.driveSS.p + integral * PID.driveSS.i + (angdiff - previousangdiff)*PID.driveSS.d;
+      integral += angdiff;
+      if (fabs(powerOutput) >100){
+        powerOutput = 0;
+      }
     }
-    if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
-      moveI.PIDSSFLAT = -2 * move.speed_limit;
+    else{
+      powerOutput = 0;
+      integral = 0;
     }
-
-    //outputting speeds to turn at
-    moveI.PIDSpeedR = moveI.PIDSSFLAT;
-    moveI.PIDSpeedL = -moveI.PIDSSFLAT;
-    if (fabs(moveI.ets) < move.errtheta &&
-        fabs(lfD.get_actual_velocity()) + fabs(rfD.get_actual_velocity()) <
-            40) {//angle is within range and speed is low enough
-      resetMoveToSS = true;
-      leftSpd = 0;
-      rightSpd = 0;
-    } else {//need to keep turning
-      leftSpd = moveI.PIDSpeedL * 12000 / 127;
-      rightSpd = moveI.PIDSpeedR * 12000 / 127;
-    }
+    leftSpd = powerOutput;
+    rightSpd = -powerOutput;
   }
 
   //function to travel to specific point
@@ -393,7 +383,7 @@ public:
     shoot3.set_value(false);
     raise_intake.set_value(false);
     raise_magazine.set_value(false);
-    boomShackalacka.set_value(false);
+    expansion.set_value(false);
   }
 
   //function to better follow paths generated by Bezier curves
@@ -690,33 +680,30 @@ public:
 
       angdiff = goalAngle - sensing.robot.angle;
       updatedAD = true;
-      //outpuutting for match review
+
+      //outputting for match review
       logValue("x", sensing.robot.xpos, 0);
       logValue("y", sensing.robot.ypos, 1);
-      logValue("ODOx", sensing.robot.odoxpos, 2);
-      logValue("ODOy", sensing.robot.odoypos, 3);
-      logValue("GPSx", sensing.robot.GPSxpos, 4);
-      logValue("GPSy", sensing.robot.GPSypos, 5);
-      logValue("heading", sensing.robot.angle, 6);
-      logValue("turr ang", sensing.robot.turAng, 7);
-      logValue("angDiff", angdiff, 8);
-      logValue("batt pct", battery::get_capacity(), 9);
-      logValue("lfdTemp", lfD.get_temperature(), 10);
-      logValue("lmdTemp", lmD.get_temperature(), 11);
-      logValue("lbdTemp", lbD.get_temperature(), 12);
-      logValue("rfdTemp", rfD.get_temperature(), 13);
-      logValue("rmdTemp", rmD.get_temperature(), 14);
-      logValue("rbdTemp", rbD.get_temperature(), 15);
-      logValue("intakeTemp", intakeMotor.get_temperature(), 16);
-      logValue("fW1Temp", flyWheel1.get_temperature(), 17);
-      logValue("fw1SPD", flyWheel1.get_actual_velocity(), 18);
-      logValue("magCount", sensing.robot.magFullness, 19);
-      logValue("goalAngle", goalAngle, 20);
-      logValue("goalSPD", sensing.goalSpeed, 21);
-      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
-      //logging color from rollerGood
-      logValue("rollerGood", sensing.rollerIsGood(),26);
-      logValue("time", millis(), 27);
+      logValue("angle", sensing.robot.angle, 2);
+      logValue("rightArc", sensing.arc1g, 3);
+      logValue("leftArc", sensing.arc2g, 4);
+      logValue("backArc", sensing.arc3g, 5);
+
+      double lfArc = lfD.get_position() / 360 * 1.375 * 2 * M_PI ;
+      double rfArc = rfD.get_position() / 360 * 1.375 * 2 * M_PI ;
+      double lmArc = lmD.get_position() / 360 * 1.375 * 2 * M_PI ;
+      double rmArc = rmD.get_position() / 360 * 1.375 * 2 * M_PI ;
+      double lbArc = lbD.get_position() / 360 * 1.375 * 2 * M_PI ;
+      double rbArc = rbD.get_position() / 360 * 1.375 * 2 * M_PI ;
+
+      logValue("lfArc", lfArc, 6);
+      logValue("rfArc", rfArc, 7);
+      logValue("lmArc", lmArc, 8);
+      logValue("rmArc", rmArc, 9);
+      logValue("lbArc", lbArc, 10);
+      logValue("rbArc", rbArc, 11);
+      logValue("odoAng", sensing.robot.odoangle, 12);
+      logValue("time", millis(), 13);
 
       delay(optimalDelay);
     }
@@ -724,7 +711,6 @@ public:
 
   // voltage controller for flywheel motors
   void flyController() {
-
     // speed needed to accelerate
     double bottomLimit = 25;
     // speed needed to decelerate
@@ -830,18 +816,18 @@ public:
     while (!competition::is_disabled() && runTurretIntake == true) {
 
       if (!competition::is_autonomous()) {//control pistons in driver control
-        if (master.get_digital(E_CONTROLLER_DIGITAL_A) &&//expand
-            master.get_digital(E_CONTROLLER_DIGITAL_X) &&
-            master.get_digital(E_CONTROLLER_DIGITAL_B) &&
-            master.get_digital(E_CONTROLLER_DIGITAL_Y)) {
-          boomShackalacka.set_value(true);
-          shoot3.set_value(false);
-        } else {
-          boomShackalacka.set_value(false); //operate 
-          raise_intake.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));//operates piston to raise intake
-          shoot3.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1));
-          raise_magazine.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_UP));//operates piston lift magazine pressure
-        }
+        if (master.get_digital(E_CONTROLLER_DIGITAL_UP) &&//expand
+            master.get_digital(E_CONTROLLER_DIGITAL_LEFT)) {
+          expansion.set_value(true);
+        } 
+        if (master.get_digital(E_CONTROLLER_DIGITAL_DOWN) &&//block
+            master.get_digital(E_CONTROLLER_DIGITAL_RIGHT)) {
+          blocker.set_value(true);
+        } 
+
+        raise_intake.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2));//operates piston to raise intake
+        shoot3.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1));
+        raise_magazine.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_UP));//operates piston lift magazine pressure
       }
 
       double intakeSpd = intakeControl();
@@ -908,7 +894,7 @@ public:
 
   // expansion
   void explode(void) {
-    boomShackalacka.set_value(true);
+    expansion.set_value(true);
     driveType = 2;
     rightSpd = 0;
     leftSpd = 0;

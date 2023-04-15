@@ -40,11 +40,6 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
     }
     ((motorControl_t*) mc)->autoAim = true;
     delay(20);
-    if (number!=1){
-    ((motorControl_t*) mc)->discCountChoice = 2;
-    } else {
-    ((motorControl_t*) mc)->discCountChoice = 1;
-    }
     int starttime = millis();
     double gpsIntegX = 0;
     double gpsIntegY = 0;

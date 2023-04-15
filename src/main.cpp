@@ -25,6 +25,7 @@ void initialize() {
 
 	//default values set in case of entering into operatorControl without going through autonomous first
 	sensing.set_status(37,11.5,90,100, 0);
+	sensing.set_status(0,0,180,0, 0);
 }
 
 //section of code that runs when robot is not in autonomous or driver
@@ -82,55 +83,75 @@ void opcontrol() {
 					"My Driver Controller Task");
 	Task turret_Intake_Task(intake_ControllerWrapper, (void *)&motorControl,
 							"Intake Controller Task");
-	Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
-					"My Flywheel Speed Controller Task");
+	//Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
+	//				"My Flywheel Speed Controller Task");
 	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
-	Task vibrationTask(vibrateController,"My Vibrator Controller Task");
+	//Task vibrationTask(vibrateController,"My Vibrator Controller Task");
 	motorControl.autoAim = false;
   
 	while (1) {  
-		if (master.get_digital_new_press(DIGITAL_L2)){
-			logMessage("shoot 1");
+		std::cout << "\n\nlooping \n\n";
+		if (master.get_digital_new_press(DIGITAL_R1)){
+			logMessage("reverse intake");
 		}
 		if (master.get_digital_new_press(DIGITAL_L1)){
 			logMessage("shoot 3");
 		}
 
-		//adjusts goal speed for single vs double shot
-		if (master.get_digital_new_press(DIGITAL_LEFT)){
-			motorControl.discCountChoice = 2;
-		}
-		if (master.get_digital_new_press(DIGITAL_DOWN)){
-			motorControl.discCountChoice = 1;
-		}
-
-		//robot aims at goal and shoots when ready
-		static bool pressedA = false;
-		static bool run = true;
-		if (master.get_digital(DIGITAL_A)){
-			if (pressedA == false){
-				pressedA = true;
-				run = true;
+		//aim and speed control
+		static bool aPressed = false;
+		static bool bPressed = false;
+		bool bRun = false;
+		bool aRun = false;
+		if (master.get_digital(DIGITAL_B)){
+			if (bPressed == false){
+				bRun = true;
 			}
+			bPressed = true;
 		}
 		else{
-			pressedA = false;
+			bPressed = false;
 		}
-		
-		if (run){
-			motorControl.autoAim = !motorControl.autoAim;
-			run = false;
+		if (master.get_digital(DIGITAL_A)){
+			if (aPressed == false){
+				aRun = true;
+			}
+			aPressed = true;
 		}
-		
-		//intercept adjustment
-		/*if (master.get_digital(DIGITAL_UP)){
-			motorControl.slope+=.005;
+		else{
+			aPressed = false;
 		}
-		else if (master.get_digital(DIGITAL_DOWN)){
-			motorControl.slope-=.005;
+
+		if (aRun == true){
+			if (motorControl.lockSpeed == 1){
+				motorControl.autoAim = true;
+				motorControl.lockSpeed = 0;
+			}
+			else if (motorControl.autoAim == 0){
+				motorControl.autoAim = true;
+				motorControl.lockSpeed = 0;
+			}
+			else{
+				motorControl.autoAim = false;
+				motorControl.lockSpeed = 1;
+			}
 		}
-		logValue("slope", motorControl.slope, 0);*/
-		
+
+		if (bRun == true){
+			if (motorControl.lockSpeed == 0){
+				motorControl.autoAim = true;
+				motorControl.lockSpeed = 1;
+			}
+			else if (motorControl.autoAim == 0){
+				motorControl.autoAim = true;
+				motorControl.lockSpeed = 1;
+			}
+			else{
+				motorControl.autoAim = false;
+				motorControl.lockSpeed = 1;
+			}
+		}
+ 		
 		//code to alert driver when angle and speed of turret are correct
 		static bool turretGood = false;
 		if(fabs(motorControl.diffFlyWheelW) <35 && motorControl.angdiff < 3){
@@ -198,7 +219,7 @@ void opcontrol() {
 				loop = 0;
 			}
 		}
-		
-		delay(20);
+		std::cout << "loop done\n";
+		delay(25);
 	}
 }
