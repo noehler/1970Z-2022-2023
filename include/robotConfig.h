@@ -58,7 +58,7 @@ private:
     if (encoderLoc == &rightEncoderFB) {
       radius = 1.375;
     } else {
-      radius = 1.375;
+      radius = 1.383;
     }
 
     double degreesTraveled = encoderLoc->get_value();
@@ -166,6 +166,7 @@ public:
     robot.zpos = 8;
     chaIntAng = heading;
     robot.odoangle = chaIntAng;
+    odoHeading = chaIntAng/180*M_PI;
     color = colorPT;
     goal.xpos = 20;
     goal.ypos = 124;
@@ -217,31 +218,26 @@ public:
   double arc1g;
   double arc2g;
   double arc3g;
+  double odoHeading = 0;
   void odometry(void) {
 
     while (1) {
-      static double odoHeading = 0;
-      static double odomposx = 0;
-      static double odomposy = 0;
-
-      double Arc1 =
+      double Arc2 =
           distTraveled(&rightEncoderFB); // rightEncoderFB travel, to forward
                                          // direction of robot is positive
-      double Arc2 =
+      double Arc1 =
           distTraveled(&leftEncoderFB); // leftEncoderFB travel, to forward
-                                        // direction of robot is positiv
-      double Arc3 = -distTraveled(
-          &encoderLR);   // backEncoderFB travel, to right of robot is positive
-
+                                        // direction of robot is positive
+      double Arc3 = -distTraveled(&encoderLR);   // backEncoderFB travel, to right of robot is positive
       arc1g += Arc1;
       arc2g += Arc2;
       arc3g += Arc3;
 
 
-      double a = 4.67881905; // distance between two tracking wheels
-      double b = -2.40625; // distance from tracking center to back tracking
-                         // wheel, positive direction is to the back of robot
-      double P1 = (Arc1 - Arc2);
+      double a = 4.76775; // distance between two tracking wheels
+      double b = 2.40625; // distance from tracking center to back tracking
+                         // wheel, positive direction is to the front of tracking point
+      double P1 = (Arc2 - Arc1);
       double Delta_y, Delta_x;
 
       //getting rotation and checking for error
@@ -260,7 +256,6 @@ public:
 
       //checking if calculated angle difference to inertial angle difference is too large and resetting if is too large
       double angle_error = odoHeading - radRotation;
-      angle_error = 0;
       if (angle_error > M_PI) {
         angle_error -= 2 * M_PI;
       } else if (angle_error < -M_PI) {
@@ -287,14 +282,14 @@ public:
         double sin_side = -cos(odoHeading + Delta_heading) + cos(odoHeading);
         double sin_back = -sin(odoHeading + Delta_heading) + sin(odoHeading);
 
-        Delta_x = Radius_side * cos_side - Radius_back * cos_back;
-        Delta_y = Radius_side * sin_side - Radius_back * sin_back;
+        Delta_x = Radius_side * cos_side + Radius_back * cos_back;
+        Delta_y = Radius_side * sin_side + Radius_back * sin_back;
 
       } else {
         Delta_x =
-            Arc1 * cos(odoHeading) - (Arc3 * cos(odoHeading + (M_PI / 2)));
+            Arc1 * cos(odoHeading) + (Arc3 * cos(odoHeading - (M_PI / 2)));
         Delta_y =
-            Arc1 * sin(odoHeading) - (Arc3 * sin(odoHeading + (M_PI / 2)));
+            Arc1 * sin(odoHeading) + (Arc3 * sin(odoHeading - (M_PI / 2)));
       }
       odoHeading += Delta_heading;
       robot.odoangle +=Delta_heading*180/M_PI;
@@ -329,8 +324,23 @@ public:
         robot.turAng += 360;
       }
 
+      logValue("time", c::millis(), 0);
+      logValue("xpos", robot.xpos, 1);
+      logValue("ypos", robot.ypos, 2);
+      logValue("arc1", arc1g, 3);
+      logValue("arc2", arc2g, 4);
+      logValue("arc3", arc3g, 5);
+      logValue("iHead", robot.angle, 6);
+      logValue("oHead", robot.odoangle, 7);
+      logValue("arc1d", Arc1, 8);
+      logValue("arc2d", Arc2, 9);
+      logValue("arc3d", Arc3, 10);
+      logValue("dx", Delta_x, 11);
+      logValue("dy", Delta_y, 12);
+      outValsSDCard();
+
       // delay to allow for other tasks to run
-      delay(5);
+      delay(10);
     }
   }
 
@@ -340,57 +350,18 @@ public:
     SSOSTTT_bool = true;
     // acceleration due to gravity in inches per second
     float g = 386.08858267717;
-    // constant based around acceleration due to gravity in inches per second
-    // devided squared by four -(g^2)/4
-    double a = -37266.393609;
-    targetAngleOffest = 0;
-    // chaIntAng = 0;
     while (!competition::is_disabled() && SSOSTTT_bool == true) {
-      // define quartic equation terms
-
+     
+      //calculating difference in position
       robotGoal.dx = goal.xpos - robot.xpos;
       robotGoal.dy = goal.ypos - robot.ypos;
       robotGoal.dz = goal.zpos - robot.zpos;
-      double c = pow(robot.velX, 2) + pow(robot.velY, 2) - robotGoal.dz * g;
-      double d = -2 * robotGoal.dx * robot.velX - 2 * robotGoal.dy * robot.velY;
-      double e =
-          pow(robotGoal.dx, 2) + pow(robotGoal.dy, 2) - pow(robotGoal.dz, 2);
-      double D = 1000000000000;
-      double T = 0.1;
-      bool close_enough = false;
-      while (close_enough != true) {
-        if (D > 10000) {
-          T += 0.1;
-        } else if (D > 1) {
-          T += 0.001;
-        } else {
-          close_enough = true;
-        }
-        D = a * pow(T, 4) + c * pow(T, 2) + d * T + e;
-      }
 
-      double P1 = robotGoal.dy - robot.velY * T;
-      double P2 = robotGoal.dx - robot.velX * T;
-      double Tar_ang = 0;
-      if (P2 == 0) {
-        if (P1 > 0) {
-          Tar_ang = M_PI / 2;
-        } else {
-          Tar_ang = -M_PI / 2;
-        }
-      } else {
-        Tar_ang = atan(P1 / P2);
-        if (P2 < 0) {
-          Tar_ang = Tar_ang + M_PI;
-        } else {
-          Tar_ang = Tar_ang + 2 * M_PI;
-        }
-      }
-      double P3 = cos(Tar_ang) * 0.707106781187 * T;
-      double V_disk = P2 / P3;
-      double turOfCenterOffset = 0; // offcenter offset, not tested yet
-      // outputting calculated values
-      
+      goalSpeed = 0;
+
+      goalAngle = 0;
+
+      //checking how many discs are in the magazine
       double angle = potentiometer.get_angle();
       if (angle > 220) {
         robot.magFullness = 0;
@@ -402,21 +373,7 @@ public:
         robot.magFullness = 3;
       }
 
-      if (V_disk < 160) {
-        V_disk = 160;
-      }
-      goalSpeed = V_disk;
-      goalAngle = (Tar_ang * 180 / M_PI + 0 * targetAngleOffest +
-                    0 * turOfCenterOffset);
-
-      while (goalAngle > 180) {
-        goalAngle -= 360;
-      }
-      while (goalAngle < -180) {
-        goalAngle += 360;
-      }
-      robot.turvelocity = (robot.velX * P1 - robot.velY * P2) /
-                          (pow(P1, 2) + pow(P2, 2)) * 180 / M_PI;
+      
       delay(optimalDelay);
     }
   }

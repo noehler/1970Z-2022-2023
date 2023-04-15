@@ -134,7 +134,7 @@ void warn(std::string message, int messageShowTime){
 
 //outputting to SD card in seperate thread so if there is a corrupted card it will not end what the robot is actually doing
 void outValsSDCard(void){
-    while(1){
+    //while(1){
         if (usd::is_installed() && outVals[0] != 420.69 && !competition::is_disabled()){
             //making file and initally printing names of colums on top
             static int fileNum;
@@ -198,7 +198,7 @@ void outValsSDCard(void){
                 }
             }
         }
-        warnScreenUpdate();//update second controller screen
-        delay(40);
-    }
+        //warnScreenUpdate();//update second controller screen
+        //delay(40);
+    //}
 }

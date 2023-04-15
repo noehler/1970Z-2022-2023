@@ -21,11 +21,10 @@ void initialize() {
 
 	//logging and interface threads starting up
 	Task AutonSelector_Task(AutonSelector, "Auton Selector Task");
-	Task outPutting_task(outValsSDCard, "Outputting Task");
+	//Task outPutting_task(outValsSDCard, "Outputting Task");
 
 	//default values set in case of entering into operatorControl without going through autonomous first
 	sensing.set_status(37,11.5,90,100, 0);
-	sensing.set_status(0,0,180,0, 0);
 }
 
 //section of code that runs when robot is not in autonomous or driver

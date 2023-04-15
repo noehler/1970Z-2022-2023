@@ -48,7 +48,7 @@ private:
   // All PID systems combined into one class
   class tunedSystems_t {
   public:
-    PID_t driveFR, driveSS, turret, flyWheel;
+    PID_t driveFR, driveSS, turret, flyWheel, rotate;
   } PID;
 
   // class that handles individual values for moveTo functions
@@ -149,9 +149,13 @@ public:
     PID.driveFR.i = 0.01;
     PID.driveFR.d = 7;
 
-    PID.driveSS.p = 4;
+    PID.driveSS.p = 5;
     PID.driveSS.i = 0.065;
-    PID.driveSS.d = 6;
+    PID.driveSS.d = 5;
+
+    PID.rotate.p = 4;
+    PID.rotate.i = 0.065;
+    PID.rotate.d = 10;
 
     PID.turret.p = 3.2;
     PID.turret.i = .01;
@@ -263,7 +267,7 @@ public:
       integral = 0;
 
     } else if (fabs(angdiff) > move.errtheta){//PID controller in small ranges
-      powerOutput = (angdiff * PID.driveSS.p + integral * PID.driveSS.i + (angdiff - previousangdiff)*PID.driveSS.d)* 12000 / 127;
+      powerOutput = (angdiff * PID.rotate.p + integral * PID.rotate.i + (angdiff - previousangdiff)*PID.rotate.d)* 12000 / 127;
       integral += angdiff;
       if (powerOutput >12000){
         powerOutput = 12000;
@@ -282,125 +286,112 @@ public:
 
   //function to travel to specific point
   void moveTo(bool resetIntegs) {
+
     //setting up variables and setting intially to 0
-    static moveToInfoInternal_t moveI;
-    static double IPIDSS = 0;
-    static double previousets = 0;
-    static double IPIDfw = 0;
-    static double previouset = 0;
-    double turnOrMoveMult = 1;
-
-    //resetting variables when neccessary
-    if (resetIntegs == true) {
-      move.resetMoveTo = true;
+    static double integralFW;
+    static double integralSS;
+    if (resetIntegs){
+      integralFW = 0;
+      integralSS = 0;
     }
-    if (move.resetMoveTo) {
-      IPIDSS = 0;
-      previousets = 0;
-      IPIDfw = 0;
-      previouset = 0;
-      moveI.PIDSS = 0;     // PID turning speed
-      moveI.PIDFW = 0;     // PID moveforward speed
-      moveI.PIDSpeedL = 0; // PID leftside speed
-      moveI.PIDSpeedR = 0; // PID rightside speed
-      moveI.PIDFWFLAT = 0; // variable used for keeping move forward speed < 100
-      moveI.PIDSSFLAT = 0; // variable used for keeping turning speed < 20
-      // variable for for calculating first turning.
-      move.resetMoveTo = false;
+    if (integralFW == NAN){
+      integralFW = 0;
+    }
+    if (integralSS == NAN){
+      integralSS = 0;
     }
 
-
-    double currentheading = sensing.robot.angle / 180 * M_PI;
-    /*
-    function logic:
-    find errors of position, turn to target if robot cannot move in a arc to
-    it, than move to target in a arc. tracking center of robot is at the
-    center of two tracking wheels do not recomand using this funciton with
-    SpinTo() function. perferd to have a sperate thread for calculating live
-    position, than just take out codes from line 41 to line 48
-    */
+    //Calculating proportionate and derivative for lateral controller
     double etx = move.moveToxpos - sensing.robot.xpos; // change of x
     double ety = move.moveToypos - sensing.robot.ypos; // change of y
-    double dist = sqrt(pow(etx, 2) + pow(ety, 2));
-    double et = dist * 10;  //total distance needed to cover multiplied by constant to make it more pronounced
+    double FW = sqrt(pow(etx, 2) + pow(ety, 2));
+    static double prevFW = FW;
 
-    //calculating necessary heading needed to go towards point and making sure that returned value is not undefined or impossible
+    //Calculating proportionate and derivative for rotational controller
     move.targetHeading = atan(ety / etx);
-    if (etx < 0) {
-      move.targetHeading += M_PI;
-    } else if (etx == 0) {
-      move.targetHeading = M_PI / 2 * (fabs(ety) / ety);
-    }
-    if (move.moveToforwardToggle == -1) {
-      move.targetHeading += M_PI;
-    }
+    double currentheading = sensing.robot.angle / 180 * M_PI;
+    angdiff = move.targetHeading - currentheading;
+    static double prevSS = angdiff;
 
-    //calculating rotational difference and ensuring between +- 180
-    moveI.ets = move.targetHeading - currentheading;
-    if (moveI.ets < -M_PI) {
-      moveI.ets += 2 * M_PI;
-    }
-    if (moveI.ets > M_PI) {
-      moveI.ets -= 2 * M_PI;
-    }
+    if (angdiff < move.errtheta){
+      double straightOutput = 0;
+      double turnOutput = 0;
+      if (FW < 2*move.tolerance) {//voltage and acceleration controller
+        //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
+        double acceleration = .15;
 
-    //changing from radians to degreees
-    moveI.ets = moveI.ets * 180 / M_PI;
-    IPIDSS += moveI.ets;
-    IPIDfw += et;
+        //if motor is too hot the motor will not be able to accelerate as well
+        double motordecreaseConstant = .8;
+        if (lfD.get_temperature() > 45){
+          acceleration*=motordecreaseConstant;
+        }
+        if (lmD.get_temperature() > 45){
+          acceleration*=motordecreaseConstant;
+        }
+        if (lbD.get_temperature() > 45){
+          acceleration*=motordecreaseConstant;
+        }
+        if (rfD.get_temperature() > 45){
+          acceleration*=motordecreaseConstant;
+        }
+        if (rmD.get_temperature() > 45){
+          acceleration*=motordecreaseConstant;
+        }
+        if (rbD.get_temperature() > 45){
+          acceleration*=motordecreaseConstant;
+        }
 
-    //calculating turning PID
-    moveI.PIDSS = PID.driveSS.p * moveI.ets + PID.driveSS.i * IPIDSS +
-                  PID.driveSS.d * (moveI.ets - previousets);
+        //first term is amount of loops until target is reached, second term is amount of loops to slow down at current speed
+        turnOutput = (FW * PID.driveSS.p + integralFW * PID.driveSS.i + (FW - prevFW)*PID.driveSS.d)* 12000 / 127;
+        double basePWR = 12000 - fabs(turnOutput);
+        if (fabs(FW) / fabs(FW - prevFW) >
+            fabs(FW - prevFW) / acceleration) { //accelerate
+          if (FW < 0) {
+            straightOutput = -basePWR;
+          } else {
+            straightOutput = basePWR;
+          }
+        } else {//deccelerate
+          if (FW < 0) {
+            straightOutput = basePWR;
+          } else {
+            straightOutput = -basePWR;
+          }
+        }
 
-    //checking if withing range for no turning or only turning
-    if (fabs(moveI.ets) < move.errtheta * turnOrMoveMult) {//if small enough distance to move forward
-      if (fabs(moveI.ets - previousets) < 4) {//if slow enough reset turn integral and turning back on forward motion
-        IPIDSS = 0;
-        turnOrMoveMult = 1;
+        //storing value for velocity calculation
+        prevFW = FW;
+        integralFW = 0;
+        integralSS = 0;
+
+      } else if (fabs(FW) > move.tolerance){//PID controller in small ranges
+
+        //PID controllers
+        straightOutput = (FW * PID.driveFR.p + integralFW * PID.driveFR.i + (FW - prevFW)*PID.driveFR.d)* 12000 / 127;
+        turnOutput = (FW * PID.driveSS.p + integralFW * PID.driveSS.i + (FW - prevFW)*PID.driveSS.d)* 12000 / 127;
+
+        integralFW += FW;
+        integralSS += angdiff;
+        double max = fabs(straightOutput) + fabs(turnOutput);
+        if (max >12000){
+          double min = fabs(straightOutput) - fabs(turnOutput);
+          double ratio = min/max;
+
+          straightOutput = straightOutput / max*12000;
+          turnOutput = turnOutput/max*12000;
+        }
       }
-
-      //calculating forward motion
-      moveI.PIDFW = move.moveToforwardToggle *
-                    (PID.driveFR.p * et + PID.driveFR.i * IPIDfw +
-                      PID.driveFR.d * (et - previouset));
-    } else {
-      //slow motion down significantly to allow for greater influence of turning
-      turnOrMoveMult = .2;
-      moveI.PIDFW = 0;
+      else{
+        straightOutput = 0;
+        integralFW = 0;
+        integralSS = 0;
+      }
+      leftSpd = straightOutput + turnOutput;
+      rightSpd = straightOutput - turnOutput;
     }
-
-    //setting variables for derivative calculation 
-    previousets = moveI.ets;
-    previouset = et;
-
-    // lowering speed of turning when moving slower so that it runs at the same percentage difference
-    moveI.PIDSSFLAT = moveI.PIDSS * move.speed_limit / 100;
-    moveI.PIDFWFLAT = moveI.PIDFW * move.speed_limit / 100;
-
-    //making sure that speeds outputted do not exceed capabilities of the motor
-    if (moveI.PIDFWFLAT >= move.speed_limit) {
-      moveI.PIDFWFLAT = move.speed_limit;
-    }
-    if (moveI.PIDFWFLAT <= -move.speed_limit) {
-      moveI.PIDFWFLAT = -move.speed_limit;
-    }
-    if (moveI.PIDSSFLAT >= 2 * move.speed_limit) {
-      moveI.PIDSSFLAT = 2 * move.speed_limit;
-    }
-    if (moveI.PIDSSFLAT <= -2 * move.speed_limit) {
-      moveI.PIDSSFLAT = -2 * move.speed_limit;
-    }
-
-    //changing from percent to millivolts for motor input
-    rightSpd = (moveI.PIDFWFLAT + moveI.PIDSSFLAT) * 12000 / 127;
-    leftSpd = (moveI.PIDFWFLAT - moveI.PIDSSFLAT) * 12000 / 127;
-
-    //stopping and reseting varialbes 
-    if (dist < move.tolerance) {
-      move.resetMoveTo = true;
-      leftSpd = 0;
-      rightSpd = 0;
+    else{ //if angle is too far off only use rotation
+      HeadingTarget = move.targetHeading;
+      rotateTo(0);
     }
   }
 
@@ -716,30 +707,6 @@ public:
 
       angdiff = goalAngle - sensing.robot.angle;
       updatedAD = true;
-
-      //outputting for match review
-      logValue("x", sensing.robot.xpos, 0);
-      logValue("y", sensing.robot.ypos, 1);
-      logValue("angle", sensing.robot.angle, 2);
-      logValue("rightArc", sensing.arc1g, 3);
-      logValue("leftArc", sensing.arc2g, 4);
-      logValue("backArc", sensing.arc3g, 5);
-
-      double lfArc = lfD.get_position() / 360 * 1.375 * 2 * M_PI ;
-      double rfArc = rfD.get_position() / 360 * 1.375 * 2 * M_PI ;
-      double lmArc = lmD.get_position() / 360 * 1.375 * 2 * M_PI ;
-      double rmArc = rmD.get_position() / 360 * 1.375 * 2 * M_PI ;
-      double lbArc = lbD.get_position() / 360 * 1.375 * 2 * M_PI ;
-      double rbArc = rbD.get_position() / 360 * 1.375 * 2 * M_PI ;
-
-      logValue("lfArc", lfArc, 6);
-      logValue("rfArc", rfArc, 7);
-      logValue("lmArc", lmArc, 8);
-      logValue("rmArc", rmArc, 9);
-      logValue("lbArc", lbArc, 10);
-      logValue("rbArc", rbArc, 11);
-      logValue("odoAng", sensing.robot.odoangle, 12);
-      logValue("time", millis(), 13);
 
       delay(optimalDelay);
     }
