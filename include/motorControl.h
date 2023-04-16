@@ -145,9 +145,9 @@ public:
         shoot3({{22, 'A'}}), raise_magazine({{22, 'B'}}), raise_intake({{22,'C'}}) {
     
     //setting PID values begining of motorcontrol class
-    PID.driveFR.p = .5;
+    PID.driveFR.p = 6;
     PID.driveFR.i = 0.01;
-    PID.driveFR.d = 7;
+    PID.driveFR.d = 10;
 
     PID.driveSS.p = 5;
     PID.driveSS.i = 0.065;
@@ -306,19 +306,32 @@ public:
     double ety = move.moveToypos - sensing.robot.ypos; // change of y
     double FW = sqrt(pow(etx, 2) + pow(ety, 2));
     static double prevFW = FW;
+    if (resetIntegs){
+      prevFW = FW;
+    }
 
     //Calculating proportionate and derivative for rotational controller
-    move.targetHeading = atan(ety / etx);
+    move.targetHeading = atan2(ety,etx);
     double currentheading = sensing.robot.angle / 180 * M_PI;
     angdiff = move.targetHeading - currentheading;
+    while( angdiff > M_PI){
+      angdiff-= 2*M_PI;
+    }
+    while( angdiff < -M_PI){
+      angdiff+= 2*M_PI;
+    }
     static double prevSS = angdiff;
-
-    if (angdiff < move.errtheta){
-      double straightOutput = 0;
-      double turnOutput = 0;
-      if (FW < 2*move.tolerance) {//voltage and acceleration controller
+    if (resetIntegs){
+      prevSS = angdiff;
+    }
+    
+    double straightOutput = 0;
+    double turnOutput = 0;
+    if (fabs(angdiff) < move.errtheta/180*M_PI){
+      
+      if (FW > 2*move.tolerance) {//voltage and acceleration controller
         //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
-        double acceleration = .15;
+        double acceleration = .019;
 
         //if motor is too hot the motor will not be able to accelerate as well
         double motordecreaseConstant = .8;
@@ -342,8 +355,11 @@ public:
         }
 
         //first term is amount of loops until target is reached, second term is amount of loops to slow down at current speed
-        turnOutput = (FW * PID.driveSS.p + integralFW * PID.driveSS.i + (FW - prevFW)*PID.driveSS.d)* 12000 / 127;
-        double basePWR = 12000 - fabs(turnOutput);
+        double radius = -FW/(2*sin(angdiff));
+        double ratio = fabs((radius - 4.5) / (radius + 4.5));
+
+        double basePWR = 12000* ratio;
+
         if (fabs(FW) / fabs(FW - prevFW) >
             fabs(FW - prevFW) / acceleration) { //accelerate
           if (FW < 0) {
@@ -360,15 +376,24 @@ public:
         }
 
         //storing value for velocity calculation
-        prevFW = FW;
         integralFW = 0;
         integralSS = 0;
+        
+        if (radius < 0){
+          leftSpd = straightOutput*pow(ratio,2);
+          rightSpd = straightOutput;
+        }
+        else{
+          leftSpd = straightOutput;
+          rightSpd = straightOutput*pow(ratio,2);
+        }
+        
 
       } else if (fabs(FW) > move.tolerance){//PID controller in small ranges
 
         //PID controllers
         straightOutput = (FW * PID.driveFR.p + integralFW * PID.driveFR.i + (FW - prevFW)*PID.driveFR.d)* 12000 / 127;
-        turnOutput = (FW * PID.driveSS.p + integralFW * PID.driveSS.i + (FW - prevFW)*PID.driveSS.d)* 12000 / 127;
+        turnOutput = (angdiff * PID.driveSS.p + integralSS * PID.driveSS.i + (angdiff - prevSS)*PID.driveSS.d)* 12000 / 127;
 
         integralFW += FW;
         integralSS += angdiff;
@@ -380,19 +405,28 @@ public:
           straightOutput = straightOutput / max*12000;
           turnOutput = turnOutput/max*12000;
         }
+        leftSpd = straightOutput + turnOutput;
+        rightSpd = straightOutput - turnOutput;
       }
       else{
-        straightOutput = 0;
         integralFW = 0;
         integralSS = 0;
+        
+        leftSpd = 0;
+        rightSpd = 0;
+
+        move.resetMoveTo = true;
       }
-      leftSpd = straightOutput + turnOutput;
-      rightSpd = straightOutput - turnOutput;
+
     }
     else{ //if angle is too far off only use rotation
-      HeadingTarget = move.targetHeading;
+      HeadingTarget = move.targetHeading*180/M_PI;
       rotateTo(0);
     }
+
+    //storing previous values for velocity calc
+    prevFW = FW;
+    prevSS = angdiff;
   }
 
   //set pistions to correct starting position to ensure that there is no early expansion or shooting at start of match
@@ -635,8 +669,8 @@ public:
       logValue("y", sensing.robot.ypos, 1);
       logValue("ODOx", sensing.robot.odoxpos, 2);
       logValue("ODOy", sensing.robot.odoypos, 3);
-      logValue("GPSx", sensing.robot.GPSxpos, 4);
-      logValue("GPSy", sensing.robot.GPSypos, 5);
+      logValue("moveToX", move.moveToxpos, 4);
+      logValue("moveToy", move.moveToypos, 5);
       logValue("heading", sensing.robot.angle, 6);
       logValue("turr ang", sensing.robot.turAng, 7);
       logValue("angDiff", angdiff, 8);

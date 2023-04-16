@@ -2,6 +2,7 @@
 #include "Autons/autonSetup.h"
 #include "devFuncs.h"
 #include "output.h"
+#include "pros/misc.hpp"
 #include "pros/rtos.h"
 #include "robotConfig.h"
 
@@ -21,7 +22,7 @@ void initialize() {
 
 	//logging and interface threads starting up
 	Task AutonSelector_Task(AutonSelector, "Auton Selector Task");
-	//Task outPutting_task(outValsSDCard, "Outputting Task");
+	Task outPutting_task(outValsSDCard, "Outputting Task");
 
 	//default values set in case of entering into operatorControl without going through autonomous first
 	sensing.set_status(37,11.5,90,100, 0);
@@ -64,7 +65,7 @@ void autonomous() {
 //secotion of code used to alert driver when all conditions right to shoot
 bool vibrate = false;
 void vibrateController(void){
-  while(1){
+  while(!competition::is_disabled()){
     while(vibrate){
 		master.rumble(".");
 		delay(400);
@@ -76,16 +77,17 @@ void vibrateController(void){
 //Main driver control thread that runs during matches, motor control threads started locally here
 void opcontrol() {
 	logMessage("start of operator control");
+
 	//starting up tasks neccessary for driving
 	motorControl_t motorControl;
 	Task drive_Task(drive_ControllerWrapper, (void *)&motorControl,
 					"My Driver Controller Task");
 	Task turret_Intake_Task(intake_ControllerWrapper, (void *)&motorControl,
 							"Intake Controller Task");
-	//Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
-	//				"My Flywheel Speed Controller Task");
-	Task SSOSTTT_Task(SSOSTTT_Wrapper, (void *)&sensing, "turret angle Task");
-	//Task vibrationTask(vibrateController,"My Vibrator Controller Task");
+	Task fly_Task(fly_ControllerWrapper, (void *)&motorControl,
+					"My Flywheel Speed Controller Task");
+	Task speedAngleCalc_Task(speedAngleCalc_Wrapper, (void *)&sensing, "turret angle Task");
+	Task vibrationTask(vibrateController,"My Vibrator Controller Task");
 	motorControl.autoAim = false;
   
 	while (1) {  

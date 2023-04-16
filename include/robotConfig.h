@@ -324,42 +324,34 @@ public:
         robot.turAng += 360;
       }
 
-      logValue("time", c::millis(), 0);
-      logValue("xpos", robot.xpos, 1);
-      logValue("ypos", robot.ypos, 2);
-      logValue("arc1", arc1g, 3);
-      logValue("arc2", arc2g, 4);
-      logValue("arc3", arc3g, 5);
-      logValue("iHead", robot.angle, 6);
-      logValue("oHead", robot.odoangle, 7);
-      logValue("arc1d", Arc1, 8);
-      logValue("arc2d", Arc2, 9);
-      logValue("arc3d", Arc3, 10);
-      logValue("dx", Delta_x, 11);
-      logValue("dy", Delta_y, 12);
-      outValsSDCard();
-
       // delay to allow for other tasks to run
       delay(10);
     }
   }
 
-  bool SSOSTTT_bool = true;
-  void SSOSTTT(void) { // singSameOldSongTimeTurretTwister       //(itterative
-                       // Turret Angle calculation)
-    SSOSTTT_bool = true;
+  //speed and angle calculation for aimbot
+  bool speedAngleCalc_bool = true;
+  void speedAngleCalc(void) { 
+    speedAngleCalc_bool = true;
     // acceleration due to gravity in inches per second
-    float g = 386.08858267717;
-    while (!competition::is_disabled() && SSOSTTT_bool == true) {
+    float g = -386.08858267717;
+    //angle that the disc exits to robot at
+    float exitAngle = 2*M_PI/9;
+
+    while (!competition::is_disabled() && speedAngleCalc_bool == true) {
      
       //calculating difference in position
       robotGoal.dx = goal.xpos - robot.xpos;
       robotGoal.dy = goal.ypos - robot.ypos;
       robotGoal.dz = goal.zpos - robot.zpos;
 
-      goalSpeed = 0;
+      double dist = sqrt(pow(robotGoal.dx,2) + pow(robotGoal.dy,2));
 
-      goalAngle = 0;
+      //calculating exit velocity and 
+      goalSpeed = dist /
+                  (cos(exitAngle) * sqrt(2 * (robotGoal.dz-tan(exitAngle)*dist) / g ));
+      
+      goalAngle = atan2(robotGoal.dy,robotGoal.dx);
 
       //checking how many discs are in the magazine
       double angle = potentiometer.get_angle();
@@ -372,7 +364,6 @@ public:
       } else {
         robot.magFullness = 3;
       }
-
       
       delay(optimalDelay);
     }
@@ -433,7 +424,7 @@ public:
 extern void odometry_Wrapper(void *sensing);
 extern void GPS_Wrapper(void *sensing);
 extern void odometry_Wrapper(void *sensing);
-extern void SSOSTTT_Wrapper(void *sensing);
+extern void speedAngleCalc_Wrapper(void *sensing);
 extern sensing_t sensing;
 
 #endif

@@ -15,8 +15,8 @@ void odometry_Wrapper(void* sensing) {
     ((sensing_t*) sensing)->odometry();
 }
 
-void SSOSTTT_Wrapper(void* sensing){
-    ((sensing_t*) sensing)->SSOSTTT();
+void speedAngleCalc_Wrapper(void* sensing){
+    ((sensing_t*) sensing)->speedAngleCalc();
 }
 
 void GPS_Wrapper(void* sensing){
