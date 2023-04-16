@@ -32,8 +32,8 @@ void moveto(void *mc, double xTo, double yTo, double speedLimit, double toleranc
 }
 
 //wait until shooter is lined up, robot is still, speed is right, or timout to shoot
-void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, int overallMaxTime, int maxTime){
-    ((motorControl_t*) mc)->driveType = 1;
+void shootdisks(void *mc, int overallStartTime, int maxTime, int number, bool calibrapePos, int overallMaxTime){
+    ((motorControl_t*) mc)->driveType = 3;
     ((motorControl_t*) mc)->HeadingTarget = goalAngle;
     if (number == 4){
         number = sensing.robot.magFullness;
@@ -67,11 +67,17 @@ void shootdisks(void *mc, int overallStartTime, bool calibrapePos, int number, i
         sensing.robot.xpos = gpsIntegX/loops;
         sensing.robot.xpos = gpsIntegY/loops;
     }
-    if (number!=1){//second batch
+    if (number==3){//second batch
     ((motorControl_t*) mc)->raiseAScore(3);
         logMessage("shoot 3");
-    } else {
-    ((motorControl_t*) mc)->raiseAScore(1);
+    } else if (number==2){
+        ((motorControl_t*) mc)->raiseAScore(1);
+        logMessage("shoot 1");
+        ((motorControl_t*) mc)->raiseAScore(1);
+        logMessage("shoot 1");
+    }
+    else{
+        ((motorControl_t*) mc)->raiseAScore(1);
         logMessage("shoot 1");
     }
     delay(300);

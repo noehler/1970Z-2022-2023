@@ -334,7 +334,7 @@ public:
         double acceleration = .019;
 
         //if motor is too hot the motor will not be able to accelerate as well
-        double motordecreaseConstant = .8;
+        double motordecreaseConstant = .9;
         if (lfD.get_temperature() > 45){
           acceleration*=motordecreaseConstant;
         }
@@ -380,12 +380,12 @@ public:
         integralSS = 0;
         
         if (radius < 0){
-          leftSpd = straightOutput*pow(ratio,2);
+          leftSpd = straightOutput*pow(ratio,3);
           rightSpd = straightOutput;
         }
         else{
           leftSpd = straightOutput;
-          rightSpd = straightOutput*pow(ratio,2);
+          rightSpd = straightOutput*pow(ratio,3);
         }
         
 
@@ -602,6 +602,10 @@ public:
         rotateTo(resetIntegs);
         break;
       case 2: // driveVoltage
+        break;
+      case 3://aim
+        HeadingTarget = goalAngle;
+        rotateTo(resetIntegs);
         break;
       }
       prevdriveType = driveType;
@@ -901,8 +905,13 @@ public:
     int startTime = millis();
     while (!sensing.underRoller(1) && !sensing.underRoller(2) && //drive to roller until under roller
            millis() - startTime < time) {
-      leftSpd = 8000*fwd;
-      rightSpd = 8000*fwd;
+      if (fwd < 0){
+        leftSpd = -3000;
+        rightSpd = -3000;
+      }else {
+        leftSpd = 8000;
+        rightSpd = 8000;
+      }
       delay(20);
     }
     //run with constant power to ensure contact with roller

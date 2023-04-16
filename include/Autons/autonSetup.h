@@ -7,7 +7,7 @@ enum autonTypes_t{
 
 extern double distto(double x, double y);
 extern void moveto(void *mc, double xTo, double yTo, double speedLimit = 100, double tolerance = 5, double errtheta = 5, int forward = 1);
-extern void shootdisks(void *mc, int overallStartTime, bool calibrapePos = false, int number = 4, int overallMaxTime = 55000, int maxTime = 5000);
+extern void shootdisks(void *mc, int overallStartTime, int maxTime = 5000, int number = 4, bool calibrapePos = false, int overallMaxTime = 55000);
 extern void intake(void *mc);
 extern void movevoltage(void *mc, double L, double R);
 extern void rotateto(void *mc,double ang, double range = 3);

@@ -325,7 +325,7 @@ public:
       }
 
       // delay to allow for other tasks to run
-      delay(10);
+      delay(4);
     }
   }
 
@@ -351,7 +351,7 @@ public:
       goalSpeed = dist /
                   (cos(exitAngle) * sqrt(2 * (robotGoal.dz-tan(exitAngle)*dist) / g ));
       
-      goalAngle = atan2(robotGoal.dy,robotGoal.dx);
+      goalAngle = atan2(robotGoal.dy,robotGoal.dx)*180/M_PI;
 
       //checking how many discs are in the magazine
       double angle = potentiometer.get_angle();
