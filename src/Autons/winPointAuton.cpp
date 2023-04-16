@@ -20,7 +20,7 @@ void winPointAuton(void){
     moveto(&mc, 48, 23);
     waitPosTime(&mc,1000,overallStartTime);
 
-    shootdisks(&mc, overallStartTime,4000,1);
+    shootdisks(&mc, overallStartTime,3000,1);
 
     //move to lineup roller
     intake(&mc);

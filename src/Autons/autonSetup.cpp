@@ -34,6 +34,7 @@ void moveto(void *mc, double xTo, double yTo, double speedLimit, double toleranc
 //wait until shooter is lined up, robot is still, speed is right, or timout to shoot
 void shootdisks(void *mc, int overallStartTime, int maxTime, int number, bool calibrapePos, int overallMaxTime){
     ((motorControl_t*) mc)->driveType = 3;
+    ((motorControl_t*) mc)->move.errtheta = .5;
     ((motorControl_t*) mc)->HeadingTarget = goalAngle;
     if (number == 4){
         number = sensing.robot.magFullness;

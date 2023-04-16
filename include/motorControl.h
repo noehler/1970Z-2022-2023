@@ -91,7 +91,7 @@ private:
   // conversion from inches per second to rpm needed at flywheel
   double angularVelocityCalc(int number) {
     if (lockSpeed == true) {
-      return 500;
+      return 650;
     } else {
       return sensing.goalSpeed * 2.215 + 63.5;
     }
@@ -693,8 +693,9 @@ public:
       logValue("goalSPD", sensing.goalSpeed, 21);
       logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
       //logging color from rollerGood
-      logValue("rollerGood", sensing.rollerIsGood(),26);
-      logValue("time", millis(), 27);
+      logValue("rollerGoodFRONT", sensing.rollerIsGood(1),26);
+      logValue("rollerGoodBACK", sensing.rollerIsGood(-1),27);
+      logValue("time", millis(), 28);
 
       delay(optimalDelay);
     }
@@ -745,6 +746,36 @@ public:
 
       angdiff = goalAngle - sensing.robot.angle;
       updatedAD = true;
+
+      
+      //outpuutting for match review
+      logValue("x", sensing.robot.xpos, 0);
+      logValue("y", sensing.robot.ypos, 1);
+      logValue("ODOx", sensing.robot.odoxpos, 2);
+      logValue("ODOy", sensing.robot.odoypos, 3);
+      logValue("moveToX", move.moveToxpos, 4);
+      logValue("moveToy", move.moveToypos, 5);
+      logValue("heading", sensing.robot.angle, 6);
+      logValue("turr ang", sensing.robot.turAng, 7);
+      logValue("angDiff", angdiff, 8);
+      logValue("batt pct", battery::get_capacity(), 9);
+      logValue("lfdTemp", lfD.get_temperature(), 10);
+      logValue("lmdTemp", lmD.get_temperature(), 11);
+      logValue("lbdTemp", lbD.get_temperature(), 12);
+      logValue("rfdTemp", rfD.get_temperature(), 13);
+      logValue("rmdTemp", rmD.get_temperature(), 14);
+      logValue("rbdTemp", rbD.get_temperature(), 15);
+      logValue("intakeTemp", intakeMotor.get_temperature(), 16);
+      logValue("fW1Temp", flyWheel1.get_temperature(), 17);
+      logValue("fw1SPD", flyWheel1.get_actual_velocity(), 18);
+      logValue("magCount", sensing.robot.magFullness, 19);
+      logValue("goalAngle", goalAngle, 20);
+      logValue("goalSPD", sensing.goalSpeed, 21);
+      logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
+      //logging color from rollerGood
+      logValue("rollerGoodFRONT", sensing.rollerIsGood(1),26);
+      logValue("rollerGoodBACK", sensing.rollerIsGood(-1),27);
+      logValue("time", millis(), 28);
 
       delay(optimalDelay);
     }
@@ -922,7 +953,7 @@ public:
     intakespdTarget = 180;
     while (finished == false && millis() - startTime < time) {//wait until roller is flipped
       static int pwr = 8000;
-      if (sensing.rollerIsGood()) {
+      if (sensing.rollerIsGood(fwd)) {
         finished = true;
         break;
       }

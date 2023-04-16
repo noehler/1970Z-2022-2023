@@ -98,8 +98,8 @@ public:
 
   Imu inertial;
 
-  Optical opticalSensor;
-  Optical opticalSensor2;
+  Optical frontOpticalSensor;
+  Optical backOpticalSensor;
   Vision discSearch;
 
   GPS GPS_sensor;
@@ -114,7 +114,7 @@ public:
       : leftEncoderFB({{5, 'E', 'F'}, false}),
         rightEncoderFB({{5, 'C', 'D'}, false}), encoderLR({{5, 'A', 'B'}, false}),
         inertial2(20), inertial(19),
-        opticalSensor(15), opticalSensor2(15), discSearch(15), potentiometer({22, 'e'}),
+        frontOpticalSensor(15), backOpticalSensor(15), discSearch(15), potentiometer({22, 'e'}),
         GPS_sensor(15) {}
 
   // called at start of pre Auton, calibrates inerials and other sensors along
@@ -157,8 +157,8 @@ public:
   //  start of autonomous
   void set_status(double xpos, double ypos, double heading,
                   double color_sensor_luminance, int colorPT) {
-    opticalSensor.set_led_pwm(color_sensor_luminance);
-    opticalSensor2.set_led_pwm(color_sensor_luminance);
+    frontOpticalSensor.set_led_pwm(color_sensor_luminance);
+    backOpticalSensor.set_led_pwm(color_sensor_luminance);
     robot.xpos = xpos;
     robot.ypos = ypos;
     robot.odoxpos = xpos;
@@ -371,13 +371,13 @@ public:
 
   bool underRoller(int sensorNum) {
     if (sensorNum == 1) {
-      if (opticalSensor.get_proximity() > 200) {
+      if (frontOpticalSensor.get_proximity() > 200) {
         return 1;
       } else {
         return 0;
       }
     } else {
-      if (opticalSensor2.get_proximity() > 200) {
+      if (backOpticalSensor.get_proximity() > 200) {
         return 1;
       } else {
         return 0;
@@ -385,12 +385,15 @@ public:
     }
   }
 
-  bool rollerIsGood(void) {
-    if (underRoller(1)) {
-      c::optical_rgb_s color_sensor = opticalSensor.get_rgb();
+  bool rollerIsGood(int fwd) {
+    if (!underRoller(fwd)){
+      return 0;
+    }
+    if (fwd == 1) {
+      c::optical_rgb_s color_sensor = frontOpticalSensor.get_rgb();
       logValue("r", color_sensor.red, 23);
       logValue("b", color_sensor.blue, 24);
-      logValue("prox", opticalSensor.get_proximity(), 25);
+      logValue("prox", frontOpticalSensor.get_proximity(), 25);
       if (((color_sensor.red > 3800 && color == true) ||
            (color_sensor.red < 1200 && color == false)) &&
           underRoller(1)) {
@@ -398,11 +401,11 @@ public:
       } else {
         return 0;
       }
-    } else if (underRoller(2)) {
-      c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
+    } else{
+      c::optical_rgb_s color_sensor = backOpticalSensor.get_rgb();
       logValue("r", color_sensor.red, 23);
       logValue("b", color_sensor.blue, 24);
-      logValue("prox", opticalSensor2.get_proximity(), 25);
+      logValue("prox", backOpticalSensor.get_proximity(), 25);
 
       if (((color_sensor.red > 2000 && color == true) ||
            (color_sensor.red < 500 && color == false)) &&
@@ -411,12 +414,6 @@ public:
       } else {
         return 0;
       }
-    } else {
-      c::optical_rgb_s color_sensor = opticalSensor2.get_rgb();
-      logValue("r", 0, 23);
-      logValue("b", 0, 24);
-      logValue("prox", opticalSensor2.get_proximity(), 25);
-      return 0;
     }
   }
 };
