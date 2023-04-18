@@ -33,7 +33,6 @@ private:
   ADIDigitalOut blocker;
   ADIDigitalOut shoot3;
   ADIDigitalOut raise_magazine;
-  ADIDigitalOut raise_intake;
 
   // delay used to control most functions, tuned to optimize performance while
   // not overdrawing power or affecting calculations
@@ -135,6 +134,7 @@ public:
   double diffFlyWheelW; // difference in goal speed of flywheel verse actual speed
   bool autoAim = false;
   double slope = 2.215;
+  ADIDigitalOut raise_intake;
 
   // Constructor to assign values to the motors and PID values
   motorControl_t(void)
@@ -225,7 +225,7 @@ public:
       double acceleration = .15;
 
       //if motor is too hot the motor will not be able to accelerate as well
-      double motordecreaseConstant = .8;
+      double motordecreaseConstant = .9;
       if (lfD.get_temperature() > 45){
         acceleration*=motordecreaseConstant;
       }
@@ -379,13 +379,13 @@ public:
         integralFW = 0;
         integralSS = 0;
         
-        if (radius < 0){
-          leftSpd = straightOutput*pow(ratio,3);
+        if (radius > 0){
+          leftSpd = straightOutput*pow(ratio,2);
           rightSpd = straightOutput;
         }
         else{
           leftSpd = straightOutput;
-          rightSpd = straightOutput*pow(ratio,3);
+          rightSpd = straightOutput*pow(ratio,2);
         }
         
 
@@ -782,6 +782,7 @@ public:
   }
 
   // voltage controller for flywheel motors
+  double flyAngularVelocity;
   void flyController() {
     // speed needed to accelerate
     double bottomLimit = 25;
@@ -793,6 +794,7 @@ public:
     double prevAngularVelocityDifference1 = 0;
     
     while (!competition::is_disabled()) {
+      flyAngularVelocity = flyWheel1.get_actual_velocity();
       if (flyWheel1.get_temperature() < 45) {
         double flyWVolt1;
         double goalAngularVelocity = angularVelocityCalc(sensing.goalSpeed);
@@ -920,15 +922,14 @@ public:
     }
     else{
       intakeRunning = 2;
-      delay(1000);
+      delay(500);
       intakeRunning = 0;
     }
   }
 
   // moves to roller and spins it to correct orientation
   //fwd == 1 || -1
-  void driveToRoller(double time,
-                     bool reverseOut = true, int fwd = 1) { // changing to let move to take
+  void driveToRoller(double time, int sensor, bool reverseout = true) { // changing to let move to take
                                                // over the initial moveto
     bool finished = false;
     driveType = 2;//manual voltage control
@@ -936,36 +937,32 @@ public:
     int startTime = millis();
     while (!sensing.underRoller(1) && !sensing.underRoller(2) && //drive to roller until under roller
            millis() - startTime < time) {
-      if (fwd < 0){
-        leftSpd = -3000;
-        rightSpd = -3000;
-      }else {
-        leftSpd = 8000;
-        rightSpd = 8000;
-      }
+      leftSpd = -5000;
+      rightSpd = -5000;
       delay(20);
     }
     //run with constant power to ensure contact with roller
-    leftSpd = 6000*fwd;
-    rightSpd = 6000*fwd;
+    leftSpd = -4000;
+    rightSpd = -4000;
 
-    intakeRunning = 3;//speed control for intake
-    intakespdTarget = 180;
+    intakeRunning = 1;//speed control for intake
+    sensing.rollerIsGood(sensor, 1);
     while (finished == false && millis() - startTime < time) {//wait until roller is flipped
-      static int pwr = 8000;
-      if (sensing.rollerIsGood(fwd)) {
+      if (sensing.rollerIsGood(sensor)) {
         finished = true;
         break;
       }
       delay(20);
     }
 
-    if (reverseOut) {
-      leftSpd = -8000*fwd;
-      rightSpd = -8000*fwd;
+    if (reverseout) {
+      leftSpd = 8000;
+      rightSpd = 8000;
       intakeRunning = 1;
-      delay(300);
+      delay(150);
     }
+    leftSpd = 0;
+    rightSpd = 0;
     intakeRunning = 0;
   }
 

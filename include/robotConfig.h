@@ -98,8 +98,8 @@ public:
 
   Imu inertial;
 
-  Optical frontOpticalSensor;
-  Optical backOpticalSensor;
+  Optical leftOpticalSensor;
+  Optical rightOpticalSensor;
   Vision discSearch;
 
   GPS GPS_sensor;
@@ -114,8 +114,8 @@ public:
       : leftEncoderFB({{5, 'E', 'F'}, false}),
         rightEncoderFB({{5, 'C', 'D'}, false}), encoderLR({{5, 'A', 'B'}, false}),
         inertial2(20), inertial(19),
-        frontOpticalSensor(15), backOpticalSensor(15), discSearch(15), potentiometer({22, 'e'}),
-        GPS_sensor(15) {}
+        leftOpticalSensor(12), rightOpticalSensor(14), discSearch(16), potentiometer({22, 'e'}),
+        GPS_sensor(16) {}
 
   // called at start of pre Auton, calibrates inerials and other sensors along
   // with setting intial values
@@ -157,8 +157,8 @@ public:
   //  start of autonomous
   void set_status(double xpos, double ypos, double heading,
                   double color_sensor_luminance, int colorPT) {
-    frontOpticalSensor.set_led_pwm(color_sensor_luminance);
-    backOpticalSensor.set_led_pwm(color_sensor_luminance);
+    leftOpticalSensor.set_led_pwm(color_sensor_luminance);
+    rightOpticalSensor.set_led_pwm(color_sensor_luminance);
     robot.xpos = xpos;
     robot.ypos = ypos;
     robot.odoxpos = xpos;
@@ -371,13 +371,13 @@ public:
 
   bool underRoller(int sensorNum) {
     if (sensorNum == 1) {
-      if (frontOpticalSensor.get_proximity() > 200) {
+      if (leftOpticalSensor.get_proximity() ==255) {
         return 1;
       } else {
         return 0;
       }
     } else {
-      if (backOpticalSensor.get_proximity() > 200) {
+      if (rightOpticalSensor.get_proximity() == 255) {
         return 1;
       } else {
         return 0;
@@ -385,36 +385,89 @@ public:
     }
   }
 
-  bool rollerIsGood(int fwd) {
-    if (!underRoller(fwd)){
+  bool rollerIsGood(int fwd, bool newRoller = false) {
+    static bool seenBad = 0;
+    bool isGood = false;
+    if (newRoller){
+      seenBad = 0;
+    }
+    if (!underRoller(1) && !underRoller(2)){
       return 0;
     }
-    if (fwd == 1) {
-      c::optical_rgb_s color_sensor = frontOpticalSensor.get_rgb();
-      logValue("r", color_sensor.red, 23);
-      logValue("b", color_sensor.blue, 24);
-      logValue("prox", frontOpticalSensor.get_proximity(), 25);
-      if (((color_sensor.red > 3800 && color == true) ||
-           (color_sensor.red < 1200 && color == false)) &&
+    if (underRoller(1)) {
+      c::optical_rgb_s color_sensor = leftOpticalSensor.get_rgb();
+      logValue("r", color_sensor.red, 0);
+      logValue("b", color_sensor.blue, 1);
+      logValue("prox", leftOpticalSensor.get_proximity(), 25);
+      if (((color_sensor.red > 400 && color == true) ||
+           (color_sensor.red < 300 && color == false)) &&
           underRoller(1)) {
-        return 1;
+        isGood = true;
       } else {
-        return 0;
+        isGood = false;
       }
     } else{
-      c::optical_rgb_s color_sensor = backOpticalSensor.get_rgb();
+      c::optical_rgb_s color_sensor = rightOpticalSensor.get_rgb();
       logValue("r", color_sensor.red, 23);
       logValue("b", color_sensor.blue, 24);
-      logValue("prox", backOpticalSensor.get_proximity(), 25);
+      logValue("prox", rightOpticalSensor.get_proximity(), 25);
 
-      if (((color_sensor.red > 2000 && color == true) ||
-           (color_sensor.red < 500 && color == false)) &&
-          underRoller(2)) {
-        return 1;
+      if (((color_sensor.red > 400 && color == true) ||
+           (color_sensor.red < 300 && color == false)) &&
+          underRoller(-1)) {
+        isGood = true;
       } else {
-        return 0;
+        isGood = false;
       }
     }
+
+    if (isGood == false && seenBad == false && underRoller(fwd)){
+      seenBad = true;
+    }
+
+    if (seenBad == true && isGood == true){
+      return 1;
+    }
+    else{
+      return 0;
+    }
+  }
+
+  Object prevShotRobot;
+  double prevAngularVelocityShot;
+  void positionCorrection(void){
+    double changeX = robot.xpos - prevShotRobot.xpos;
+    double changeY = robot.ypos - prevShotRobot.ypos;
+
+    double trueX[2] = {0,0};
+    double trueY[2]{0,0};
+    double trueAngle[2]{0,0};
+
+    //checking which is better
+
+    bool secondGood;
+
+    robot.xpos = trueX[secondGood] + changeX;
+    robot.ypos = trueY[secondGood] + changeY;
+    chaIntAng = chaIntAng + (trueAngle[secondGood] - prevShotRobot.angle);
+  }
+  
+  void shooting(int velocity){
+    static double prevAngularVelocity = velocity;
+    static int prevTime = millis();
+    static Object prevRobotData = robot;
+
+    //(rotations per second) per milisecond
+    double velocityDerivative = (velocity - prevAngularVelocity)/(millis() - prevTime);
+
+    if (velocityDerivative < -2){
+      prevShotRobot = prevRobotData;
+      prevAngularVelocityShot = velocity;
+    }
+
+    prevRobotData = robot;
+    prevAngularVelocity = velocity;
+    prevTime = millis();
   }
 };
 

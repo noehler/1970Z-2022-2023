@@ -36,7 +36,7 @@ void competition_initialize() {}
 
 //section of code that runs at start of autonomous, threads are started locally in each seperate function
 void autonomous() {
-	autonType = winPointBoth;
+	autonType = winPointClose;
 	logMessage("start of autonomous");
 	switch(autonType){
 		case winPointClose: // close win Point auton
@@ -57,7 +57,7 @@ void autonomous() {
 	}
 	logMessage("end of autonomous");
 	while(1){
-		delay(20);
+		delay(200);
 	}
 }
 
@@ -94,6 +94,7 @@ void opcontrol() {
 		std::cout << "\n\nlooping \n\n";
 		if (master.get_digital_new_press(DIGITAL_R1)){
 			logMessage("reverse intake");
+			sensing.shooting(motorControl.flyAngularVelocity);
 		}
 		if (master.get_digital_new_press(DIGITAL_L1)){
 			logMessage("shoot 3");
