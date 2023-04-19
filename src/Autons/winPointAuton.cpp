@@ -60,30 +60,20 @@ void closeWinPoint(void){
     moveto(&mc, 48, 23);
     waitPosTime(&mc,1000,overallStartTime);
 
-    shootdisks(&mc, overallStartTime,1500,1);
+    shootdisks(&mc, overallStartTime,2000,1);
     delay(200);
     shootdisks(&mc, overallStartTime,1500,1);
     
     mc.raise_intake.set_value(true);
     intake(&mc);
-    moveto(&mc,44,20,100,2,5,-1);
-    waitPosTime(&mc,1000,overallStartTime, 11000);
     mc.raise_intake.set_value(false);
-    rotateto(&mc, 45);
-    waitRotate(&mc, 2000, overallStartTime);
-    if (mc.angdiff < 5){
-        movevoltage(&mc, 5000, 5000);
-        delay(3000);
-        mc.raise_intake.set_value(false);
-    }
-    else{
-        moveto(&mc,60,48);
-        mc.raise_intake.set_value(false);
-        intakeWaitForDiscs(&mc, 1000, overallStartTime);
-    }
-    shootdisks(&mc, overallStartTime,3000,1,0,13000);
+    moveto(&mc,60,36,100,6);
+    intakeWaitForDiscs(&mc, 3000, overallStartTime);
+    mc.raise_intake.set_value(false);
+    delay(3000);
+    shootdisks(&mc, overallStartTime,2000,1,0,13000);
     delay(200);
-    shootdisks(&mc, overallStartTime,3000,1,0,14000);
+    shootdisks(&mc, overallStartTime,2000,1,0,14000);
 
     delay(20);
     movevoltage(&mc, 0, 0);

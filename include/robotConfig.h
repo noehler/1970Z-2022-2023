@@ -26,7 +26,7 @@ public:
   double xpos, ypos, zpos, // seperate position outputs for each tracking system
       odoxpos, odoypos,    // seperate position outputs for each tracking system
       GPSxpos, GPSypos,    // seperate position outputs for each tracking system
-      angle,odoangle, turAng, turvelw, velX, velY, velW, turvelocity, odovelW, imuvelw,
+      angle,odoangle, turAng = 40, turvelw, velX, velY, velW, turvelocity, odovelW, imuvelw,
       angAccel, xAccel, yAccel;
   int magFullness;
 };
@@ -173,47 +173,6 @@ public:
     goal.zpos = 30;
   }
 
-  // used to get data form GPS sensor and mix it with odometry
-  void GPS_tracking(void) {
-    // note: rotation of Gps strip can vary depend on field if true, going to
-    // verify on 2/28
-    bool sensorFail = false;
-    while (1) {
-      static bool prevX;
-      static bool prevY;
-      static double ydiff = 0, xdiff = 0; // diff from middle/gps origin
-      pros::c::gps_status_s_t temp_status = GPS_sensor.get_status();
-      if (color != 0) {
-        xdiff = double(temp_status.y) * 39.37;
-        ydiff = -double(temp_status.x) * 39.37;
-      } else {
-        xdiff = -double(temp_status.y) * 39.37;
-        ydiff = double(temp_status.x) * 39.37;
-      }
-
-      static bool firstFail = true;
-      // if red: x direction is correct y is flipped, if blue: x direction is
-      // flipped, y is correct
-      if (prevX - (72 + xdiff) == 0) {
-        sensorFail = true;
-
-        if (firstFail) {
-          master.clear_line(2);
-          delay(50);
-          master.print(2, 0, "GPS Fail");
-          firstFail = false;
-        }
-      } else {
-        sensorFail = false;
-      }
-      prevX = (72 + xdiff);
-      robot.GPSxpos = 72 + xdiff - cos(robot.turAng * M_PI / 180) * 4.5;
-      robot.GPSypos = 72 + ydiff - sin(robot.turAng * M_PI / 180) * 4.5;
-
-      delay(20);
-    }
-  }
-
   //odometry task used to track position with tracking wheels placed under robot
   double arc1g;
   double arc2g;
@@ -314,16 +273,6 @@ public:
       robot.odoxpos += Delta_x;
       robot.odoypos += Delta_y;
 
-      // note:division of one hundred is due to the angle is messured in
-      // centideg
-      robot.turAng = robot.angle;
-      while (robot.turAng > 360) {
-        robot.turAng -= 360;
-      }
-      while (robot.turAng < 0) {
-        robot.turAng += 360;
-      }
-
       // delay to allow for other tasks to run
       delay(4);
     }
@@ -399,8 +348,8 @@ public:
       logValue("r", color_sensor.red, 0);
       logValue("b", color_sensor.blue, 1);
       logValue("prox", leftOpticalSensor.get_proximity(), 25);
-      if (((color_sensor.red > 400 && color == true) ||
-           (color_sensor.red < 300 && color == false)) &&
+      if (((color_sensor.red > 300 && color == true) ||
+           (color_sensor.red < 200 && color == false)) &&
           underRoller(1)) {
         isGood = true;
       } else {
@@ -434,22 +383,54 @@ public:
   }
 
   Object prevShotRobot;
-  double prevAngularVelocityShot;
-  void positionCorrection(void){
-    double changeX = robot.xpos - prevShotRobot.xpos;
-    double changeY = robot.ypos - prevShotRobot.ypos;
+  double prevAngularVelocityShot = NAN;
+  void positionCorrection(double angleOff, double heightOff){
+    
+    double trueRadius[2];
+    if (heightOff != 0){
+      double changePos[2] = {robot.xpos - prevShotRobot.xpos, robot.ypos - prevShotRobot.ypos};
+      double velocity = 0;
+      double acceleration = -386.08858267562;
+      double exitAngle = robot.turAng/180*M_PI;
 
-    double trueX[2] = {0,0};
-    double trueY[2]{0,0};
-    double trueAngle[2]{0,0};
+      double constant1 = -(velocity * sin(robot.turAng/180*M_PI)* cos(robot.turAng/180*M_PI)) / acceleration;
+      double constant2 = sqrt(pow(velocity * sin(exitAngle), 2)) + (2 * acceleration * (robot.zpos - heightOff)*velocity*cos(exitAngle) / acceleration);
+      trueRadius[0] = constant1 - constant2;
+      trueRadius[1] = constant1 + constant2;
 
-    //checking which is better
+      double truePos[2][2];
+      truePos[0][0] = trueRadius[0]*cos(prevShotRobot.angle) - goal.xpos + prevShotRobot.xpos;
+      truePos[0][1] = trueRadius[0]*sin(prevShotRobot.angle) - goal.ypos + prevShotRobot.ypos;
+      truePos[1][0] = trueRadius[1]*cos(prevShotRobot.angle) - goal.xpos + prevShotRobot.xpos;
+      truePos[1][1] = trueRadius[1]*sin(prevShotRobot.angle) - goal.ypos + prevShotRobot.ypos;
+      
+      double distBtwn[2];
+      distBtwn[0] = sqrt(pow(robot.xpos - truePos[0][0],2) + pow(robot.ypos - truePos[0][1],2));
+      distBtwn[1] = sqrt(pow(robot.xpos - truePos[1][0],2) + pow(robot.ypos - truePos[1][1],2));
 
-    bool secondGood;
+      if(distBtwn[0]-distBtwn[1]){
+        robot.xpos = changePos[0] + truePos[0][0];
+        robot.ypos = changePos[0] + truePos[0][1];
+      }
+      else{
+        robot.xpos = changePos[0] + truePos[1][0];
+        robot.ypos = changePos[0] + truePos[1][1];
+      }
+    }
+    else{
+      trueRadius[0] = sqrt(pow(prevShotRobot.xpos - goal.xpos,2) + pow(prevShotRobot.ypos - goal.ypos,2));\
+      
+      double truePos[2][2];
+      if (angleOff != 0){
 
-    robot.xpos = trueX[secondGood] + changeX;
-    robot.ypos = trueY[secondGood] + changeY;
-    chaIntAng = chaIntAng + (trueAngle[secondGood] - prevShotRobot.angle);
+        truePos[0][0] = trueRadius[0]*cos(robot.angle/180*M_PI + angleOff/180*M_PI)-goal.xpos + robot.xpos;
+        truePos[0][1] = trueRadius[0]*sin(robot.angle/180*M_PI + angleOff/180*M_PI)-goal.ypos + robot.ypos;
+      }
+
+
+      robot.xpos = truePos[0][0];
+    }
+
   }
   
   void shooting(int velocity){
@@ -472,7 +453,6 @@ public:
 };
 
 extern void odometry_Wrapper(void *sensing);
-extern void GPS_Wrapper(void *sensing);
 extern void odometry_Wrapper(void *sensing);
 extern void speedAngleCalc_Wrapper(void *sensing);
 extern sensing_t sensing;

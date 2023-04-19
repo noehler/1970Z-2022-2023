@@ -19,10 +19,6 @@ void speedAngleCalc_Wrapper(void* sensing){
     ((sensing_t*) sensing)->speedAngleCalc();
 }
 
-void GPS_Wrapper(void* sensing){
-    ((sensing_t*) sensing)->GPS_tracking();
-}
-
 //get input from terminal on computer
 double getNum(std::string Output){
   std::string tempDist;

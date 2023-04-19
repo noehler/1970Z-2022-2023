@@ -18,7 +18,6 @@ void initialize() {
 
 	//positional tracking threads starting
 	Task odometry_Task(odometry_Wrapper, (void *)&sensing, "Odometry Task");
-	Task gps_Task(GPS_Wrapper, (void *)&sensing, "GPS Task");
 
 	//logging and interface threads starting up
 	Task AutonSelector_Task(AutonSelector, "Auton Selector Task");

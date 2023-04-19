@@ -59,77 +59,20 @@ int startRecord(void){
 }
 
 //updates screen of second controller with updated variables and warnings
-char errorMessage[20];
-double discMults[3][2] = {{1,0}, {1,0}, {1,0}};
-void sidecarGUI(bool showError){
-    static bool prevShow = 0;
-    static int multChange[2] = {0,1};
-    
-    //update variables
-    if (sidecar.get_digital(DIGITAL_B)){
-        multChange[0] = 1;
-    }
-    else if (sidecar.get_digital(DIGITAL_A)){
-        multChange[0] = 2;
-    }
-    else if (sidecar.get_digital(DIGITAL_X)){
-        multChange[0] = 3;
-    }
-    discMults[multChange[0]-1][0] += double(sidecar.get_analog(ANALOG_RIGHT_Y))/2048;
+void sideScreenUpdate(void){
+    static double angleOff = 0;
+    static double prevAngleOff = -10201200;
+    static double heightOff = 0;
+    static double prevHeightOff = -10201200;
+    angleOff+=double(sidecar.get_analog(ANALOG_RIGHT_X))/127*2;
+    heightOff+=double(sidecar.get_analog(ANALOG_LEFT_Y))/127*2;
 
-    if (discMults[0][0] != discMults[0][1] || discMults[1][0] != discMults[1][1] || discMults[2][0] != discMults[2][1] || multChange[0] != multChange[1]){//detects change so only sends data to controller when has to
-        //setting all variables to current
-        discMults[0][1] = discMults[0][0];
-        discMults[1][1] = discMults[1][0];
-        discMults[2][1] = discMults[2][0];
-        multChange[1] = multChange[0];
-
-        //indicator of what variables are being changed
-        char changeOut[10];
-        sprintf(changeOut," Change %d",multChange[0]);
-
-        //clear and print to screen
-        delay(50);
-        sidecar.clear();
-        delay(50);
-        sidecar.print(0,0,"%.2f | %s", discMults[0][0], errorMessage);
-        delay(50);
-        sidecar.print(1,0,"%.2f | %s", discMults[1][0], errorMessage);
-        delay(50);
-        sidecar.print(2,0,"%.2f | %s", discMults[2][0], changeOut);
+    if (angleOff != prevAngleOff || prevHeightOff != heightOff){
+        prevAngleOff = angleOff;
+        prevHeightOff = heightOff;
+        sensing.positionCorrection(angleOff, heightOff);
     }
-}
 
-//determines is last warning pushed should still be shown or cleared
-int waitTime = 0;
-int lastWarnTime = 0;
-bool showing = true;
-void warnScreenUpdate(void){
-    if (sidecar.is_connected()){//only run if second controller is connected
-        
-        if (c::millis()-lastWarnTime < waitTime && millis() > waitTime){//if should show
-            if (updateScreen[1]){
-                showing = true;
-                updateScreen[1] = false;
-            }
-            delay(50);
-            sidecar.rumble(".-");//rumble when showing
-        }
-        else{
-            if (showing){//remove warning
-                showing = false;
-            }
-        }
-        sidecarGUI(showing);//update screen
-    }
-}
-
-//variable to safely send a warning message
-void warn(std::string message, int messageShowTime){
-    lastWarnTime = millis();
-    waitTime = messageShowTime;
-    strcpy(errorMessage, message.c_str());
-    updateScreen[1] = true;
 }
 
 //outputting to SD card in seperate thread so if there is a corrupted card it will not end what the robot is actually doing
@@ -198,7 +141,7 @@ void outValsSDCard(void){
                 }
             }
         }
-        warnScreenUpdate();//update second controller screen
+        sideScreenUpdate();//update second controller screen
         delay(40);
     }
 }

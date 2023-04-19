@@ -92,7 +92,7 @@ private:
     if (lockSpeed == true) {
       return 650;
     } else {
-      return sensing.goalSpeed * 2.215 + 63.5;
+      return sensing.goalSpeed * 2.207 + 63.5;
     }
     //triple shot equation = v*1.4 + 84.5
     //double shot equation = v*1.28 + 42
@@ -153,7 +153,7 @@ public:
     PID.driveSS.i = 0.065;
     PID.driveSS.d = 5;
 
-    PID.rotate.p = 4;
+    PID.rotate.p = 17;
     PID.rotate.i = 0.065;
     PID.rotate.d = 10;
 
@@ -922,7 +922,7 @@ public:
     }
     else{
       intakeRunning = 2;
-      delay(500);
+      delay(100);
       intakeRunning = 0;
     }
   }
@@ -942,8 +942,8 @@ public:
       delay(20);
     }
     //run with constant power to ensure contact with roller
-    leftSpd = -4000;
-    rightSpd = -4000;
+    leftSpd = -3000;
+    rightSpd = -3000;
 
     intakeRunning = 1;//speed control for intake
     sensing.rollerIsGood(sensor, 1);
