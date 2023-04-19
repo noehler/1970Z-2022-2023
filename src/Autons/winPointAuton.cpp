@@ -1,5 +1,6 @@
 #include "autonSetup.h"
 #include "main.h"
+#include "robotConfig.h"
 #include "winPointAuton.h"
 
 void winPointAuton(void){
@@ -20,7 +21,7 @@ void winPointAuton(void){
     moveto(&mc, 48, 23);
     waitPosTime(&mc,1000,overallStartTime);
 
-    shootdisks(&mc, overallStartTime,1500,1);
+    shootdisks(&mc, overallStartTime,2000,1);
     delay(200);
     shootdisks(&mc, overallStartTime,1500,1);
 
@@ -89,5 +90,34 @@ void farWinPoint(void){
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
     Task speedAngleCalc_Task(speedAngleCalc_Wrapper, (void *)&sensing, "turret angle Task");
 
+	sensing.set_status(129,91,270,100, color);
+    movevoltage(&mc, 0, 0);
+    delay(20);
+
+    //move to lineup roller
+    moveto(&mc, 128, 110,100,2,8,-1);
+    waitPosTime(&mc, 1500, overallStartTime);
     
+    //rotating to face with roller
+    rotateto(&mc, 180);
+    waitRotate(&mc, 1500, overallStartTime);
+
+    //getting far roller
+    mc.driveToRoller(2000, 1,1);
+    shootdisks(&mc, overallStartTime,2000,1);
+    shootdisks(&mc, overallStartTime,2000,1);
+
+    //getting discs
+    intake(&mc);
+    moveto(&mc, 84,60, 100,5,7);
+    intakeWaitForDiscs(&mc, 5000, overallStartTime);
+    rotateto(&mc,goalAngle);
+    delay(1000);
+    mc.intakeRunning = 0;
+    shootdisks(&mc, overallStartTime,(15000 -(millis()- overallStartTime))/3,1);
+    shootdisks(&mc, overallStartTime,(15000-(millis()- overallStartTime))/2,1);
+    shootdisks(&mc, overallStartTime,(15000 -(millis()- overallStartTime)-100),1);
+    
+    delay(20);
+    movevoltage(&mc, 0, 0);
 }

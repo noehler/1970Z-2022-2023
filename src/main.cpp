@@ -35,7 +35,7 @@ void competition_initialize() {}
 
 //section of code that runs at start of autonomous, threads are started locally in each seperate function
 void autonomous() {
-	autonType = winPointClose;
+	autonType = winPointFar;
 	logMessage("start of autonomous");
 	switch(autonType){
 		case winPointClose: // close win Point auton

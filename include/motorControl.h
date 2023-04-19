@@ -92,7 +92,7 @@ private:
     if (lockSpeed == true) {
       return 650;
     } else {
-      return sensing.goalSpeed * 2.207 + 63.5;
+      return sensing.goalSpeed * 2.2 + 63.5;
     }
     //triple shot equation = v*1.4 + 84.5
     //double shot equation = v*1.28 + 42
@@ -313,6 +313,9 @@ public:
     //Calculating proportionate and derivative for rotational controller
     move.targetHeading = atan2(ety,etx);
     double currentheading = sensing.robot.angle / 180 * M_PI;
+    if(move.moveToforwardToggle == -1){
+      currentheading += M_PI;
+    }
     angdiff = move.targetHeading - currentheading;
     while( angdiff > M_PI){
       angdiff-= 2*M_PI;
@@ -332,6 +335,9 @@ public:
       if (FW > 2*move.tolerance) {//voltage and acceleration controller
         //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
         double acceleration = .019;
+        if(move.moveToforwardToggle == -1){
+          acceleration = .015;
+        }
 
         //if motor is too hot the motor will not be able to accelerate as well
         double motordecreaseConstant = .9;
@@ -358,7 +364,7 @@ public:
         double radius = -FW/(2*sin(angdiff));
         double ratio = fabs((radius - 4.5) / (radius + 4.5));
 
-        double basePWR = 12000* ratio;
+        double basePWR = 12000* ratio*move.moveToforwardToggle;
 
         if (fabs(FW) / fabs(FW - prevFW) >
             fabs(FW - prevFW) / acceleration) { //accelerate
@@ -392,7 +398,7 @@ public:
       } else if (fabs(FW) > move.tolerance){//PID controller in small ranges
 
         //PID controllers
-        straightOutput = (FW * PID.driveFR.p + integralFW * PID.driveFR.i + (FW - prevFW)*PID.driveFR.d)* 12000 / 127;
+        straightOutput = (FW * PID.driveFR.p + integralFW * PID.driveFR.i + (FW - prevFW)*PID.driveFR.d)* 12000 / 127*move.moveToforwardToggle;
         turnOutput = (angdiff * PID.driveSS.p + integralSS * PID.driveSS.i + (angdiff - prevSS)*PID.driveSS.d)* 12000 / 127;
 
         integralFW += FW;
@@ -922,7 +928,7 @@ public:
     }
     else{
       intakeRunning = 2;
-      delay(100);
+      delay(75);
       intakeRunning = 0;
     }
   }
@@ -935,15 +941,15 @@ public:
     driveType = 2;//manual voltage control
 
     int startTime = millis();
-    while (!sensing.underRoller(1) && !sensing.underRoller(2) && //drive to roller until under roller
-           millis() - startTime < time) {
+    while (!sensing.underRoller(sensor) && //drive to roller until under roller
+           millis() - startTime < time/2) {
       leftSpd = -5000;
       rightSpd = -5000;
       delay(20);
     }
     //run with constant power to ensure contact with roller
-    leftSpd = -3000;
-    rightSpd = -3000;
+    leftSpd = -2000;
+    rightSpd = -2000;
 
     intakeRunning = 1;//speed control for intake
     sensing.rollerIsGood(sensor, 1);
@@ -959,7 +965,7 @@ public:
       leftSpd = 8000;
       rightSpd = 8000;
       intakeRunning = 1;
-      delay(150);
+      delay(180);
     }
     leftSpd = 0;
     rightSpd = 0;

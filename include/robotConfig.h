@@ -320,13 +320,13 @@ public:
 
   bool underRoller(int sensorNum) {
     if (sensorNum == 1) {
-      if (leftOpticalSensor.get_proximity() ==255) {
+      if (leftOpticalSensor.get_proximity() >250) {
         return 1;
       } else {
         return 0;
       }
     } else {
-      if (rightOpticalSensor.get_proximity() == 255) {
+      if (rightOpticalSensor.get_proximity() > 250) {
         return 1;
       } else {
         return 0;
@@ -348,8 +348,8 @@ public:
       logValue("r", color_sensor.red, 0);
       logValue("b", color_sensor.blue, 1);
       logValue("prox", leftOpticalSensor.get_proximity(), 25);
-      if (((color_sensor.red > 300 && color == true) ||
-           (color_sensor.red < 200 && color == false)) &&
+      if (((color_sensor.red > 8000 && color == true) ||
+           (color_sensor.red < 400 && color == false)) &&
           underRoller(1)) {
         isGood = true;
       } else {
