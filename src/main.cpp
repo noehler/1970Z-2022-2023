@@ -24,7 +24,7 @@ void initialize() {
 	Task outPutting_task(outValsSDCard, "Outputting Task");
 
 	//default values set in case of entering into operatorControl without going through autonomous first
-	sensing.set_status(37,11.5,90,100, 0);
+	sensing.set_status(37,11.5,90,100, 1);
 }
 
 //section of code that runs when robot is not in autonomous or driver
@@ -35,7 +35,6 @@ void competition_initialize() {}
 
 //section of code that runs at start of autonomous, threads are started locally in each seperate function
 void autonomous() {
-	autonType = winPointFar;
 	logMessage("start of autonomous");
 	switch(autonType){
 		case winPointClose: // close win Point auton

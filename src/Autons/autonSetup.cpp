@@ -5,7 +5,7 @@
 #include "pros/misc.hpp"
 #include "robotConfig.h"
 
-autonTypes_t autonType = noAuton;
+autonTypes_t autonType = skillsAuton;
 
 int color = true;//0 is blue, 1 is red, 2 is driver skill
 
