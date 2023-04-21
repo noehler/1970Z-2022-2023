@@ -5,7 +5,7 @@
 #include "pros/misc.hpp"
 #include "robotConfig.h"
 
-autonTypes_t autonType = skillsAuton;
+autonTypes_t autonType = winPointBoth;
 
 int color = true;//0 is blue, 1 is red, 2 is driver skill
 
@@ -56,7 +56,7 @@ void shootdisks(void *mc, int overallStartTime, int maxTime, int number, bool ca
                 loops++;
             }
         }
-        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW)) < 5 && fabs(sensing.robot.velX)+fabs(sensing.robot.velY) + fabs(sensing.robot.turvelw)*2 + fabs(sensing.robot.angAccel)*2 < 30){
+        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW)) < 5){
             logMessage("turret good exit");
             break;
             //flywheel speed check
@@ -69,7 +69,7 @@ void shootdisks(void *mc, int overallStartTime, int maxTime, int number, bool ca
         sensing.robot.xpos = gpsIntegY/loops;
     }
     if (number==3){//second batch
-    ((motorControl_t*) mc)->raiseAScore(3);
+        ((motorControl_t*) mc)->raiseAScore(3);
         logMessage("shoot 3");
     } else if (number==2){
         ((motorControl_t*) mc)->raiseAScore(1);

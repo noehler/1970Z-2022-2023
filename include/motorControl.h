@@ -90,7 +90,7 @@ private:
   // conversion from inches per second to rpm needed at flywheel
   double angularVelocityCalc(int number) {
     if (lockSpeed == true) {
-      return 650;
+      return 500;
     } else {
       return sensing.goalSpeed * 2.2 + 63.5;
     }
@@ -312,10 +312,10 @@ public:
 
     //Calculating proportionate and derivative for rotational controller
     move.targetHeading = atan2(ety,etx);
-    double currentheading = sensing.robot.angle / 180 * M_PI;
     if(move.moveToforwardToggle == -1){
-      currentheading += M_PI;
+      move.targetHeading += M_PI;
     }
+    double currentheading = sensing.robot.angle / 180 * M_PI;
     angdiff = move.targetHeading - currentheading;
     while( angdiff > M_PI){
       angdiff-= 2*M_PI;
@@ -427,6 +427,7 @@ public:
     }
     else{ //if angle is too far off only use rotation
       HeadingTarget = move.targetHeading*180/M_PI;
+
       rotateTo(0);
     }
 
@@ -928,7 +929,7 @@ public:
     }
     else{
       intakeRunning = 2;
-      delay(75);
+      delay(95);
       intakeRunning = 0;
     }
   }

@@ -19,16 +19,16 @@ void winPointAuton(void){
 
     //move to lineup disk
     moveto(&mc, 48, 23);
-    waitPosTime(&mc,1000,overallStartTime);
+    waitPosTime(&mc,500,overallStartTime);
 
-    shootdisks(&mc, overallStartTime,2000,1);
+    shootdisks(&mc, overallStartTime,2500,1);
     delay(200);
-    shootdisks(&mc, overallStartTime,1500,1);
+    shootdisks(&mc, overallStartTime,2000,1);
 
     //move to lineup roller
     intake(&mc);
-    moveto(&mc, 128, 110,100,3,8);
-    intakeWaitForDiscs(&mc, 5000,overallStartTime);
+    moveto(&mc, 125, 110,100,3,8);
+    intakeWaitForDiscs(&mc, 6500,overallStartTime);
     
     //rotating to face with roller
     mc.intakeRunning = 0;
