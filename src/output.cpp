@@ -64,13 +64,13 @@ void sideScreenUpdate(void){
     static double prevAngleOff = -10201200;
     static double heightOff = 0;
     static double prevHeightOff = -10201200;
-    angleOff+=double(sidecar.get_analog(ANALOG_RIGHT_X))/127*2;
-    heightOff+=double(sidecar.get_analog(ANALOG_LEFT_Y))/127*2;
+    angleOff=double(sidecar.get_analog(ANALOG_RIGHT_X))/16384;
+    heightOff=double(sidecar.get_analog(ANALOG_LEFT_Y))/2048;
 
     if (angleOff != prevAngleOff || prevHeightOff != heightOff){
         prevAngleOff = angleOff;
         prevHeightOff = heightOff;
-        sensing.positionCorrection(angleOff, heightOff);
+        //sensing.positionCorrection(angleOff, heightOff);
     }
 
 }
@@ -125,6 +125,7 @@ void outValsSDCard(void){
             }
             //log new messages after all other data outputted
             if (messageToLog){
+                lv_label_set_text(outMessage, logMessageText);
                 fprintf(usd_file_write,",%s", logMessageText);
                 messageToLog = false;
             }

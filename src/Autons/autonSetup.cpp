@@ -46,27 +46,30 @@ void shootdisks(void *mc, int overallStartTime, int maxTime, int number, bool ca
     double gpsIntegY = 0;
     double loops = 0;
     ((motorControl_t*) mc)->updatedAD = false;
-    while(millis() - starttime < maxTime/* && millis() - overallStartTime < overallMaxTime*/){
+    
+    logValue("updatedAD", ((motorControl_t*) mc)->updatedAD,24);
+    logValue("updatedAD", ((motorControl_t*) mc)->angdiff,25);
+    logValue("updatedAD", ((motorControl_t*) mc)->diffFlyWheelW,26);
+    logValue("updatedAD", ((motorControl_t*) mc)->diffofdiffSpeed,27);
+    while(millis() - starttime < maxTime){
         ((motorControl_t*) mc)->HeadingTarget = goalAngle;
+        ((motorControl_t*) mc)->angdiff = goalAngle - sensing.robot.angle;
         //time out
-        if (calibrapePos){
-            if (sensing.GPS_sensor.get_error() < 0.012){
-                gpsIntegX+=sensing.robot.GPSxpos;
-                gpsIntegY+=sensing.robot.GPSxpos;
-                loops++;
-            }
-        }
-        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW)) < 5){
+        logValue("updatedAD", ((motorControl_t*) mc)->updatedAD,24);
+        logValue("updatedAD", ((motorControl_t*) mc)->angdiff,25);
+        logValue("updatedAD", ((motorControl_t*) mc)->diffFlyWheelW,26);
+        logValue("updatedAD", ((motorControl_t*) mc)->diffofdiffSpeed,27);
+        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW)) < 6){
             logMessage("turret good exit");
+            logValue("updatedAD", ((motorControl_t*) mc)->updatedAD,24);
+            logValue("updatedAD", ((motorControl_t*) mc)->angdiff,25);
+            logValue("updatedAD", ((motorControl_t*) mc)->diffFlyWheelW,26);
+            logValue("updatedAD", ((motorControl_t*) mc)->diffofdiffSpeed,27);
             break;
             //flywheel speed check
             //turret heading check
             //robot speed check
         }
-    }
-    if (calibrapePos){
-        sensing.robot.xpos = gpsIntegX/loops;
-        sensing.robot.xpos = gpsIntegY/loops;
     }
     if (number==3){//second batch
         ((motorControl_t*) mc)->raiseAScore(3);

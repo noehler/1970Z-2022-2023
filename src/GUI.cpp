@@ -23,6 +23,7 @@ lv_obj_t * turrSlider;
 lv_obj_t * posBtn;
 lv_obj_t * fieldBtn;
 lv_obj_t * outLabels[20];
+lv_obj_t * outMessage;
 
 
 /*This section has functions to make buttons*/
@@ -216,6 +217,9 @@ void setupScreen(void){
 
     preMatchCheck();
 
+    outMessage = lv_label_create(tab3, NULL); //create label and puts it on the screen
+    lv_label_set_text(outMessage, "No message yet"); //sets label text
+    lv_obj_align(outMessage, NULL, LV_ALIGN_IN_TOP_LEFT, 5, 20); //set the position to left
 
     /*Value Output Screen*/
     for (int i = 0; i < 20; i++){
@@ -231,6 +235,7 @@ void setupScreen(void){
             lv_obj_align(outLabels[i], NULL, LV_ALIGN_IN_TOP_RIGHT, -20, 20*(i-14)+20); //set the position to right
         }
     }
+
 }
 
 //Checklist to ensure that all variables that need to be set are set in pre auton

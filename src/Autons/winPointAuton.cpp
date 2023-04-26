@@ -57,34 +57,36 @@ void closeWinPoint(void){
     sensing.set_status(36,11.5,90,100, color);
     movevoltage(&mc, 0, 0);
     delay(20);
-    mc.driveToRoller(3000, 2,1);
-
+    shootdisks(&mc, overallStartTime,2000000,1);
+    //mc.driveToRoller(2000, 2,1);
+    
     //move to lineup disk
     moveto(&mc, 48, 23);
     waitPosTime(&mc,1000,overallStartTime);
 
     shootdisks(&mc, overallStartTime,6000,1);
-    delay(200);
+    delay(500);
     shootdisks(&mc, overallStartTime,6000,1);
     
     mc.raise_intake.set_value(true);
     intake(&mc);
-    mc.raise_intake.set_value(false);
     moveto(&mc,60,36,100,6);
-    waitPosTime(&mc, 3000, overallStartTime);
-    rotateto(&mc, 45);
-    waitRotate(&mc, 500, overallStartTime);
+    while(sensing.robot.ypos <30){
+        delay(20);
+    }
+    movevoltage(&mc, 4000, 4000);
+    delay(900);
     mc.raise_intake.set_value(false);
-    movevoltage(&mc, 1000, 1000);
+    rotateto(&mc, goalAngle);
     delay(1500);
-    movevoltage(&mc, 0, 0);
-    delay(1500);
+    shootdisks(&mc, overallStartTime,6000,1);
+    delay(200);
     shootdisks(&mc, overallStartTime,6000,1);
     delay(200);
     shootdisks(&mc, overallStartTime,6000,1);
 
     delay(20);
-    movevoltage(&mc, 0, 0);
+    movevoltage(&mc, 1, 1);
     
 }
 

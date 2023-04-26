@@ -94,7 +94,7 @@ private:
     if (lockSpeed == true) {
       return 600;
     } else {
-      return sensing.goalSpeed * 2.25 + 42;
+      return sensing.goalSpeed * 2.29 + 42;
     }
     //triple shot equation = v*1.4 + 84.5
     //double shot equation = v*1.28 + 42
@@ -133,7 +133,6 @@ public:
   int lockSpeed = 1;
   double intakespdTarget = 0;
   int intakeRunning; // variable to control switch between types of intake contol. 0 for stop, 1 for intake, 2 for outtake, 3 for goal speed
-  double diffFlyWheelW; // difference in goal speed of flywheel verse actual speed
   bool autoAim = false;
   double slope = 2.215;
   ADIDigitalOut raise_intake;
@@ -155,7 +154,7 @@ public:
     PID.driveSS.i = 0.065;
     PID.driveSS.d = 5;
 
-    PID.rotate.p = 17;
+    PID.rotate.p = 8;
     PID.rotate.i = 0.065;
     PID.rotate.d = 10;
 
@@ -228,10 +227,10 @@ public:
     }
     if (fabs(angdiff) > move.errtheta+3) {//voltage and acceleration controller
       //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
-      double acceleration = .1;
+      double acceleration = .04;
 
       //if motor is too hot the motor will not be able to accelerate as well
-      double motordecreaseConstant = .9;
+      double motordecreaseConstant = .7;
       if (lfD.get_temperature() > 45){
         acceleration*=motordecreaseConstant;
       }
@@ -340,7 +339,7 @@ public:
       
       if (FW > 2*move.tolerance) {//voltage and acceleration controller
         //pre determined value, if too large will overshoot, if too small, will undershoot(better to undershoot and restart than overshoot and enter a cycle of overshooting)
-        double acceleration = .019;
+        double acceleration = .017;
         if(move.moveToforwardToggle == -1){
           acceleration = .015;
         }
@@ -571,8 +570,6 @@ public:
       logValue("goalSPD", sensing.goalSpeed, 21);
       logValue("goalSPD", angularVelocityCalc(sensing.goalSpeed), 22);
       logValue("time", millis(), 23);
-      logValue("rollerGoodFRONT", sensing.rollerIsGood(1),24);
-      logValue("rollerGoodBACK", sensing.rollerIsGood(2),25);
       //logging color from rollerGood
 
       delay(optimalDelay);
@@ -661,6 +658,8 @@ public:
 
   // voltage controller for flywheel motors
   double flyAngularVelocity;
+  double diffofdiffSpeed;
+  double diffFlyWheelW; // difference in goal speed of flywheel verse actual speed
   void flyController() {
     // speed needed to accelerate
     double bottomLimit = 25;
@@ -670,21 +669,19 @@ public:
     // setting up PID controller values
     double angularVelocityDifferenceIntegral1 = 0;
     double prevAngularVelocityDifference1 = 0;
-    
     while (!competition::is_disabled()) {
+      diffFlyWheelW = angularVelocityCalc(sensing.goalSpeed) - flyWheel1.get_actual_velocity();
+      diffofdiffSpeed = (diffFlyWheelW - prevAngularVelocityDifference1);
       if (competition::is_autonomous()){
         lockSpeed = false;
       }
       flyAngularVelocity = flyWheel1.get_actual_velocity();
       if (flyWheel1.get_temperature() < 45) {
         double flyWVolt1;
-        double goalAngularVelocity = angularVelocityCalc(sensing.goalSpeed);
-        double holdPower1 = -1.885*pow(10,-11)*pow(goalAngularVelocity,5) + 7.756*pow(10,-8)*pow(goalAngularVelocity,4) - 5.624*pow(10,-5)*pow(goalAngularVelocity,3) + 0.01407*pow(goalAngularVelocity,2) + 15.9*goalAngularVelocity + 628;
+        double holdPower1 = -1.885*pow(10,-11)*pow(angularVelocityCalc(sensing.goalSpeed),5) + 7.756*pow(10,-8)*pow(angularVelocityCalc(sensing.goalSpeed),4) - 5.624*pow(10,-5)*pow(angularVelocityCalc(sensing.goalSpeed),3) + 0.01407*pow(angularVelocityCalc(sensing.goalSpeed),2) + 15.9*angularVelocityCalc(sensing.goalSpeed) + 628;
 
         // positive values means acceleration is needed and negative means speed
         // is too high
-        diffFlyWheelW =
-            goalAngularVelocity - flyWheel1.get_actual_velocity();
 
         // checking nanf
         if (angularVelocityDifferenceIntegral1 == NAN) {
@@ -713,8 +710,6 @@ public:
           flyWVolt1 = holdPower1 + PIDVAL;
         }
 
-        prevAngularVelocityDifference1 = diffFlyWheelW;
-
         flyWheel1.move_voltage(flyWVolt1);
       } else {
         static double IPIDang = 0;
@@ -723,18 +718,14 @@ public:
         //calculating how diffence in speed as input for PID and as tool to know when to shoot
         double flyWVolt;
         double flyWheelW = flyWheel1.get_actual_velocity();
-        diffFlyWheelW =
-            angularVelocityCalc(sensing.robot.magFullness) - flyWheelW;
-        static double prevFWdiffSPD =
-            angularVelocityCalc(sensing.robot.magFullness);
 
         //updating Integral and derivative, calculating PID
         IPIDang += diffFlyWheelW;
         double prop = PID.flyWheel.p * diffFlyWheelW;
         double integ = IPIDang * PID.flyWheel.i;
         double integ2 = IPIDang2 * PID.flyWheel.i2;
-        double deriv = PID.flyWheel.d * (diffFlyWheelW - prevFWdiffSPD);
-        prevFWdiffSPD = diffFlyWheelW;
+        double deriv = PID.flyWheel.d * (diffFlyWheelW - prevAngularVelocityDifference1);
+        prevAngularVelocityDifference1 = diffFlyWheelW;
 
 
         //converting to millivolts and ensuring that it does not exceed the capabilities of the motors
@@ -753,13 +744,13 @@ public:
         //checking for not a number returns, happens often when motor is disconnected
         if (isnanf(flyWVolt)) {
           flyWVolt = 0;
-          prevFWdiffSPD = angularVelocityCalc(sensing.robot.magFullness);
+          prevAngularVelocityDifference1 = angularVelocityCalc(sensing.robot.magFullness);
           IPIDang = 0;
         }
 
         flyWheel1.move_voltage(flyWVolt);
       }
-
+      prevAngularVelocityDifference1 = diffFlyWheelW;
       delay(optimalDelay);
     }
   }

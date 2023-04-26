@@ -352,7 +352,6 @@ public:
       } else {
         isGood = false;
       }
-      logValue("leftHue", leftOpticalSensor.get_hue(),26);
     } else{
 
       if (((fabs(rightOpticalSensor.get_hue() - 10) < 30 && color == true) ||
@@ -362,7 +361,6 @@ public:
       } else {
         isGood = false;
       }
-      logValue("rightHue", rightOpticalSensor.get_hue(),27);
     }
 
     if (isGood == false && seenBad == false && underRoller(fwd)){
@@ -380,6 +378,7 @@ public:
   Object prevShotRobot;
   double prevAngularVelocityShot = NAN;
   void positionCorrection(double angleOff, double heightOff){
+    angleOff *=.0000001;
     double trueRadius[2];
     double changePos[2] = {robot.xpos - prevShotRobot.xpos, robot.ypos - prevShotRobot.ypos};
     double velocity = 0;
@@ -408,14 +407,20 @@ public:
       double distBtwn[2] = {sqrt(pow(truePos[0][0],2) + pow(truePos[0][1],2)),sqrt(pow(truePos[1][0],2) + pow(truePos[1][1],2))};
 
       if(distBtwn[0]-distBtwn[1]){
+        char temp[100];
+        sprintf(temp, "position Changed from (%.3f %.3f) to (%.3f %.3f)", robot.xpos, robot.ypos, changePos[0] + truePos[0][0],changePos[1] + truePos[0][1]);
+        logMessage(temp);
         robot.xpos = changePos[0] + truePos[0][0];
-        robot.ypos = changePos[0] + truePos[0][1];
+        robot.ypos = changePos[1] + truePos[0][1];
         prevShotRobot.ypos = truePos[0][0];
         prevShotRobot.ypos = truePos[0][1];
       }
       else{
+        char temp[100];
+        sprintf(temp, "position Changed from (%.3f %.3f) to (%.3f %.3f)", robot.xpos, robot.ypos, changePos[0] + truePos[1][0],changePos[1] + truePos[1][1]);
+        logMessage(temp);
         robot.xpos = changePos[0] + truePos[1][0];
-        robot.ypos = changePos[0] + truePos[1][1];
+        robot.ypos = changePos[1] + truePos[1][1];
         prevShotRobot.ypos = truePos[1][0];
         prevShotRobot.ypos = truePos[1][1];
       }
@@ -426,11 +431,17 @@ public:
       double truePos[2][2];
       if (angleOff != 0){
 
-        truePos[0][0] = trueRadius[0]*cos(robot.angle/180*M_PI + angleOff/180*M_PI)-goal.xpos + robot.xpos;
-        truePos[0][1] = trueRadius[0]*sin(robot.angle/180*M_PI + angleOff/180*M_PI)-goal.ypos + robot.ypos;
+        truePos[0][0] = trueRadius[0]*cos((robot.angle)/180*M_PI + angleOff);
+        truePos[0][1] = trueRadius[0]*sin((robot.angle)/180*M_PI + angleOff);
       }
 
+      
+        char temp[100];
+        sprintf(temp, "position Changed from (%.3f %.3f) to (%.3f %.3f)", robot.xpos, robot.ypos, truePos[0][1],truePos[0][1]);
+        logMessage(temp);
+
       robot.xpos = truePos[0][0];
+      robot.ypos = truePos[0][1];
     }
   }
   
