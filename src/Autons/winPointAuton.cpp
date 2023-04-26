@@ -57,8 +57,7 @@ void closeWinPoint(void){
     sensing.set_status(36,11.5,90,100, color);
     movevoltage(&mc, 0, 0);
     delay(20);
-    shootdisks(&mc, overallStartTime,2000000,1);
-    //mc.driveToRoller(2000, 2,1);
+    mc.driveToRoller(2000, 2,1);
     
     //move to lineup disk
     moveto(&mc, 48, 23);
@@ -74,8 +73,8 @@ void closeWinPoint(void){
     while(sensing.robot.ypos <30){
         delay(20);
     }
-    movevoltage(&mc, 4000, 4000);
-    delay(900);
+    movevoltage(&mc, 3000, 3000);
+    delay(1000);
     mc.raise_intake.set_value(false);
     rotateto(&mc, goalAngle);
     delay(1500);

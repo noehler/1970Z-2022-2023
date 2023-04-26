@@ -49,22 +49,19 @@ void shootdisks(void *mc, int overallStartTime, int maxTime, int number, bool ca
     
     logValue("updatedAD", ((motorControl_t*) mc)->updatedAD,24);
     logValue("updatedAD", ((motorControl_t*) mc)->angdiff,25);
-    logValue("updatedAD", ((motorControl_t*) mc)->diffFlyWheelW,26);
-    logValue("updatedAD", ((motorControl_t*) mc)->diffofdiffSpeed,27);
+    logValue("updatedAD", ((motorControl_t*) mc)->shootGood,26);
     while(millis() - starttime < maxTime){
         ((motorControl_t*) mc)->HeadingTarget = goalAngle;
         ((motorControl_t*) mc)->angdiff = goalAngle - sensing.robot.angle;
         //time out
         logValue("updatedAD", ((motorControl_t*) mc)->updatedAD,24);
         logValue("updatedAD", ((motorControl_t*) mc)->angdiff,25);
-        logValue("updatedAD", ((motorControl_t*) mc)->diffFlyWheelW,26);
-        logValue("updatedAD", ((motorControl_t*) mc)->diffofdiffSpeed,27);
-        if (((motorControl_t*) mc)->updatedAD && fabs(((motorControl_t*) mc)->angdiff)<3 && (fabs(((motorControl_t*) mc)->diffFlyWheelW)) < 6){
+        logValue("updatedAD", ((motorControl_t*) mc)->shootGood,26);
+        if (((motorControl_t*) mc)->updatedAD && (((motorControl_t*) mc)->shootGood)){
             logMessage("turret good exit");
             logValue("updatedAD", ((motorControl_t*) mc)->updatedAD,24);
             logValue("updatedAD", ((motorControl_t*) mc)->angdiff,25);
-            logValue("updatedAD", ((motorControl_t*) mc)->diffFlyWheelW,26);
-            logValue("updatedAD", ((motorControl_t*) mc)->diffofdiffSpeed,27);
+            logValue("updatedAD", ((motorControl_t*) mc)->shootGood,26);
             break;
             //flywheel speed check
             //turret heading check

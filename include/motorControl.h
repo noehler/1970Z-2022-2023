@@ -94,7 +94,7 @@ private:
     if (lockSpeed == true) {
       return 600;
     } else {
-      return sensing.goalSpeed * 2.29 + 42;
+      return sensing.goalSpeed * 2.31 + 42;
     }
     //triple shot equation = v*1.4 + 84.5
     //double shot equation = v*1.28 + 42
@@ -584,7 +584,7 @@ public:
 
   // Operator control drive controller
   void driveController() {
-    while (!competition::is_disabled()) {
+    while (!competition::is_disabled() || !master.is_connected()) {
       //setting variables and converting them to millivolts
       double fwdSPD = double(master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y)) * 12000 / 127;
       double turnSPD;
@@ -660,6 +660,7 @@ public:
   double flyAngularVelocity;
   double diffofdiffSpeed;
   double diffFlyWheelW; // difference in goal speed of flywheel verse actual speed
+  bool shootGood = false;
   void flyController() {
     // speed needed to accelerate
     double bottomLimit = 25;
@@ -669,8 +670,14 @@ public:
     // setting up PID controller values
     double angularVelocityDifferenceIntegral1 = 0;
     double prevAngularVelocityDifference1 = 0;
-    while (!competition::is_disabled()) {
+    while (!competition::is_disabled() || !master.is_connected()) {
       diffFlyWheelW = angularVelocityCalc(sensing.goalSpeed) - flyWheel1.get_actual_velocity();
+      if (fabs(diffFlyWheelW) < 6){
+        shootGood = true;
+      }
+      else{
+        shootGood = false;
+      }
       diffofdiffSpeed = (diffFlyWheelW - prevAngularVelocityDifference1);
       if (competition::is_autonomous()){
         lockSpeed = false;
@@ -680,11 +687,8 @@ public:
         double flyWVolt1;
         double holdPower1 = -1.885*pow(10,-11)*pow(angularVelocityCalc(sensing.goalSpeed),5) + 7.756*pow(10,-8)*pow(angularVelocityCalc(sensing.goalSpeed),4) - 5.624*pow(10,-5)*pow(angularVelocityCalc(sensing.goalSpeed),3) + 0.01407*pow(angularVelocityCalc(sensing.goalSpeed),2) + 15.9*angularVelocityCalc(sensing.goalSpeed) + 628;
 
-        // positive values means acceleration is needed and negative means speed
-        // is too high
-
         // checking nanf
-        if (angularVelocityDifferenceIntegral1 == NAN) {
+        if (isnanf(angularVelocityDifferenceIntegral1)) {
           angularVelocityDifferenceIntegral1 = 0;
         }
 
@@ -696,18 +700,7 @@ public:
           angularVelocityDifferenceIntegral1 = 0;
           flyWVolt1 = -12000;
         } else {
-          double prop = diffFlyWheelW * PID.flyWheel.p * 0;
-          double integ =
-              angularVelocityDifferenceIntegral1 * PID.flyWheel.i * 0;
-          if (!(integ > 60)) {
-            angularVelocityDifferenceIntegral1 += diffFlyWheelW;
-          }
-          double deriv =
-              (prevAngularVelocityDifference1 - diffFlyWheelW) *
-              PID.flyWheel.d * 0;
-          double PIDVAL = (prop + integ + deriv) * 12000 / 127 * 0;
-          angularVelocityDifferenceIntegral1 += diffFlyWheelW;
-          flyWVolt1 = holdPower1 + PIDVAL;
+          flyWVolt1 = holdPower1;
         }
 
         flyWheel1.move_voltage(flyWVolt1);
@@ -759,7 +752,7 @@ public:
   bool runTurretIntake = true;//variable to properly stop the thread
   void intakeController() {
     runTurretIntake = true;
-    while (!competition::is_disabled() && runTurretIntake == true) {
+    while ((!competition::is_disabled() && runTurretIntake == true) || !master.is_connected()) {
 
       if (!competition::is_autonomous()) {//control pistons in driver control
         if (master.get_digital(E_CONTROLLER_DIGITAL_UP) &&//expand
