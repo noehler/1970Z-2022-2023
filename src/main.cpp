@@ -24,7 +24,7 @@ void initialize() {
 	Task outPutting_task(outValsSDCard, "Outputting Task");
 
 	//default values set in case of entering into operatorControl without going through autonomous first
-	sensing.set_status(37,11.5,90,100, 1);
+	sensing.set_status(36,12,90,100, color);
 }
 
 //section of code that runs when robot is not in autonomous or driver
@@ -75,7 +75,7 @@ void vibrateController(void){
 //Main driver control thread that runs during matches, motor control threads started locally here
 void opcontrol() {
 	logMessage("start of operator control");
-
+	
 	//starting up tasks neccessary for driving
 	motorControl_t motorControl;
 	Task drive_Task(drive_ControllerWrapper, (void *)&motorControl,
@@ -154,12 +154,13 @@ void opcontrol() {
  		
 		//code to alert driver when angle and speed of turret are correct
 		static bool turretGood = false;
-		if(fabs(motorControl.diffFlyWheelW) <35 && motorControl.angdiff < 3){
+		if(fabs(motorControl.diffFlyWheelW) <35 && fabs(motorControl.angdiff) < 3){
 			vibrate = true;
 		}
 		else{
 			vibrate = false;
 		}
+		
 
 
 		//code to change goal shooting position
@@ -191,34 +192,6 @@ void opcontrol() {
 			}
 		}
 		
-		//GPS Calibration
-		static int loop = 0;
-		static double xGPSintegral = 0;
-		static double yGPSintegral = 0;
-		static bool calculatePos = false;
-		if (master.get_digital(DIGITAL_Y)){
-			xGPSintegral +=sensing.robot.GPSxpos;
-			yGPSintegral +=sensing.robot.GPSypos;
-			loop++;
-			calculatePos = true;
-		}
-		else{
-			if (calculatePos && loop > 50){
-				sensing.robot.xpos = xGPSintegral/loop;
-				sensing.robot.ypos = yGPSintegral/loop;
-
-				xGPSintegral = 0;
-				yGPSintegral = 0;
-				loop = 0;
-				calculatePos = 0;
-			}
-			else{
-				xGPSintegral = 0;
-				yGPSintegral = 0;
-				calculatePos = 0;
-				loop = 0;
-			}
-		}
 		std::cout << "loop done\n";
 		delay(25);
 	}

@@ -5,9 +5,9 @@
 #include "pros/misc.hpp"
 #include "robotConfig.h"
 
-autonTypes_t autonType = winPointBoth;
+autonTypes_t autonType = winPointClose;
 
-int color = true;//0 is blue, 1 is red, 2 is driver skill
+int color = false;//0 is blue, 1 is red, 2 is driver skill
 
 bool updateScreen[2] = {1,1};
 

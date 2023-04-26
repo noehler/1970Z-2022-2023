@@ -344,30 +344,25 @@ public:
       return 0;
     }
     if (underRoller(1)) {
-      c::optical_rgb_s color_sensor = leftOpticalSensor.get_rgb();
-      logValue("r", color_sensor.red, 0);
-      logValue("b", color_sensor.blue, 1);
-      logValue("prox", leftOpticalSensor.get_proximity(), 25);
-      if (((color_sensor.red > 8000 && color == true) ||
-           (color_sensor.red < 400 && color == false)) &&
+      if (((fabs(leftOpticalSensor.get_hue() - 10) < 30 && color == true) ||
+           (fabs(leftOpticalSensor.get_hue() - 226) < 30 && color == false)) &&
           underRoller(1)) {
         isGood = true;
+
       } else {
         isGood = false;
       }
+      logValue("leftHue", leftOpticalSensor.get_hue(),26);
     } else{
-      c::optical_rgb_s color_sensor = rightOpticalSensor.get_rgb();
-      logValue("r", color_sensor.red, 23);
-      logValue("b", color_sensor.blue, 24);
-      logValue("prox", rightOpticalSensor.get_proximity(), 25);
 
-      if (((color_sensor.red > 400 && color == true) ||
-           (color_sensor.red < 300 && color == false)) &&
+      if (((fabs(rightOpticalSensor.get_hue() - 10) < 30 && color == true) ||
+           (fabs(rightOpticalSensor.get_hue() - 236) < 30 && color == false)) &&
           underRoller(-1)) {
         isGood = true;
       } else {
         isGood = false;
       }
+      logValue("rightHue", rightOpticalSensor.get_hue(),27);
     }
 
     if (isGood == false && seenBad == false && underRoller(fwd)){
@@ -385,40 +380,48 @@ public:
   Object prevShotRobot;
   double prevAngularVelocityShot = NAN;
   void positionCorrection(double angleOff, double heightOff){
-    
     double trueRadius[2];
+    double changePos[2] = {robot.xpos - prevShotRobot.xpos, robot.ypos - prevShotRobot.ypos};
+    double velocity = 0;
+    double acceleration = -386.08858267562;
+    double exitAngle = robot.turAng/180*M_PI;
+
     if (heightOff != 0){
-      double changePos[2] = {robot.xpos - prevShotRobot.xpos, robot.ypos - prevShotRobot.ypos};
-      double velocity = 0;
-      double acceleration = -386.08858267562;
-      double exitAngle = robot.turAng/180*M_PI;
+      //computations
+      double dx = goal.xpos - prevShotRobot.xpos;
+      double dy = goal.ypos - prevShotRobot.ypos;
+      double dz = goal.zpos - prevShotRobot.zpos;
+      double dist = sqrt(pow(dx, 2) + pow(dy, 2));
 
-      double constant1 = -(velocity * sin(robot.turAng/180*M_PI)* cos(robot.turAng/180*M_PI)) / acceleration;
-      double constant2 = sqrt(pow(velocity * sin(exitAngle), 2)) + (2 * acceleration * (robot.zpos - heightOff)*velocity*cos(exitAngle) / acceleration);
-      trueRadius[0] = constant1 - constant2;
-      trueRadius[1] = constant1 + constant2;
+      double robotAngle = prevShotRobot.angle*M_PI/180;
+      double component1 = -pow(goalSpeed,2)*sin(exitAngle)*cos(exitAngle)/acceleration;
+      double component2 = sqrt(pow(goalSpeed*sin(exitAngle),2)+2*acceleration*(dz-heightOff))*goalSpeed*cos(exitAngle)/acceleration;
+      double distEst1 = component1+component2;
+      double distEst2 = component1-component2;
+      double dx1 = cos(robotAngle + angleOff)*distEst1;
+      double dy1 = sin(robotAngle + angleOff)*distEst1;
+      double dx2 = cos(robotAngle + angleOff)*distEst2;
+      double dy2 = sin(robotAngle + angleOff)*distEst2;
 
-      double truePos[2][2];
-      truePos[0][0] = trueRadius[0]*cos(prevShotRobot.angle) - goal.xpos + prevShotRobot.xpos;
-      truePos[0][1] = trueRadius[0]*sin(prevShotRobot.angle) - goal.ypos + prevShotRobot.ypos;
-      truePos[1][0] = trueRadius[1]*cos(prevShotRobot.angle) - goal.xpos + prevShotRobot.xpos;
-      truePos[1][1] = trueRadius[1]*sin(prevShotRobot.angle) - goal.ypos + prevShotRobot.ypos;
+      double truePos[2][2] = {{dx1 + goal.xpos,dy1 + goal.ypos},{dx2 + goal.xpos,dy2 + goal.ypos}};
       
-      double distBtwn[2];
-      distBtwn[0] = sqrt(pow(robot.xpos - truePos[0][0],2) + pow(robot.ypos - truePos[0][1],2));
-      distBtwn[1] = sqrt(pow(robot.xpos - truePos[1][0],2) + pow(robot.ypos - truePos[1][1],2));
+      double distBtwn[2] = {sqrt(pow(truePos[0][0],2) + pow(truePos[0][1],2)),sqrt(pow(truePos[1][0],2) + pow(truePos[1][1],2))};
 
       if(distBtwn[0]-distBtwn[1]){
         robot.xpos = changePos[0] + truePos[0][0];
         robot.ypos = changePos[0] + truePos[0][1];
+        prevShotRobot.ypos = truePos[0][0];
+        prevShotRobot.ypos = truePos[0][1];
       }
       else{
         robot.xpos = changePos[0] + truePos[1][0];
         robot.ypos = changePos[0] + truePos[1][1];
+        prevShotRobot.ypos = truePos[1][0];
+        prevShotRobot.ypos = truePos[1][1];
       }
     }
     else{
-      trueRadius[0] = sqrt(pow(prevShotRobot.xpos - goal.xpos,2) + pow(prevShotRobot.ypos - goal.ypos,2));\
+      trueRadius[0] = sqrt(pow(prevShotRobot.xpos - goal.xpos,2) + pow(prevShotRobot.ypos - goal.ypos,2));
       
       double truePos[2][2];
       if (angleOff != 0){
@@ -427,10 +430,8 @@ public:
         truePos[0][1] = trueRadius[0]*sin(robot.angle/180*M_PI + angleOff/180*M_PI)-goal.ypos + robot.ypos;
       }
 
-
       robot.xpos = truePos[0][0];
     }
-
   }
   
   void shooting(int velocity){
