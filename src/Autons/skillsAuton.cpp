@@ -11,89 +11,61 @@ void skillsAutonomous(void){
 	Task fly_Task(fly_ControllerWrapper, (void*) &mc, "My Flywheel Speed Controller Task");
     Task speedAngleCalc_Task(speedAngleCalc_Wrapper, (void *)&sensing, "turret angle Task");
 
-	sensing.set_status(37,11.5,90,100, color);
+	sensing.set_status(36,11.5,90,100, color);
     movevoltage(&mc, 0, 0);
     delay(20);
+    mc.driveToRoller(2000, 2,1);
 
-	//first roller
-    mc.driveToRoller(4000, 2,1);
+    //move to lineup disk
+    moveto(&mc, 48, 23);
+    waitPosTime(&mc,500,overallStartTime);
 
-	//get first disc
-	intake(&mc);
-	moveto(&mc,24,24,100,5,5,1);
-	waitPosTime(&mc, 1000, overallStartTime);
+    shootdisks(&mc, overallStartTime,6000,1);
+    delay(200);
+    shootdisks(&mc, overallStartTime,6000,1);
 
-	//shoot all discs
-	rotateto(&mc, goalAngle);
-	delay(500);
-	for (int i = 0;i <3;i++){
-		shootdisks(&mc, overallStartTime,1500,1);
-		delay(30);
-	}
+    //move to lineup roller
+    intake(&mc);
+    moveto(&mc, 125, 110,100,3,8);
+    waitPosTime(&mc, 7500,overallStartTime);
+    
+    //rotating to face with roller
+    mc.intakeRunning = 0;
+    rotateto(&mc, 180);
+    waitRotate(&mc, 1500, overallStartTime);
 
+    //getting far roller
+    mc.driveToRoller(3000, 1,1);
+    
+    shootdisks(&mc, overallStartTime,6000,1);
+    shootdisks(&mc, overallStartTime,6000,1);
+    shootdisks(&mc, overallStartTime,6000,1);
+    movevoltage(&mc, 0, 0);
 
-	//getting second roller
-	moveto(&mc,11.5,37,100,3,5,-1);
-	waitPosTime(&mc, 3000, overallStartTime);
-	rotateto(&mc, 0);
-	waitRotate(&mc, 1500, overallStartTime);
-    mc.driveToRoller(4000, 2,2);
-
-	//getting row
-	intake(&mc);
-	moveto(&mc,36,60,100,5,10,1);
-	waitPosTime(&mc, 3000, overallStartTime);
-	moveto(&mc,60,84,100,5,10,1);
-	waitPosTime(&mc, 3000, overallStartTime);
-
-	//shoot all discs
-	rotateto(&mc, goalAngle);
-	delay(500);
-	for (int i = 0;i <3;i++){
-		shootdisks(&mc, overallStartTime,1500,1);
-		delay(30);
-	}
-
-	//getting triple stack
-	mc.raise_intake.set_value(true);
-	intake(&mc);
-	moveto(&mc,84,108,100,3,5,1);
-	waitPosTime(&mc, 3000, overallStartTime);
-	mc.raise_intake.set_value(false);
-
-	//finish picking up and go to point
-	moveto(&mc,107,107,100,5,10,1);
-	waitPosTime(&mc, 3000, overallStartTime);
-	
-	//shoot all discs
-	rotateto(&mc, goalAngle);
-	delay(700);
-	for (int i = 0;i <3;i++){
-		shootdisks(&mc, overallStartTime,1500,1);
-		delay(30);
-	}
-
-	//getting roller
-	moveto(&mc,133,107,100,3,10,-1);
-	waitPosTime(&mc, 3000, overallStartTime);
+	//REVERSE CYCLE
+    moveto(&mc, 108, 136,100,3,5,-1);
+    waitPosTime(&mc,500,overallStartTime);
 	rotateto(&mc, 180);
-	waitRotate(&mc, 1500, overallStartTime);
-    mc.driveToRoller(4000, 2,2);
-	
-	//leave Roller
-	moveto(&mc,107,107,100,3,5,1);
-	waitPosTime(&mc, 3000, overallStartTime);
-	
-	//getting roller
-	moveto(&mc,107,133,100,3,5,-1);
-	waitPosTime(&mc, 3000, overallStartTime);
-	rotateto(&mc, 270);
-	waitRotate(&mc, 1500, overallStartTime);
-    mc.driveToRoller(4000, 2,1);
+	waitRotate(&mc, 500, overallStartTime);
+	mc.driveToRoller(2000, 2,1);
 
-	//leave Roller
-	moveto(&mc,107,107,100,3,5,1);
-	waitPosTime(&mc, 500, overallStartTime);
+    //move to lineup last roller
+    intake(&mc);
+    moveto(&mc, 19, 34,100,3,8);
+    waitPosTime(&mc, 9000,overallStartTime);
+    
+    //rotating to face with roller
+    mc.intakeRunning = 0;
+    rotateto(&mc, 0);
+    waitRotate(&mc, 500, overallStartTime);
+
+    //getting far roller
+    mc.driveToRoller(2000, 1,1);
+    
+    shootdisks(&mc, overallStartTime,6000,1);
+    shootdisks(&mc, overallStartTime,6000,1);
+    shootdisks(&mc, overallStartTime,6000,1);
+    movevoltage(&mc, 0, 0);
 
 	//expand
 	rotateto(&mc, atan2(72 - sensing.robot.ypos, 72 - sensing.robot.xpos));

@@ -15,7 +15,7 @@ void winPointAuton(void){
 	sensing.set_status(36,11.5,90,100, color);
     movevoltage(&mc, 0, 0);
     delay(20);
-    mc.driveToRoller(3000, 2,1);
+    mc.driveToRoller(2000, 2,1);
 
     //move to lineup disk
     moveto(&mc, 48, 23);

@@ -670,9 +670,11 @@ public:
     // setting up PID controller values
     double angularVelocityDifferenceIntegral1 = 0;
     double prevAngularVelocityDifference1 = 0;
+    double prevAngularVelocityDifference2 = 0;
     while (!competition::is_disabled() || !master.is_connected()) {
       diffFlyWheelW = angularVelocityCalc(sensing.goalSpeed) - flyWheel1.get_actual_velocity();
-      if (fabs(diffFlyWheelW) < 6){
+
+      if (fabs(diffFlyWheelW + prevAngularVelocityDifference1 + prevAngularVelocityDifference2)/3 < 6){
         shootGood = true;
       }
       else{
@@ -744,6 +746,7 @@ public:
         flyWheel1.move_voltage(flyWVolt);
       }
       prevAngularVelocityDifference1 = diffFlyWheelW;
+      prevAngularVelocityDifference2 = prevAngularVelocityDifference1;
       delay(optimalDelay);
     }
   }
@@ -834,10 +837,12 @@ public:
 
   // expansion
   void explode(void) {
+    blocker.set_value(true);
+    delay(1000);
     expansion.set_value(true);
     driveType = 2;
-    rightSpd = 0;
-    leftSpd = 0;
+    rightSpd = -1000;
+    leftSpd = -1000;
   }
 };
 
