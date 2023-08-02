@@ -1,5 +1,5 @@
 For Judges and those interested:
-Our code is organized into several different classesand threads. The two main classes are:
+Our code is organized into several different classes and threads. The two main classes are:
 - sensing class- This is defined in "include/robotConfig.h". In in this class the position calculations and sensor input are done.
 - motor Control class- This is defined in "include/motorControl.h".  This class deals with various motorcontrollers and final calculations(like goal speed in inches per second to rpm needed). 
 
